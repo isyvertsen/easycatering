@@ -118,26 +118,32 @@ async def search_by_gtin(
 @router.post("/search/name")
 async def search_by_name(
     name: str = Query(..., description="Product name to search for"),
+    limit: int = Query(20, ge=1, le=50, description="Maximum number of results to return"),
     db: Session = Depends(get_db)
 ):
     """
-    Search for a product in VetDuAt by name.
+    Search for products in VetDuAt by name.
 
-    Returns the product data without saving to database.
+    Returns all matching products with facets and metadata without saving to database.
     """
     try:
         async with VetDuAtSyncService(db) as service:
-            product_data = await service.search_by_name(name)
+            result = await service.search_by_name_multi(name, limit=limit)
 
-            if product_data:
+            if result:
                 return {
                     "found": True,
-                    "product": product_data
+                    "query": name,
+                    "total_count": result["count"],
+                    "returned_count": len(result["products"]),
+                    "products": result["products"],
+                    "facets": result["facets"],
+                    "searchMetadata": result["searchMetadata"]
                 }
             else:
                 return {
                     "found": False,
-                    "message": f"Product with name '{name}' not found in VetDuAt"
+                    "message": f"No products with name '{name}' found in VetDuAt"
                 }
     except Exception as e:
         logger.error(f"Error searching VetDuAt for name {name}: {e}")
@@ -182,14 +188,21 @@ async def search_by_name_with_variations(
                     f"{service.base_url}/search",
                     json={
                         "facets": [
-                            "AllergenerInneholder,count:50",
-                            "AllergenerKanInneholde,count:50",
-                            "AllergenerInneholderIkke,count:50",
-                            "Varemerke,count:10"
+                            "Produksjonsland,count:10,sort:count",
+                            "AllergenerInneholder,count:50,sort:count",
+                            "AllergenerInneholderIkke,count:50,sort:count",
+                            "AllergenerKanInneholde,count:50,sort:count",
+                            "KategoriNavn,count:10,sort:count",
+                            "Varemerke,count:10,sort:count",
+                            "Varegruppenavn,count:10,sort:count",
+                            "FirmaNavn,count:10,sort:count",
+                            "MerkeOrdninger,count:10,sort:count",
+                            "ErStorhusholdningsprodukt,count:10,sort:count"
                         ],
                         "top": limit,
                         "skip": 0,
                         "count": True,
+                        "number": 0,
                         "search": variation
                     },
                     headers={
