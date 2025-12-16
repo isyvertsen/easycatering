@@ -29,6 +29,13 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { formatGtin } from "@/lib/utils/gtin"
 import { MatinfoCreateDialog } from "@/components/produkter/matinfo-create-dialog"
+import {
+  AutoSyncPreviewDialog,
+  PreviewProduct,
+  SearchResult,
+  SearchPhase,
+  SearchSource,
+} from "@/components/produkter/auto-sync-preview-dialog"
 
 interface ProductMissingEan {
   produktid: number
@@ -68,6 +75,27 @@ export default function EanManagementPage() {
     prefillGtin?: string
     prefillName?: string
   }>({ open: false })
+
+  // Preview dialog state for Auto-søk with approval
+  const [previewDialog, setPreviewDialog] = useState<{
+    open: boolean
+    product: PreviewProduct | null
+    searchPhase: SearchPhase
+    searchSource: SearchSource
+    searchResult: SearchResult | null
+    hasNutrients: boolean
+    errorMessage?: string
+    isSaving: boolean
+  }>({
+    open: false,
+    product: null,
+    searchPhase: "idle",
+    searchSource: null,
+    searchResult: null,
+    hasNutrients: false,
+    isSaving: false,
+  })
+
   const { toast } = useToast()
 
   useEffect(() => {
@@ -334,67 +362,227 @@ export default function EanManagementPage() {
     }
   }
 
+  // New handleHybridSync with preview dialog
   const handleHybridSync = async (product: ProductMissingEan) => {
+    // Open preview dialog and start searching
+    setPreviewDialog({
+      open: true,
+      product: {
+        produktid: product.produktid,
+        produktnavn: product.produktnavn,
+        ean_kode: product.ean_kode,
+      },
+      searchPhase: "searching-matinfo",
+      searchSource: null,
+      searchResult: null,
+      hasNutrients: false,
+      isSaving: false,
+    })
+
     try {
-      setSyncing(product.produktid)
+      // Step 1: Search Matinfo first
+      let foundInMatinfo = false
+      let matinfoResult: SearchResult | null = null
+      let matinfoNutrients: any[] = []
+      let matinfoAllergens: any[] = []
 
-      // Use hybrid sync endpoint - tries Matinfo first, then VetDuAt
-      const response = await apiClient.post("/v1/hybrid-sync/sync", {
-        gtin: product.ean_kode || undefined,
-        name: product.produktnavn,
-      })
+      // Try GTIN search in Matinfo if available
+      if (product.ean_kode && product.ean_kode.trim()) {
+        try {
+          const gtinResponse = await apiClient.get(`/v1/matinfo/products/${product.ean_kode.trim()}`)
+          if (gtinResponse.data) {
+            const data = gtinResponse.data
+            matinfoResult = {
+              gtin: data.gtin,
+              name: data.name,
+              brandname: data.brand || null,
+              producername: data.producer || null,
+              packagesize: data.package_size || null,
+              similarity: 1.0,
+              matched_variation: "GTIN-match",
+              ingredients: data.ingredients || null,
+              allergens: data.allergens || [],
+              nutrients: data.nutrients || [],
+            }
+            matinfoNutrients = data.nutrients || []
+            matinfoAllergens = data.allergens || []
+            foundInMatinfo = true
+          }
+        } catch (gtinError) {
+          console.log("GTIN search failed in Matinfo, trying name search...")
+        }
+      }
 
-      if (response.data.success) {
-        const source = response.data.source === 'matinfo' ? 'Matinfo' : 'VetDuAt'
-        const hasNutrients = response.data.has_nutrients
+      // Try name search in Matinfo if GTIN didn't work
+      if (!foundInMatinfo) {
+        try {
+          const nameResponse = await apiClient.post(
+            `/v1/matinfo/search/name?name=${encodeURIComponent(product.produktnavn)}&limit=1`
+          )
+          if (nameResponse.data.success && nameResponse.data.total_matches > 0) {
+            const match = nameResponse.data.matches[0]
+            // Get full product details including nutrients
+            const detailResponse = await apiClient.get(`/v1/matinfo/products/${match.gtin}`)
+            if (detailResponse.data) {
+              const data = detailResponse.data
+              matinfoResult = {
+                gtin: match.gtin,
+                name: match.name,
+                brandname: match.brandname || null,
+                producername: match.producername || null,
+                packagesize: match.packagesize || null,
+                similarity: match.similarity,
+                matched_variation: match.matched_variation,
+                ingredients: data.ingredients || null,
+                allergens: data.allergens || [],
+                nutrients: data.nutrients || [],
+              }
+              matinfoNutrients = data.nutrients || []
+              matinfoAllergens = data.allergens || []
+              foundInMatinfo = true
+            }
+          }
+        } catch (nameError) {
+          console.log("Name search failed in Matinfo")
+        }
+      }
 
-        toast({
-          title: "Suksess!",
-          description: (
-            <div className="space-y-1">
-              <p>Produktet er hentet fra {source}</p>
-              {!hasNutrients && (
-                <p className="text-orange-600 text-sm">⚠️ VetDuAt har ikke næringsdata</p>
-              )}
-            </div>
-          ),
-        })
+      // If found in Matinfo, show result
+      if (foundInMatinfo && matinfoResult) {
+        setPreviewDialog(prev => ({
+          ...prev,
+          searchPhase: "found",
+          searchSource: "matinfo",
+          searchResult: matinfoResult,
+          hasNutrients: matinfoNutrients.length > 0,
+        }))
+        return
+      }
 
-        // Remove product from list
-        setProducts((prev) => prev.filter(p => p.produktid !== product.produktid))
+      // Step 2: Search VetDuAt
+      setPreviewDialog(prev => ({
+        ...prev,
+        searchPhase: "searching-vetduat",
+      }))
 
-      } else {
-        // Product not found in any source - offer manual creation
-        toast({
-          title: "Ikke funnet",
-          description: "Produktet ble ikke funnet i Matinfo eller VetDuAt. Vil du opprette det manuelt?",
-          action: (
-            <ToastAction
-              altText="Opprett manuelt"
-              onClick={() => {
-                setCreateDialog({
-                  open: true,
-                  prefillGtin: product.ean_kode || undefined,
-                  prefillName: product.produktnavn,
-                })
-              }}
-            >
-              Opprett manuelt
-            </ToastAction>
-          ),
+      try {
+        const vetduatResponse = await apiClient.post(
+          `/v1/vetduat/search/name-with-variations?name=${encodeURIComponent(product.produktnavn)}&limit=1`
+        )
+
+        if (vetduatResponse.data.success && vetduatResponse.data.total_matches > 0) {
+          const match = vetduatResponse.data.matches[0]
+          const vetduatResult: SearchResult = {
+            gtin: match.gtin,
+            name: match.name,
+            brandname: match.brandname || null,
+            producername: match.producername || null,
+            packagesize: match.packagesize || null,
+            similarity: match.similarity,
+            matched_variation: match.matched_variation,
+            ingredients: null,
+            allergens: [],
+            nutrients: [],
+          }
+
+          setPreviewDialog(prev => ({
+            ...prev,
+            searchPhase: "found",
+            searchSource: "vetduat",
+            searchResult: vetduatResult,
+            hasNutrients: false, // VetDuAt typically doesn't have nutrients
+          }))
+          return
+        }
+      } catch (vetduatError) {
+        console.log("VetDuAt search failed")
+      }
+
+      // Not found anywhere
+      setPreviewDialog(prev => ({
+        ...prev,
+        searchPhase: "not-found",
+      }))
+
+    } catch (error: any) {
+      console.error("Feil ved hybrid søk:", error)
+      setPreviewDialog(prev => ({
+        ...prev,
+        searchPhase: "error",
+        errorMessage: error.response?.data?.detail || "Kunne ikke søke etter produkt",
+      }))
+    }
+  }
+
+  // Handle approval - actually save the data
+  const handleApproveSync = async () => {
+    if (!previewDialog.product || !previewDialog.searchResult) return
+
+    setPreviewDialog(prev => ({ ...prev, isSaving: true }))
+
+    try {
+      if (previewDialog.searchSource === "matinfo") {
+        // Sync from Matinfo
+        await apiClient.post(`/v1/matinfo/sync/product/${previewDialog.searchResult.gtin}`)
+      } else if (previewDialog.searchSource === "vetduat") {
+        // Sync from VetDuAt
+        await apiClient.post("/v1/vetduat/sync/product", {
+          gtin: previewDialog.searchResult.gtin,
+          name: previewDialog.product.produktnavn,
+          produkt_id: previewDialog.product.produktid,
         })
       }
 
+      const sourceName = previewDialog.searchSource === "matinfo" ? "Matinfo" : "VetDuAt"
+      toast({
+        title: "Lagret!",
+        description: `Produktet er hentet fra ${sourceName} og lagret i databasen`,
+      })
+
+      // Remove product from list
+      setProducts(prev => prev.filter(p => p.produktid !== previewDialog.product?.produktid))
+
+      // Close dialog
+      setPreviewDialog(prev => ({
+        ...prev,
+        open: false,
+        isSaving: false,
+      }))
+
     } catch (error: any) {
-      console.error("Feil ved hybrid synkronisering:", error)
+      console.error("Feil ved lagring:", error)
       toast({
         title: "Feil",
-        description: error.response?.data?.detail || "Kunne ikke synkronisere produkt",
+        description: error.response?.data?.detail || "Kunne ikke lagre produktet",
         variant: "destructive",
       })
-    } finally {
-      setSyncing(null)
+      setPreviewDialog(prev => ({ ...prev, isSaving: false }))
     }
+  }
+
+  // Handle rejection - close without saving
+  const handleRejectSync = () => {
+    setPreviewDialog({
+      open: false,
+      product: null,
+      searchPhase: "idle",
+      searchSource: null,
+      searchResult: null,
+      hasNutrients: false,
+      isSaving: false,
+    })
+  }
+
+  // Handle manual creation from preview dialog
+  const handleCreateManualFromPreview = () => {
+    if (previewDialog.product) {
+      setCreateDialog({
+        open: true,
+        prefillGtin: previewDialog.product.ean_kode || undefined,
+        prefillName: previewDialog.product.produktnavn,
+      })
+    }
+    handleRejectSync()
   }
 
   const handleOpenCreateDialog = (product?: ProductMissingEan) => {
@@ -746,6 +934,24 @@ export default function EanManagementPage() {
           })
           fetchProducts()
         }}
+      />
+
+      {/* Auto-Sync Preview Dialog with Approval */}
+      <AutoSyncPreviewDialog
+        open={previewDialog.open}
+        onOpenChange={(open) => {
+          if (!open) handleRejectSync()
+        }}
+        product={previewDialog.product}
+        searchPhase={previewDialog.searchPhase}
+        searchSource={previewDialog.searchSource}
+        searchResult={previewDialog.searchResult}
+        hasNutrients={previewDialog.hasNutrients}
+        errorMessage={previewDialog.errorMessage}
+        onApprove={handleApproveSync}
+        onReject={handleRejectSync}
+        onCreateManual={handleCreateManualFromPreview}
+        isSaving={previewDialog.isSaving}
       />
     </div>
   )
