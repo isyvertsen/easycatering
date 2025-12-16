@@ -7,7 +7,7 @@ from app.api.v1 import (
     menu_management, reports, matinfo, product_search, stats, combined_dishes,
     preparation_instructions, ean_management
 )
-from app.api.v1.endpoints import matinfo_sync, matinfo_tracker, vetduat_sync, hybrid_sync
+from app.api.v1.endpoints import matinfo_sync, matinfo_tracker, ngdata_sync, vetduat_sync, hybrid_sync
 
 api_router = APIRouter()
 
@@ -26,6 +26,7 @@ api_router.include_router(matinfo_tracker.router, prefix="/matinfo", tags=["mati
 api_router.include_router(menu_management.router, prefix="/menu-management", tags=["menu-management"])
 api_router.include_router(meny.router, prefix="/meny", tags=["meny"])
 api_router.include_router(meny_produkt.router, prefix="/meny-produkt", tags=["meny-produkt"])
+api_router.include_router(ngdata_sync.router, prefix="/ngdata", tags=["ngdata-sync"])
 api_router.include_router(oppskrifter.router, prefix="/oppskrifter", tags=["oppskrifter"])
 api_router.include_router(ordrer.router, prefix="/ordrer", tags=["ordrer"])
 api_router.include_router(periode.router, prefix="/periode", tags=["periode"])

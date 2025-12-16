@@ -1,15 +1,17 @@
 """
-Hybrid product sync service that tries Matinfo first, then VetDuAt as fallback.
+Hybrid product sync service that tries multiple sources with priority.
 
 Priority:
-1. Matinfo (primary) - Full nutrition data
-2. VetDuAt (fallback) - Basic product info and allergens only
+1. Matinfo (primary) - Full nutrition data, Norwegian products
+2. Ngdata (secondary) - Full nutrition data + price + stock (Meny/REITAN only)
+3. VetDuAt (fallback) - Basic product info and allergens only
 """
 import logging
 from typing import Dict, Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.matinfo_sync import MatinfoSyncService
+from app.services.ngdata_sync import NgdataSyncService
 from app.services.vetduat_sync import VetDuAtSyncService
 from app.models.matinfo_products import MatinfoProduct
 from sqlalchemy import select
@@ -18,11 +20,12 @@ logger = logging.getLogger(__name__)
 
 
 class HybridProductSyncService:
-    """Service that combines Matinfo and VetDuAt searches with priority."""
+    """Service that combines Matinfo, Ngdata, and VetDuAt searches with priority."""
 
     def __init__(self, db: AsyncSession):
         self.db = db
         self.matinfo_service = MatinfoSyncService(db)
+        self.ngdata_service = NgdataSyncService(db)
         self.vetduat_service = VetDuAtSyncService(db)
 
     async def __aenter__(self):
@@ -30,6 +33,7 @@ class HybridProductSyncService:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.matinfo_service.client.aclose()
+        await self.ngdata_service.client.aclose()
         await self.vetduat_service.client.aclose()
 
     async def search_and_sync(
@@ -38,7 +42,7 @@ class HybridProductSyncService:
         name: Optional[str] = None
     ) -> Dict:
         """
-        Search and sync product with priority: Matinfo -> VetDuAt
+        Search and sync product with priority: Matinfo -> Ngdata -> VetDuAt
 
         Args:
             gtin: Product GTIN code
@@ -69,7 +73,22 @@ class HybridProductSyncService:
                 }
             logger.info(f"Product not found in Matinfo for GTIN: {gtin}")
 
-        # Try VetDuAt as fallback (priority 2)
+        # Try Ngdata as second priority (priority 2)
+        logger.info(f"Trying Ngdata for GTIN: {gtin}, Name: {name}")
+        ngdata_success = await self.ngdata_service.sync_product(gtin=gtin, name=name)
+
+        if ngdata_success:
+            return {
+                "success": True,
+                "message": "Product synced from Ngdata (full nutrition data + price/stock from Meny)",
+                "source": "ngdata",
+                "gtin": gtin,
+                "has_nutrients": True,
+                "info": "Ngdata provides full nutrition data for products sold at Meny/REITAN stores"
+            }
+        logger.info(f"Product not found in Ngdata for GTIN: {gtin}, Name: {name}")
+
+        # Try VetDuAt as final fallback (priority 3)
         logger.info(f"Trying VetDuAt fallback for GTIN: {gtin}, Name: {name}")
         vetduat_success = await self.vetduat_service.sync_product(gtin=gtin, name=name)
 
@@ -83,10 +102,10 @@ class HybridProductSyncService:
                 "warning": "VetDuAt does not provide nutrition data. Consider adding manually."
             }
 
-        # Both failed
+        # All sources failed
         return {
             "success": False,
-            "message": f"Product not found in Matinfo or VetDuAt",
+            "message": f"Product not found in Matinfo, Ngdata, or VetDuAt",
             "source": None,
             "gtin": gtin,
             "name": name
@@ -94,13 +113,14 @@ class HybridProductSyncService:
 
     async def search_by_gtin(self, gtin: str) -> Dict:
         """
-        Search for product by GTIN in both sources without syncing.
+        Search for product by GTIN in all sources without syncing.
 
         Returns combined results with priority indication.
         """
         results = {
             "gtin": gtin,
             "matinfo": None,
+            "ngdata": None,
             "vetduat": None,
             "recommendation": None
         }
@@ -115,7 +135,7 @@ class HybridProductSyncService:
             results["recommendation"] = "Product already in database"
             return results
 
-        # Try Matinfo
+        # Try Matinfo (priority 1)
         matinfo_data = await self.matinfo_service.fetch_product_details(gtin)
         if matinfo_data:
             results["matinfo"] = {
@@ -127,7 +147,22 @@ class HybridProductSyncService:
             }
             results["recommendation"] = "Use Matinfo (has nutrition data)"
 
-        # Try VetDuAt
+        # Try Ngdata (priority 2)
+        ngdata_data = await self.ngdata_service.search_by_gtin(gtin)
+        if ngdata_data:
+            results["ngdata"] = {
+                "found": True,
+                "name": ngdata_data.get("title"),
+                "has_nutrients": len(ngdata_data.get("nutritionalContent", [])) > 0,
+                "has_allergens": len(ngdata_data.get("allergens", [])) > 0,
+                "brand": ngdata_data.get("brand"),
+                "price": ngdata_data.get("pricePerUnit"),
+                "in_stock": not ngdata_data.get("isOutOfStock", False)
+            }
+            if not results["recommendation"]:
+                results["recommendation"] = "Use Ngdata (has nutrition data + price/stock from Meny)"
+
+        # Try VetDuAt (priority 3)
         vetduat_data = await self.vetduat_service.search_by_gtin(gtin)
         if vetduat_data:
             results["vetduat"] = {
@@ -144,13 +179,14 @@ class HybridProductSyncService:
 
     async def search_by_name(self, name: str, limit: int = 10) -> Dict:
         """
-        Search by name in both Matinfo and VetDuAt.
+        Search by name in Matinfo, Ngdata, and VetDuAt.
 
         Returns combined results with Matinfo prioritized.
         """
         results = {
             "query": name,
             "matinfo_results": [],
+            "ngdata_results": [],
             "vetduat_results": [],
             "total": 0
         }
@@ -169,19 +205,41 @@ class HybridProductSyncService:
                 "priority": 1
             })
 
-        # Search VetDuAt (priority 2) - only if Matinfo didn't return enough results
+        seen_gtins = {r["gtin"] for r in results["matinfo_results"]}
+
+        # Search Ngdata (priority 2) - only if Matinfo didn't return enough results
         if len(results["matinfo_results"]) < limit:
+            ngdata_result = await self.ngdata_service.search_by_name_multi(name, limit=limit)
+
+            if ngdata_result:
+                for product in ngdata_result.get("products", []):
+                    gtin = product.get("ean")
+                    if gtin and gtin not in seen_gtins:
+                        seen_gtins.add(gtin)
+
+                        results["ngdata_results"].append({
+                            "gtin": gtin,
+                            "name": product.get("title"),
+                            "brand": product.get("brand"),
+                            "similarity": 0.9,  # Ngdata has good search
+                            "source": "ngdata",
+                            "has_nutrients": True,
+                            "priority": 2,
+                            "price": product.get("pricePerUnit"),
+                            "in_stock": not product.get("isOutOfStock", False)
+                        })
+
+        # Search VetDuAt (priority 3) - only if still not enough results
+        if len(results["matinfo_results"]) + len(results["ngdata_results"]) < limit:
             # Use AI-powered name cleaning to generate variations
             name_variations = await self.vetduat_service.name_cleaner.clean_product_name(name)
-
-            seen_gtins = {r["gtin"] for r in results["matinfo_results"]}
 
             for variation in name_variations[:3]:  # Try top 3 variations
                 search_response = await self.vetduat_service.client.post(
                     f"{self.vetduat_service.base_url}/search",
                     json={
                         "facets": ["Varemerke,count:10"],
-                        "top": limit - len(results["matinfo_results"]),
+                        "top": limit - len(results["matinfo_results"]) - len(results["ngdata_results"]),
                         "skip": 0,
                         "count": True,
                         "search": variation
@@ -216,10 +274,10 @@ class HybridProductSyncService:
                                 "similarity": 0.8,  # Estimated
                                 "source": "vetduat",
                                 "has_nutrients": False,
-                                "priority": 2
+                                "priority": 3
                             })
 
-        results["total"] = len(results["matinfo_results"]) + len(results["vetduat_results"])
+        results["total"] = len(results["matinfo_results"]) + len(results["ngdata_results"]) + len(results["vetduat_results"])
 
         return results
 
@@ -237,6 +295,7 @@ class HybridProductSyncService:
             "in_database": db_product is not None,
             "database_info": None,
             "matinfo_available": False,
+            "ngdata_available": False,
             "vetduat_available": False,
             "recommendation": None
         }
@@ -252,20 +311,27 @@ class HybridProductSyncService:
             status["recommendation"] = "Product already in database"
             return status
 
-        # Check Matinfo availability
+        # Check Matinfo availability (priority 1)
         matinfo_data = await self.matinfo_service.fetch_product_details(gtin)
         if matinfo_data:
             status["matinfo_available"] = True
             status["recommendation"] = "Sync from Matinfo for full nutrition data"
 
-        # Check VetDuAt availability
+        # Check Ngdata availability (priority 2)
+        ngdata_data = await self.ngdata_service.search_by_gtin(gtin)
+        if ngdata_data:
+            status["ngdata_available"] = True
+            if not status["recommendation"]:
+                status["recommendation"] = "Sync from Ngdata (full nutrition data + price/stock from Meny)"
+
+        # Check VetDuAt availability (priority 3)
         vetduat_data = await self.vetduat_service.search_by_gtin(gtin)
         if vetduat_data:
             status["vetduat_available"] = True
             if not status["recommendation"]:
                 status["recommendation"] = "Sync from VetDuAt (allergens only)"
 
-        if not status["matinfo_available"] and not status["vetduat_available"]:
+        if not status["matinfo_available"] and not status["ngdata_available"] and not status["vetduat_available"]:
             status["recommendation"] = "Manual entry required - product not found in any source"
 
         return status
