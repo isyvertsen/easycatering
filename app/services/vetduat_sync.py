@@ -39,7 +39,18 @@ class VetDuAtSyncService:
             Product data dictionary or None if not found.
         """
         search_payload = {
-            "facets": [],
+            "facets": [
+                "Produksjonsland,count:10,sort:count",
+                "AllergenerInneholder,count:10,sort:count",
+                "AllergenerInneholderIkke,count:10,sort:count",
+                "AllergenerKanInneholde,count:10,sort:count",
+                "KategoriNavn,count:10,sort:count",
+                "Varemerke,count:10,sort:count",
+                "Varegruppenavn,count:10,sort:count",
+                "FirmaNavn,count:10,sort:count",
+                "MerkeOrdninger,count:10,sort:count",
+                "ErStorhusholdningsprodukt,count:10,sort:count"
+            ],
             "top": 1,
             "skip": 0,
             "count": True,
@@ -90,8 +101,19 @@ class VetDuAtSyncService:
             Product data dictionary or None if not found.
         """
         search_payload = {
-            "facets": [],
-            "top": 5,
+            "facets": [
+                "Produksjonsland,count:10,sort:count",
+                "AllergenerInneholder,count:10,sort:count",
+                "AllergenerInneholderIkke,count:10,sort:count",
+                "AllergenerKanInneholde,count:10,sort:count",
+                "KategoriNavn,count:10,sort:count",
+                "Varemerke,count:10,sort:count",
+                "Varegruppenavn,count:10,sort:count",
+                "FirmaNavn,count:10,sort:count",
+                "MerkeOrdninger,count:10,sort:count",
+                "ErStorhusholdningsprodukt,count:10,sort:count"
+            ],
+            "top": 20,
             "skip": 0,
             "count": True,
             "number": 0,
@@ -292,14 +314,21 @@ class VetDuAtSyncService:
                 f"{self.base_url}/search",
                 json={
                     "facets": [
-                        "AllergenerInneholder,count:50",
-                        "AllergenerKanInneholde,count:50",
-                        "AllergenerInneholderIkke,count:50",
-                        "Varemerke,count:10"
+                        "Produksjonsland,count:10,sort:count",
+                        "AllergenerInneholder,count:50,sort:count",
+                        "AllergenerInneholderIkke,count:50,sort:count",
+                        "AllergenerKanInneholde,count:50,sort:count",
+                        "KategoriNavn,count:10,sort:count",
+                        "Varemerke,count:10,sort:count",
+                        "Varegruppenavn,count:10,sort:count",
+                        "FirmaNavn,count:10,sort:count",
+                        "MerkeOrdninger,count:10,sort:count",
+                        "ErStorhusholdningsprodukt,count:10,sort:count"
                     ],
                     "top": 1,
                     "skip": 0,
                     "count": True,
+                    "number": 0,
                     "search": gtin
                 },
                 headers={
@@ -330,14 +359,21 @@ class VetDuAtSyncService:
                     f"{self.base_url}/search",
                     json={
                         "facets": [
-                            "AllergenerInneholder,count:50",
-                            "AllergenerKanInneholde,count:50",
-                            "AllergenerInneholderIkke,count:50",
-                            "Varemerke,count:10"
+                            "Produksjonsland,count:10,sort:count",
+                            "AllergenerInneholder,count:50,sort:count",
+                            "AllergenerInneholderIkke,count:50,sort:count",
+                            "AllergenerKanInneholde,count:50,sort:count",
+                            "KategoriNavn,count:10,sort:count",
+                            "Varemerke,count:10,sort:count",
+                            "Varegruppenavn,count:10,sort:count",
+                            "FirmaNavn,count:10,sort:count",
+                            "MerkeOrdninger,count:10,sort:count",
+                            "ErStorhusholdningsprodukt,count:10,sort:count"
                         ],
                         "top": 1,
                         "skip": 0,
                         "count": True,
+                        "number": 0,
                         "search": variation
                     },
                     headers={
