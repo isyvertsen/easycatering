@@ -90,12 +90,16 @@ class VetDuAtSyncService:
             logger.error(f"Error searching VetDuAt for GTIN {gtin}: {e}")
             return None
 
-    async def search_by_name(self, name: str) -> Optional[Dict]:
+    async def search_by_name(self, name: str, limit: int = 1) -> Optional[Dict]:
         """
         Search for product by name in VetDuAt API.
+        Returns only the first match (for backward compatibility with sync_product).
+
+        For multiple results, use search_by_name_multi().
 
         Args:
             name: The product name to search for.
+            limit: Maximum number of results to fetch (default 1).
 
         Returns:
             Product data dictionary or None if not found.
@@ -113,7 +117,7 @@ class VetDuAtSyncService:
                 "MerkeOrdninger,count:10,sort:count",
                 "ErStorhusholdningsprodukt,count:10,sort:count"
             ],
-            "top": 20,
+            "top": limit,
             "skip": 0,
             "count": True,
             "number": 0,
@@ -147,6 +151,76 @@ class VetDuAtSyncService:
             product = products[0]
             logger.info(f"Found product in VetDuAt: {product.get('fellesProduktnavn')} (score: {product.get('searchScore')})")
             return product
+
+        except httpx.HTTPError as e:
+            logger.error(f"Error searching VetDuAt for name {name}: {e}")
+            return None
+
+    async def search_by_name_multi(self, name: str, limit: int = 20) -> Optional[Dict]:
+        """
+        Search for multiple products by name in VetDuAt API.
+        Returns all matching products with facets and metadata.
+
+        Args:
+            name: The product name to search for.
+            limit: Maximum number of results to return (default 20).
+
+        Returns:
+            Dictionary containing products, facets, and count, or None if not found.
+        """
+        search_payload = {
+            "facets": [
+                "Produksjonsland,count:10,sort:count",
+                "AllergenerInneholder,count:10,sort:count",
+                "AllergenerInneholderIkke,count:10,sort:count",
+                "AllergenerKanInneholde,count:10,sort:count",
+                "KategoriNavn,count:10,sort:count",
+                "Varemerke,count:10,sort:count",
+                "Varegruppenavn,count:10,sort:count",
+                "FirmaNavn,count:10,sort:count",
+                "MerkeOrdninger,count:10,sort:count",
+                "ErStorhusholdningsprodukt,count:10,sort:count"
+            ],
+            "top": limit,
+            "skip": 0,
+            "count": True,
+            "number": 0,
+            "search": name
+        }
+
+        try:
+            logger.info(f"Searching VetDuAt for name: {name} (limit: {limit})")
+            response = await self.client.post(
+                f"{self.base_url}/search",
+                json=search_payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Origin": "https://vetduat.no"
+                }
+            )
+
+            if response.status_code == 404:
+                logger.warning(f"Products not found for name: {name}")
+                return None
+
+            response.raise_for_status()
+            data = response.json()
+
+            products = data.get("products", [])
+            if not products:
+                logger.warning(f"No products found for name: {name}")
+                return None
+
+            # Return all matches with metadata
+            total_count = data.get("searchMetadata", {}).get("count", len(products))
+            logger.info(f"Found {len(products)} products in VetDuAt for '{name}' (total: {total_count})")
+
+            return {
+                "products": products,
+                "facets": data.get("facets", {}),
+                "count": total_count,
+                "searchMetadata": data.get("searchMetadata", {})
+            }
 
         except httpx.HTTPError as e:
             logger.error(f"Error searching VetDuAt for name {name}: {e}")
