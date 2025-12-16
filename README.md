@@ -1,96 +1,110 @@
-# Catering System Backend
+# LKC Backend
 
-FastAPI-based backend for the Larvik Kommune Catering Management System.
+Backend API for Larvik Kommunale Catering System.
 
-## Features
+## Tech Stack
 
-- FastAPI with async support
-- PostgreSQL database with SQLAlchemy ORM
-- JWT authentication with refresh tokens
-- Google OAuth integration
-- Generic CRUD API for all tables
-- Redis for caching and session management
-- BDD testing with pytest-bdd
-- Docker support
+- **Framework**: FastAPI
+- **Database**: PostgreSQL med SQLAlchemy ORM
+- **Autentisering**: JWT med refresh tokens, Google OAuth
+- **Cache**: Redis
+- **Package Manager**: uv
 
-## Project Structure
+## Prosjektstruktur
 
 ```
-backend/
 ├── app/
-│   ├── api/          # API endpoints (v1 routers)
-│   ├── core/         # Core functionality (config, security, migrations)
-│   ├── models/       # SQLAlchemy ORM models
-│   ├── schemas/      # Pydantic schemas for API validation
-│   ├── services/     # Business logic services
-│   └── infrastructure/ # Database session management
-├── tests/
-│   ├── unit/         # Unit tests
-│   ├── integration/  # Integration tests
-│   └── seed_data.py  # Test database seeding
-├── scripts/          # Utility scripts
-├── migrations/       # Database migration scripts
-└── pyproject.toml    # Dependencies (managed with uv)
+│   ├── api/v1/         # API endpoints
+│   ├── core/           # Konfigurasjon, sikkerhet, migrasjoner
+│   ├── models/         # SQLAlchemy modeller
+│   ├── schemas/        # Pydantic schemas
+│   ├── services/       # Forretningslogikk
+│   └── infrastructure/ # Database-håndtering
+├── docs/               # Dokumentasjon og OpenAPI spec
+├── scripts/            # Shell og Python scripts
+└── tests/              # Tester og HTTP test-filer
 ```
 
-## Development
+## Oppsett
 
-### Setup
+### Forutsetninger
 
-1. Install uv: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-2. Install dependencies: `uv pip install -r pyproject.toml`
-3. Copy `.env.development` and configure database connection
-4. Migrations run automatically on server startup
+- Python 3.11+
+- PostgreSQL
+- Redis (valgfritt, for caching)
 
-### Running
+### Installasjon
+
+```bash
+# Installer uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Installer dependencies
+uv pip install -r pyproject.toml
+
+# Kopier environment fil
+cp .env.example .env
+# Rediger .env med dine database-innstillinger
+```
+
+### Kjøring
 
 ```bash
 # Development server
-./start-dev.sh
+./scripts/start-dev.sh
 
-# Or manually with uv
+# Eller manuelt
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
-# With Docker
-docker-compose up backend
 ```
 
-### Testing
+## API Dokumentasjon
+
+Når serveren kjører:
+- Swagger UI: http://localhost:8000/api/docs
+- ReDoc: http://localhost:8000/api/redoc
+
+## Database Migrasjoner
+
+Prosjektet bruker et **egendefinert migrasjonssystem** (ikke Alembic).
+
+Migrasjoner kjøres automatisk ved oppstart. For å legge til ny migrasjon:
+
+1. Opprett ny klasse i `app/core/migrations.py` som arver fra `Migration`
+2. Implementer `up()` metoden
+3. Registrer i `get_migration_runner()`
+
+## Testing
 
 ```bash
-# Run all tests
+# Kjør alle tester
 uv run pytest
 
-# Run with coverage
+# Med coverage
 uv run pytest --cov
 
 # Seed test database
 uv run python tests/seed_data.py
-
-# Run E2E tests (from frontend directory)
-cd ../frontend
-npx playwright test
 ```
 
-### Database Migrations
+## Scripts
 
-**IMPORTANT**: This project uses a custom migration system, NOT Alembic.
+Nyttige scripts i `scripts/` mappen:
 
-- Migrations are defined in `app/core/migrations.py`
-- Migrations run automatically on application startup
-- Migration status is tracked in the `_migrations` table
-- To add a new migration:
-  1. Create a new class inheriting from `Migration` in `app/core/migrations.py`
-  2. Implement the `up()` method with your migration logic
-  3. Register it in the `get_migration_runner()` function
-  4. The migration will run automatically on next server start
-
-## API Documentation
-
-When running, API documentation is available at:
-- Swagger UI: http://localhost:8000/api/docs
-- ReDoc: http://localhost:8000/api/redoc
+| Script | Beskrivelse |
+|--------|-------------|
+| `create_admin_user.py` | Opprett admin bruker |
+| `anonymize_customers.py` | Anonymiser kundedata |
+| `fix_gtin_codes.py` | Fiks GTIN/EAN koder |
+| `run_migrations.py` | Kjør migrasjoner manuelt |
 
 ## Environment Variables
 
-See `.env.example` for required environment variables.
+Se `.env.example` for påkrevde environment variables.
+
+## Dokumentasjon
+
+Ytterligere dokumentasjon finnes i `docs/` mappen:
+
+- `MENU_SYSTEM_DESIGN.md` - Menysystem design
+- `NUTRITION_STATUS.md` - Ernæringsinformasjon status
+- `name_mappings.md` - Navnekonvensjoner
