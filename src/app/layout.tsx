@@ -9,8 +9,12 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Larvik Kommune Catering System',
+  title: 'LKC - Larvik Kommune Catering',
   description: 'Catering management system for Larvik Kommune',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/apple-icon.svg',
+  },
 }
 
 export default function RootLayout({
