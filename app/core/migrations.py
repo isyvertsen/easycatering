@@ -436,6 +436,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(CreateCombinedDishTables())
         migration_runner.add_migration(AddPreparationInstructionsToCombinedDishes())
         migration_runner.add_migration(CreatePreparationInstructionsTable())
+        migration_runner.add_migration(CreateLabelTemplateTables())
     return migration_runner
 
 
@@ -523,6 +524,111 @@ class CreateMatinfoProductTables(Migration):
             """))
             await conn.execute(text("""
                 CREATE INDEX IF NOT EXISTS idx_matinfo_allergens_gtin ON matinfo_allergens(gtin)
+            """))
+
+
+class CreateLabelTemplateTables(Migration):
+    """Create tables for label template designer."""
+
+    def __init__(self):
+        super().__init__(
+            version="20251224_001_label_templates",
+            description="Create label template, parameter, share, and print history tables"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Create label_templates table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS label_templates (
+                    id BIGSERIAL PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    description TEXT,
+                    template_json JSONB NOT NULL,
+                    width_mm NUMERIC(10, 2) DEFAULT 100,
+                    height_mm NUMERIC(10, 2) DEFAULT 50,
+                    owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                    is_global BOOLEAN DEFAULT FALSE,
+                    thumbnail_url VARCHAR(500),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP
+                )
+            """))
+
+            # Create indexes for label_templates
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_label_templates_owner_id ON label_templates(owner_id)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_label_templates_is_global ON label_templates(is_global)
+            """))
+
+            # Create template_parameters table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS template_parameters (
+                    id BIGSERIAL PRIMARY KEY,
+                    template_id BIGINT NOT NULL REFERENCES label_templates(id) ON DELETE CASCADE,
+                    field_name VARCHAR(100) NOT NULL,
+                    display_name VARCHAR(255) NOT NULL,
+                    parameter_type VARCHAR(50) DEFAULT 'text',
+                    source_type VARCHAR(50) DEFAULT 'manual',
+                    source_config JSONB,
+                    is_required BOOLEAN DEFAULT TRUE,
+                    default_value TEXT,
+                    validation_regex VARCHAR(500),
+                    sort_order INTEGER DEFAULT 0
+                )
+            """))
+
+            # Create index for template_parameters
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_template_parameters_template_id ON template_parameters(template_id)
+            """))
+
+            # Create template_shares table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS template_shares (
+                    id BIGSERIAL PRIMARY KEY,
+                    template_id BIGINT NOT NULL REFERENCES label_templates(id) ON DELETE CASCADE,
+                    shared_with_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    permission VARCHAR(20) DEFAULT 'view',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT uq_template_share UNIQUE (template_id, shared_with_user_id)
+                )
+            """))
+
+            # Create indexes for template_shares
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_template_shares_template_id ON template_shares(template_id)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_template_shares_shared_with ON template_shares(shared_with_user_id)
+            """))
+
+            # Create print_history table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS print_history (
+                    id BIGSERIAL PRIMARY KEY,
+                    template_id BIGINT REFERENCES label_templates(id) ON DELETE SET NULL,
+                    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                    printer_name VARCHAR(255),
+                    input_data JSONB,
+                    copies INTEGER DEFAULT 1,
+                    status VARCHAR(50),
+                    error_message TEXT,
+                    printed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+
+            # Create indexes for print_history
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_print_history_template_id ON print_history(template_id)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_print_history_user_id ON print_history(user_id)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_print_history_printed_at ON print_history(printed_at)
             """))
 
 

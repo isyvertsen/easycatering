@@ -10,6 +10,14 @@ from .meny import Meny, MenyCreate, MenyUpdate, MenyWithProducts, MenyWithPeriod
 from .periode import Periode, PeriodeCreate, PeriodeUpdate, PeriodeWithMenus
 from .periode_meny import PeriodeMeny, PeriodeMenyCreate
 from .meny_produkt import MenyProdukt, MenyProduktCreate, MenyProduktWithDetails
+from .label_template import (
+    LabelTemplate, LabelTemplateCreate, LabelTemplateUpdate, LabelTemplateList,
+    TemplateParameter, TemplateParameterCreate, TemplateParameterUpdate,
+    TemplateShare, TemplateShareCreate, TemplateShareUpdate,
+    PrintHistory, PrintHistoryCreate,
+    PreviewLabelRequest, GenerateLabelRequest, BatchGenerateRequest,
+    ParameterType, SourceType,
+)
 
 __all__ = [
     "Ansatte", "AnsatteCreate", "AnsatteUpdate",
@@ -23,4 +31,10 @@ __all__ = [
     "Periode", "PeriodeCreate", "PeriodeUpdate", "PeriodeWithMenus",
     "PeriodeMeny", "PeriodeMenyCreate",
     "MenyProdukt", "MenyProduktCreate", "MenyProduktWithDetails",
+    "LabelTemplate", "LabelTemplateCreate", "LabelTemplateUpdate", "LabelTemplateList",
+    "TemplateParameter", "TemplateParameterCreate", "TemplateParameterUpdate",
+    "TemplateShare", "TemplateShareCreate", "TemplateShareUpdate",
+    "PrintHistory", "PrintHistoryCreate",
+    "PreviewLabelRequest", "GenerateLabelRequest", "BatchGenerateRequest",
+    "ParameterType", "SourceType",
 ]
