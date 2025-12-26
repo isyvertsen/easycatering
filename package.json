@@ -13,6 +13,7 @@
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
     "@pdfme/common": "^4.5.2",
+    "@pdfme/generator": "^4.5.2",
     "@pdfme/schemas": "^4.5.2",
     "@pdfme/ui": "^4.5.2",
     "@radix-ui/react-accordion": "^1.2.12",

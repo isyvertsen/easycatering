@@ -21,11 +21,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Save, Undo, Redo, PanelLeftClose, PanelLeft } from 'lucide-react'
+import { Save, Undo, Redo, PanelLeftClose, PanelLeft, Eye } from 'lucide-react'
 import type { LabelDesignerProps } from '@/types/labels'
 import { LABEL_SIZE_PRESETS } from '@/types/labels'
 import { VariablesSidebar } from './VariablesSidebar'
-import type { LabelVariable } from '@/config/label-variables'
+import { LABEL_VARIABLES, type LabelVariable } from '@/config/label-variables'
+import { createCustomRectangle, createCustomLine } from './custom-schemas'
 
 /**
  * Create a basePdf object with custom dimensions (in mm)
@@ -62,6 +63,25 @@ export function LabelDesigner({
     show: false,
     callback: null,
   })
+  const [textFields, setTextFields] = useState<{ name: string; content: string }[]>([])
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false)
+
+  // Extract text fields from template for preview
+  const extractTextFields = useCallback((template: any) => {
+    if (!template?.schemas?.[0]) return []
+
+    const schemas = template.schemas[0]
+    const fields: { name: string; content: string }[] = []
+
+    for (const [key, value] of Object.entries(schemas)) {
+      const schema = value as any
+      if (schema?.type === 'text' && schema?.content) {
+        fields.push({ name: key, content: schema.content })
+      }
+    }
+
+    return fields
+  }, [])
 
   // Initialize pdfme designer
   useEffect(() => {
@@ -93,9 +113,9 @@ export function LabelDesigner({
           // Basic elements
           Text: pdfmeSchemas.text,
           Image: pdfmeSchemas.image,
-          // Shapes (lines, rectangles/boxes)
-          Line: pdfmeSchemas.line,
-          Rectangle: pdfmeSchemas.rectangle,
+          // Shapes (lines, rectangles/boxes) - with decimal borderWidth support
+          Line: createCustomLine(pdfmeSchemas.line),
+          Rectangle: createCustomRectangle(pdfmeSchemas.rectangle),
           // Barcode types
           qrcode: pdfmeSchemas.barcodes.qrcode,
           code128: pdfmeSchemas.barcodes.code128,
@@ -117,6 +137,14 @@ export function LabelDesigner({
           plugins,
         })
 
+        // Extract initial text fields for preview
+        setTextFields(extractTextFields(template))
+
+        // Listen for template changes to update text field preview
+        designerRef.current.onChangeTemplate((updatedTemplate: any) => {
+          setTextFields(extractTextFields(updatedTemplate))
+        })
+
         setIsLoaded(true)
       } catch (error) {
         console.error('Failed to initialize pdfme designer:', error)
@@ -136,7 +164,7 @@ export function LabelDesigner({
         designerRef.current = null
       }
     }
-  }, [width, height])
+  }, [width, height, extractTextFields])
 
   // Update template size when size changes
   const handleSizeChange = useCallback(
@@ -190,6 +218,89 @@ export function LabelDesigner({
       designerRef.current.redo()
     }
   }, [])
+
+  // Generate sample data based on variables in the template
+  const generateSampleData = useCallback((template: any): Record<string, string> => {
+    const sampleData: Record<string, string> = {}
+    const schemas = template.schemas[0] || {}
+
+    // Go through all fields in the template
+    for (const [fieldName, fieldConfig] of Object.entries(schemas)) {
+      const config = fieldConfig as any
+      if (config?.type === 'text' && config?.content) {
+        // Check if content has variable placeholders
+        const variableMatch = config.content.match(/\{\{(\w+)\}\}/)
+        if (variableMatch) {
+          const varName = variableMatch[1]
+          // Find the variable definition and use its example value
+          const varDef = LABEL_VARIABLES.find(v => v.name === varName)
+          if (varDef) {
+            sampleData[fieldName] = varDef.exampleValue
+          } else {
+            // Use the variable name as fallback
+            sampleData[fieldName] = `[${varName}]`
+          }
+        } else {
+          // Use the static content as-is
+          sampleData[fieldName] = config.content
+        }
+      }
+    }
+
+    return sampleData
+  }, [])
+
+  // Handle preview - use backend API for bold text support
+  const handlePreview = useCallback(async () => {
+    if (!designerRef.current) return
+
+    setIsGeneratingPreview(true)
+    try {
+      const template = designerRef.current.getTemplate()
+
+      // Generate sample data based on template variables
+      const sampleData = generateSampleData(template)
+
+      // Call backend API for preview (supports bold tags)
+      const response = await fetch('/api/v1/labels/preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          template_json: template,
+          inputs: sampleData,
+          width_mm: size.width,
+          height_mm: size.height,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail || 'Feil ved generering av forhåndsvisning')
+      }
+
+      const result = await response.json()
+
+      // Convert base64 to blob and open in new tab
+      const binaryString = atob(result.preview)
+      const bytes = new Uint8Array(binaryString.length)
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i)
+      }
+      const blob = new Blob([bytes], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank')
+
+      // Clean up URL after a delay
+      setTimeout(() => URL.revokeObjectURL(url), 60000)
+    } catch (error) {
+      console.error('Failed to generate preview:', error)
+      alert(error instanceof Error ? error.message : 'Kunne ikke generere forhåndsvisning')
+    } finally {
+      setIsGeneratingPreview(false)
+    }
+  }, [generateSampleData, size])
 
   // Add variable as text field to the canvas
   const handleVariableClick = useCallback((variable: LabelVariable) => {
@@ -294,6 +405,16 @@ export function LabelDesigner({
 
         <div className="flex-1" />
 
+        <Button
+          variant="outline"
+          onClick={handlePreview}
+          disabled={isGeneratingPreview}
+          title="Forhåndsvis PDF"
+        >
+          <Eye className="h-4 w-4 mr-2" />
+          {isGeneratingPreview ? 'Genererer...' : 'Forhåndsvis'}
+        </Button>
+
         <Button onClick={handleSave} disabled={isSaving || !name.trim()}>
           <Save className="h-4 w-4 mr-2" />
           {isSaving ? 'Lagrer...' : 'Lagre'}
@@ -307,6 +428,7 @@ export function LabelDesigner({
           onVariableClick={handleVariableClick}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          textFields={textFields}
         />
 
         {/* Designer container */}

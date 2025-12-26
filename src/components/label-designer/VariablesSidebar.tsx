@@ -15,13 +15,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Package, ShoppingCart, Users, Calendar, Settings, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Package, ShoppingCart, Users, Calendar, Settings, GripVertical, ChevronLeft, ChevronRight, Eye } from 'lucide-react'
 import { LABEL_VARIABLES, VARIABLE_CATEGORIES, type LabelVariable } from '@/config/label-variables'
+import { RichTextPreview } from './RichTextPreview'
+
+interface TextFieldPreview {
+  name: string
+  content: string
+}
 
 interface VariablesSidebarProps {
   onVariableClick: (variable: LabelVariable) => void
   collapsed?: boolean
   onToggleCollapse?: () => void
+  textFields?: TextFieldPreview[]
 }
 
 const CATEGORY_ICONS = {
@@ -36,8 +43,10 @@ export function VariablesSidebar({
   onVariableClick,
   collapsed = false,
   onToggleCollapse,
+  textFields = [],
 }: VariablesSidebarProps) {
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['product'])
+  const [showPreview, setShowPreview] = useState(true)
 
   if (collapsed) {
     return (
@@ -130,6 +139,42 @@ export function VariablesSidebar({
               )
             })}
           </Accordion>
+
+          {/* Text Preview Section */}
+          {textFields.length > 0 && (
+            <div className="mt-4 border-t pt-3">
+              <div className="flex items-center justify-between px-2 mb-2">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Eye className="h-4 w-4" />
+                  <span>Forhåndsvisning</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={() => setShowPreview(!showPreview)}
+                >
+                  {showPreview ? 'Skjul' : 'Vis'}
+                </Button>
+              </div>
+
+              {showPreview && (
+                <div className="space-y-2 px-2">
+                  <p className="text-xs text-muted-foreground">
+                    Viser hvordan &lt;b&gt; tags vil se ut:
+                  </p>
+                  {textFields.map((field) => (
+                    <div key={field.name} className="p-2 bg-white rounded border text-sm">
+                      <div className="text-xs text-muted-foreground mb-1 font-mono">
+                        {field.name}:
+                      </div>
+                      <RichTextPreview text={field.content} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </ScrollArea>
     </div>

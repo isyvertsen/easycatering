@@ -14,7 +14,14 @@ export interface LabelVariable {
 }
 
 export const LABEL_VARIABLES: LabelVariable[] = [
-  // Product variables
+  // Product/Menu variables
+  {
+    name: 'menu_name',
+    displayName: 'Menynavn',
+    description: 'Navn på menyen/retten',
+    category: 'product',
+    exampleValue: 'Kjøttkaker med brun saus',
+  },
   {
     name: 'product_name',
     displayName: 'Produktnavn',
@@ -65,11 +72,32 @@ export const LABEL_VARIABLES: LabelVariable[] = [
     exampleValue: 'Kylling, salt, pepper',
   },
   {
+    name: 'menu_ingredients',
+    displayName: 'Meny ingredienser',
+    description: 'Alle ingredienser i retten',
+    category: 'product',
+    exampleValue: 'Kjøttdeig (storfe), løk, <b>HVETE</b>mel, <b>MELK</b>, smør (<b>MELK</b>), salt, pepper, muskatnøtt',
+  },
+  {
     name: 'product_nutrition',
     displayName: 'Næringsinnhold',
     description: 'Næringsinnhold per 100g',
     category: 'product',
     exampleValue: 'Energi: 165 kcal',
+  },
+  {
+    name: 'nutrition_per_100g',
+    displayName: 'Næringsverdier pr 100g',
+    description: 'Fullstendig næringsinnhold per 100g',
+    category: 'product',
+    exampleValue: 'Energi: 185 kcal\nFett: 9g\n- hvorav mettet: 4g\nKarbohydrat: 12g\n- hvorav sukker: 2g\nProtein: 14g\nSalt: 1.2g',
+  },
+  {
+    name: 'instructions',
+    displayName: 'Tilberedning',
+    description: 'Instruksjoner for tilberedning',
+    category: 'product',
+    exampleValue: 'Varm i stekeovn på 180°C i 20-25 min. Kan også varmes i mikrobølgeovn på full effekt i 4-5 min.',
   },
 
   // Order variables
