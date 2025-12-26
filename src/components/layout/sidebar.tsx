@@ -20,7 +20,8 @@ import {
   LogOut,
   Barcode,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Tag
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -49,6 +50,7 @@ const navigationGroups = [
       { name: "Ordrer", href: "/orders", icon: ShoppingCart },
       { name: "Produkter", href: "/produkter", icon: Package },
       { name: "EAN-kodestyring", href: "/products/ean-management", icon: Barcode },
+      { name: "Etiketter", href: "/labels", icon: Tag },
       { name: "Leveranser", href: "/deliveries", icon: Truck },
     ]
   },
