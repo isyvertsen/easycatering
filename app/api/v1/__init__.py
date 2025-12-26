@@ -5,7 +5,7 @@ from app.api.v1 import (
     produkter, kunder, ordrer, ansatte, leverandorer, kategorier,
     asko_ny, meny, oppskrifter, kunde_gruppe, periode, periode_meny, meny_produkt,
     menu_management, reports, matinfo, product_search, stats, combined_dishes,
-    preparation_instructions, ean_management
+    preparation_instructions, ean_management, label_templates, labels
 )
 from app.api.v1.endpoints import matinfo_sync, matinfo_tracker, ngdata_sync, vetduat_sync, hybrid_sync
 
@@ -18,6 +18,8 @@ api_router.include_router(combined_dishes.router, prefix="/combined-dishes", tag
 api_router.include_router(ean_management.router, prefix="/ean-management", tags=["ean-management"])
 api_router.include_router(hybrid_sync.router, prefix="/hybrid-sync", tags=["hybrid-sync"])
 api_router.include_router(kategorier.router, prefix="/kategorier", tags=["kategorier"])
+api_router.include_router(label_templates.router, prefix="/label-templates", tags=["label-templates"])
+api_router.include_router(labels.router, prefix="/labels", tags=["labels"])
 api_router.include_router(kunder.router, prefix="/kunder", tags=["kunder"])
 api_router.include_router(kunde_gruppe.router, prefix="/kunde-gruppe", tags=["kunde-gruppe"])
 api_router.include_router(leverandorer.router, prefix="/leverandorer", tags=["leverandorer"])
