@@ -4,6 +4,7 @@ Tjeneste for beregning av næringsverdier for oppskrifter.
 from typing import Dict, List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from decimal import Decimal
 
 from app.models.matinfo_products import MatinfoProduct, MatinfoNutrient as MatinfoNutrient, MatinfoAllergen
@@ -77,7 +78,52 @@ class NutritionCalculator:
         )
         ingredients = ingredients_result.scalars().all()
 
-        # Beregn næring for hver ingrediens
+        if not ingredients:
+            return {
+                "recipe_id": recipe_id,
+                "recipe_name": recipe.name,
+                "portions": recipe.portions or 1,
+                "total_nutrition": {
+                    "energy_kj": 0.0, "energy_kcal": 0.0, "protein": 0.0,
+                    "fat": 0.0, "saturated_fat": 0.0, "carbs": 0.0,
+                    "sugars": 0.0, "fiber": 0.0, "salt": 0.0,
+                },
+                "nutrition_per_portion": {
+                    "energy_kj": 0.0, "energy_kcal": 0.0, "protein": 0.0,
+                    "fat": 0.0, "saturated_fat": 0.0, "carbs": 0.0,
+                    "sugars": 0.0, "fiber": 0.0, "salt": 0.0,
+                },
+                "ingredients_nutrition": [],
+                "data_quality": self._calculate_data_quality([])
+            }
+
+        # Batch query 1: Hent alle produkter for ingrediensene
+        product_ids = [ing.product_id for ing in ingredients]
+        products_result = await self.db.execute(
+            select(Produkter).where(Produkter.produktid.in_(product_ids))
+        )
+        products_by_id = {p.produktid: p for p in products_result.scalars().all()}
+
+        # Samle alle EAN-koder (rensede)
+        ean_codes = []
+        for product in products_by_id.values():
+            if product.ean_kode:
+                clean_ean = product.ean_kode.lstrip('-')
+                if clean_ean:
+                    ean_codes.append(clean_ean)
+
+        # Batch query 2: Hent alle matinfo-produkter med næringsverdier
+        matinfo_by_ean = {}
+        if ean_codes:
+            matinfo_result = await self.db.execute(
+                select(MatinfoProduct)
+                .options(selectinload(MatinfoProduct.nutrients))
+                .where(MatinfoProduct.gtin.in_(ean_codes))
+            )
+            for mp in matinfo_result.scalars().all():
+                matinfo_by_ean[mp.gtin] = mp
+
+        # Beregn næring for hver ingrediens ved hjelp av cached data
         total_nutrition = {
             "energy_kj": 0.0,
             "energy_kcal": 0.0,
@@ -93,7 +139,9 @@ class NutritionCalculator:
         ingredients_nutrition = []
 
         for ingredient in ingredients:
-            nutrition = await self._calculate_ingredient_nutrition(ingredient)
+            nutrition = self._calculate_ingredient_nutrition_from_cache(
+                ingredient, products_by_id, matinfo_by_ean
+            )
 
             if nutrition:
                 # Legg til i total
@@ -126,49 +174,43 @@ class NutritionCalculator:
             "data_quality": self._calculate_data_quality(ingredients_nutrition)
         }
 
-    async def _calculate_ingredient_nutrition(
+    def _calculate_ingredient_nutrition_from_cache(
         self,
-        ingredient: RecipeIngredient
+        ingredient: RecipeIngredient,
+        products_by_id: Dict[int, Produkter],
+        matinfo_by_ean: Dict[str, MatinfoProduct]
     ) -> Optional[Dict]:
         """
-        Beregner næringsverdier for en ingrediens basert på mengde.
+        Beregner næringsverdier for en ingrediens basert på prefetched data.
 
         Args:
             ingredient: RecipeIngredient objekt
+            products_by_id: Dict med produkter hentet i batch
+            matinfo_by_ean: Dict med matinfo-produkter hentet i batch
 
         Returns:
             Dict med næringsverdier eller None hvis data ikke finnes
         """
-        # Hent produkt fra tblprodukter
-        product_result = await self.db.execute(
-            select(Produkter).where(Produkter.produktid == ingredient.product_id)
-        )
-        product = product_result.scalar_one_or_none()
+        # Hent produkt fra cache
+        product = products_by_id.get(ingredient.product_id)
 
         if not product or not product.ean_kode:
             return None
 
         # Rens EAN-kode (fjern minustegn foran)
-        # tblprodukter har ofte EAN-koder med minustegn foran (f.eks. "-7044416016203")
         clean_ean = product.ean_kode.lstrip('-') if product.ean_kode else None
 
         if not clean_ean:
             return None
 
-        # Finn tilsvarende produkt i matinfo_products-tabellen via GTIN/EAN
-        matinfo_result = await self.db.execute(
-            select(MatinfoProduct).where(MatinfoMatinfoProduct.gtin == clean_ean)
-        )
-        matinfo_product = matinfo_result.scalar_one_or_none()
+        # Finn tilsvarende matinfo-produkt fra cache
+        matinfo_product = matinfo_by_ean.get(clean_ean)
 
         if not matinfo_product:
             return None
 
-        # Hent næringsverdier
-        nutrients_result = await self.db.execute(
-            select(MatinfoNutrient).where(MatinfoNutrient.product_id == matinfo_product.id)
-        )
-        nutrients = nutrients_result.scalars().all()
+        # Hent næringsverdier fra eagerly loaded relationship
+        nutrients = matinfo_product.nutrients
 
         if not nutrients:
             return None
@@ -185,12 +227,10 @@ class NutritionCalculator:
 
         for nutrient in nutrients:
             # Finn riktig nøkkel fra vårt mapping
-            # Matinfo bruker eksakte koder (f.eks. ENERC_KJ, ikke ENERC_)
             nutrient_key = self.NUTRIENT_CODES.get(nutrient.code)
 
             if nutrient_key and nutrient.measurement:
                 # Beregn verdi basert på mengde
-                # Matinfo-verdier er per 100g/100ml
                 value = float(nutrient.measurement) * (amount_in_grams / 100.0)
                 nutrition[nutrient_key] = round(value, 2)
 

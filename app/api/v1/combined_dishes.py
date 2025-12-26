@@ -72,27 +72,35 @@ async def create_combined_dish(
             detail="En kombinert rett må ha minst en oppskrift eller ett produkt"
         )
 
-    # Valider at oppskriftene eksisterer
-    for recipe in dish_create.recipes:
-        kalkyle_result = await db.execute(
-            select(Kalkyle).where(Kalkyle.kalkylekode == recipe.kalkylekode)
+    # Batch-valider at oppskriftene eksisterer
+    if dish_create.recipes:
+        recipe_codes = [r.kalkylekode for r in dish_create.recipes]
+        existing_recipes_result = await db.execute(
+            select(Kalkyle.kalkylekode).where(Kalkyle.kalkylekode.in_(recipe_codes))
         )
-        if not kalkyle_result.scalar_one_or_none():
-            raise HTTPException(
-                status_code=404,
-                detail=f"Oppskrift med kalkylekode {recipe.kalkylekode} finnes ikke"
-            )
+        existing_recipe_codes = set(row[0] for row in existing_recipes_result.all())
 
-    # Valider at produktene eksisterer
-    for product in dish_create.products:
-        product_result = await db.execute(
-            select(Produkter).where(Produkter.produktid == product.produktid)
+        for recipe in dish_create.recipes:
+            if recipe.kalkylekode not in existing_recipe_codes:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Oppskrift med kalkylekode {recipe.kalkylekode} finnes ikke"
+                )
+
+    # Batch-valider at produktene eksisterer
+    if dish_create.products:
+        product_ids = [p.produktid for p in dish_create.products]
+        existing_products_result = await db.execute(
+            select(Produkter.produktid).where(Produkter.produktid.in_(product_ids))
         )
-        if not product_result.scalar_one_or_none():
-            raise HTTPException(
-                status_code=404,
-                detail=f"Produkt med produktid {product.produktid} finnes ikke"
-            )
+        existing_product_ids = set(row[0] for row in existing_products_result.all())
+
+        for product in dish_create.products:
+            if product.produktid not in existing_product_ids:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Produkt med produktid {product.produktid} finnes ikke"
+                )
 
     # Opprett combined dish
     new_dish = CombinedDish(
@@ -242,23 +250,27 @@ async def update_combined_dish(
             delete(CombinedDishRecipe).where(CombinedDishRecipe.combined_dish_id == dish_id)
         )
 
-        # Valider og legg til nye oppskrifter
-        for recipe in dish_update.recipes:
-            kalkyle_result = await db.execute(
-                select(Kalkyle).where(Kalkyle.kalkylekode == recipe.kalkylekode)
+        # Batch-valider at oppskriftene eksisterer
+        if dish_update.recipes:
+            recipe_codes = [r.kalkylekode for r in dish_update.recipes]
+            existing_recipes_result = await db.execute(
+                select(Kalkyle.kalkylekode).where(Kalkyle.kalkylekode.in_(recipe_codes))
             )
-            if not kalkyle_result.scalar_one_or_none():
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Oppskrift med kalkylekode {recipe.kalkylekode} finnes ikke"
-                )
+            existing_recipe_codes = set(row[0] for row in existing_recipes_result.all())
 
-            dish_recipe = CombinedDishRecipe(
-                combined_dish_id=dish_id,
-                kalkylekode=recipe.kalkylekode,
-                amount_grams=recipe.amount_grams,
-            )
-            db.add(dish_recipe)
+            for recipe in dish_update.recipes:
+                if recipe.kalkylekode not in existing_recipe_codes:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Oppskrift med kalkylekode {recipe.kalkylekode} finnes ikke"
+                    )
+
+                dish_recipe = CombinedDishRecipe(
+                    combined_dish_id=dish_id,
+                    kalkylekode=recipe.kalkylekode,
+                    amount_grams=recipe.amount_grams,
+                )
+                db.add(dish_recipe)
 
     # Oppdater produkter hvis oppgitt
     if dish_update.products is not None:
@@ -267,23 +279,27 @@ async def update_combined_dish(
             delete(CombinedDishProduct).where(CombinedDishProduct.combined_dish_id == dish_id)
         )
 
-        # Valider og legg til nye produkter
-        for product in dish_update.products:
-            product_result = await db.execute(
-                select(Produkter).where(Produkter.produktid == product.produktid)
+        # Batch-valider at produktene eksisterer
+        if dish_update.products:
+            product_ids = [p.produktid for p in dish_update.products]
+            existing_products_result = await db.execute(
+                select(Produkter.produktid).where(Produkter.produktid.in_(product_ids))
             )
-            if not product_result.scalar_one_or_none():
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Produkt med produktid {product.produktid} finnes ikke"
-                )
+            existing_product_ids = set(row[0] for row in existing_products_result.all())
 
-            dish_product = CombinedDishProduct(
-                combined_dish_id=dish_id,
-                produktid=product.produktid,
-                amount_grams=product.amount_grams,
-            )
-            db.add(dish_product)
+            for product in dish_update.products:
+                if product.produktid not in existing_product_ids:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Produkt med produktid {product.produktid} finnes ikke"
+                    )
+
+                dish_product = CombinedDishProduct(
+                    combined_dish_id=dish_id,
+                    produktid=product.produktid,
+                    amount_grams=product.amount_grams,
+                )
+                db.add(dish_product)
 
     # Oppdater updated_at
     dish.updated_at = datetime.utcnow()

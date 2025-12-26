@@ -120,33 +120,42 @@ async def create_meny_produkter_bulk(
     meny_result = await db.execute(meny_query)
     if not meny_result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Menu not found")
-    
+
+    if not produkt_ids:
+        return []
+
+    # Batch query: Get all existing products in one query
+    existing_products_query = select(Produkter.produktid).where(
+        Produkter.produktid.in_(produkt_ids)
+    )
+    existing_products_result = await db.execute(existing_products_query)
+    valid_produkt_ids = set(row[0] for row in existing_products_result.all())
+
+    # Batch query: Get all existing associations in one query
+    existing_assoc_query = select(MenyProdukt.produktid).where(
+        and_(
+            MenyProdukt.menyid == meny_id,
+            MenyProdukt.produktid.in_(produkt_ids)
+        )
+    )
+    existing_assoc_result = await db.execute(existing_assoc_query)
+    existing_assoc_ids = set(row[0] for row in existing_assoc_result.all())
+
+    # Create associations only for valid products that don't already exist
     created = []
     for produkt_id in produkt_ids:
-        # Check if produkt exists
-        produkt_query = select(Produkter).where(Produkter.produktid == produkt_id)
-        produkt_result = await db.execute(produkt_query)
-        if not produkt_result.scalar_one_or_none():
+        if produkt_id not in valid_produkt_ids:
             continue  # Skip non-existent products
-        
-        # Check if association already exists
-        existing_query = select(MenyProdukt).where(
-            and_(
-                MenyProdukt.menyid == meny_id,
-                MenyProdukt.produktid == produkt_id
-            )
-        )
-        existing_result = await db.execute(existing_query)
-        if existing_result.scalar_one_or_none():
+        if produkt_id in existing_assoc_ids:
             continue  # Skip existing associations
-        
+
         meny_produkt = MenyProdukt(menyid=meny_id, produktid=produkt_id)
         db.add(meny_produkt)
         created.append(meny_produkt)
-    
+
     if created:
         await db.commit()
         for mp in created:
             await db.refresh(mp)
-    
+
     return created

@@ -3,7 +3,7 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_, or_, func
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_db
@@ -68,14 +68,34 @@ async def get_period_overview(
     
     result = await db.execute(periode_query)
     perioder = result.scalars().all()
-    
+
+    # Collect all menu group IDs across all periods for batch query
+    all_menu_group_ids = set()
+    for periode in perioder:
+        for pm in periode.periode_menyer:
+            if pm.meny and pm.meny.gruppe:
+                all_menu_group_ids.add(pm.meny.gruppe.gruppeid)
+
+    # Batch query: Get customer counts for all menu groups in one query
+    customer_counts = {}
+    if all_menu_group_ids:
+        customer_count_query = select(
+            Kunder.menygruppeid,
+            func.count(Kunder.kundeid)
+        ).where(
+            Kunder.menygruppeid.in_(all_menu_group_ids)
+        ).group_by(Kunder.menygruppeid)
+        customer_count_result = await db.execute(customer_count_query)
+        for gruppe_id, count in customer_count_result.all():
+            customer_counts[gruppe_id] = count
+
     summaries = []
     for periode in perioder:
         # Collect all menus and products for this period
         all_menus = []
         all_products = set()
         menu_groups = set()
-        
+
         for pm in periode.periode_menyer:
             menu = pm.meny
             menu_dict = {
@@ -85,26 +105,22 @@ async def get_period_overview(
                 "product_count": len(menu.meny_produkter)
             }
             all_menus.append(menu_dict)
-            
+
             if menu.gruppe:
                 menu_groups.add((menu.gruppe.gruppeid, menu.gruppe.gruppe))
-            
+
             for mp in menu.meny_produkter:
                 all_products.add(mp.produktid)
-        
-        # Get customer counts for each menu group
+
+        # Build customer group data from cached counts
         customer_group_data = []
         for gruppe_id, gruppe_navn in menu_groups:
-            customer_query = select(Kunder).where(Kunder.menygruppeid == gruppe_id)
-            customer_result = await db.execute(customer_query)
-            customer_count = len(customer_result.scalars().all())
-            
             customer_group_data.append({
                 "gruppeid": gruppe_id,
                 "gruppe": gruppe_navn,
-                "customer_count": customer_count
+                "customer_count": customer_counts.get(gruppe_id, 0)
             })
-        
+
         summary = MenuPeriodSummary(
             periode={
                 "menyperiodeid": periode.menyperiodeid,
@@ -117,7 +133,7 @@ async def get_period_overview(
             customer_groups=customer_group_data
         )
         summaries.append(summary)
-    
+
     return summaries
 
 
@@ -149,17 +165,32 @@ async def get_customer_period_report(
     
     periode_meny_result = await db.execute(periode_meny_query)
     periode_menyer = periode_meny_result.scalars().all()
-    
+
+    # Collect all menu group IDs for batch customer query
+    menu_group_ids = set()
+    for pm in periode_menyer:
+        if pm.meny and pm.meny.menygruppe:
+            menu_group_ids.add(pm.meny.menygruppe)
+
+    # Batch query: Get all customers for all menu groups in one query
+    customers_by_group = {}
+    if menu_group_ids:
+        customers_query = select(Kunder).where(Kunder.menygruppeid.in_(menu_group_ids))
+        customers_result = await db.execute(customers_query)
+        all_customers = customers_result.scalars().all()
+        for customer in all_customers:
+            if customer.menygruppeid not in customers_by_group:
+                customers_by_group[customer.menygruppeid] = []
+            customers_by_group[customer.menygruppeid].append(customer)
+
     reports = []
-    
+
     for pm in periode_menyer:
         menu = pm.meny
-        
-        # Get customers for this menu group
-        customer_query = select(Kunder).where(Kunder.menygruppeid == menu.menygruppe)
-        customer_result = await db.execute(customer_query)
-        customers = customer_result.scalars().all()
-        
+
+        # Get customers from cached data
+        customers = customers_by_group.get(menu.menygruppe, [])
+
         # Get products for this menu
         products = []
         for mp in menu.meny_produkter:
@@ -170,7 +201,7 @@ async def get_customer_period_report(
                 "enhet": product.pakningstype,
                 "pris": product.pris
             })
-        
+
         report = CustomerMenuReport(
             period_start=periode.fradato,
             period_end=periode.tildato,
@@ -194,7 +225,7 @@ async def get_customer_period_report(
             products=products
         )
         reports.append(report)
-    
+
     return reports
 
 
@@ -257,22 +288,25 @@ async def clone_period_menus(
     if not target_result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Target period not found")
     
-    # Clone menu assignments
+    # Batch query: Get all existing menu IDs in target period in one query
+    source_meny_ids = [sm.menyid for sm in source_menus]
+    existing_query = select(PeriodeMeny.menyid).where(
+        and_(
+            PeriodeMeny.periodeid == target_periode_id,
+            PeriodeMeny.menyid.in_(source_meny_ids)
+        )
+    )
+    existing_result = await db.execute(existing_query)
+    existing_meny_ids = set(row[0] for row in existing_result.all())
+
+    # Clone menu assignments that don't already exist
     cloned = 0
     for sm in source_menus:
-        # Check if assignment already exists
-        existing_query = select(PeriodeMeny).where(
-            and_(
-                PeriodeMeny.periodeid == target_periode_id,
-                PeriodeMeny.menyid == sm.menyid
-            )
-        )
-        existing_result = await db.execute(existing_query)
-        if not existing_result.scalar_one_or_none():
+        if sm.menyid not in existing_meny_ids:
             new_pm = PeriodeMeny(periodeid=target_periode_id, menyid=sm.menyid)
             db.add(new_pm)
             cloned += 1
-    
+
     await db.commit()
     
     return {

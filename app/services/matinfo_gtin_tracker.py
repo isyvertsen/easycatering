@@ -9,6 +9,7 @@ from sqlalchemy import select, and_, func, text
 from sqlalchemy.dialects.postgresql import insert
 
 from app.models.matinfo_updates import MatinfoGTINUpdate, MatinfoSyncLog
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -16,12 +17,11 @@ logger = logging.getLogger(__name__)
 class MatinfoGTINTracker:
     """Service for tracking GTIN updates from Matinfo API."""
 
-    BASE_URL = "https://api.matinfo.no/v2"
-    API_KEY = "63585da4-bfe4-4c13-8ada-28326ce41a9d"  # TODO: Move to environment variable
-
     def __init__(self, db: AsyncSession):
         self.db = db
         self.client = httpx.AsyncClient(timeout=30.0)
+        self.base_url = settings.MATINFO_API_URL
+        self.api_key = settings.MATINFO_API_KEY
 
     async def __aenter__(self):
         return self
@@ -58,11 +58,11 @@ class MatinfoGTINTracker:
         try:
             # Format date for API (YYYY,MM,DD)
             date_str = since_date.strftime("%Y,%m,%d")
-            url = f"{self.BASE_URL}/updatedsince/{date_str}"
+            url = f"{self.base_url}/updatedsince/{date_str}"
 
             response = await self.client.get(
                 url,
-                params={"api_key": self.API_KEY}
+                params={"api_key": self.api_key}
             )
             response.raise_for_status()
 
