@@ -6,6 +6,15 @@
 import type { Plugin } from '@pdfme/common'
 
 /**
+ * Helper to get schema from propPanel (can be function or object)
+ */
+function getSchema(propPanel: any, args: any): Record<string, any> {
+  return typeof propPanel.schema === 'function'
+    ? propPanel.schema(args)
+    : propPanel.schema
+}
+
+/**
  * Creates a modified rectangle plugin that allows decimal borderWidth values
  */
 export function createCustomRectangle(originalPlugin: Plugin<any>): Plugin<any> {
@@ -14,7 +23,7 @@ export function createCustomRectangle(originalPlugin: Plugin<any>): Plugin<any> 
     propPanel: {
       ...originalPlugin.propPanel,
       schema: (args: any) => {
-        const originalSchema = originalPlugin.propPanel.schema(args)
+        const originalSchema = getSchema(originalPlugin.propPanel, args)
         return {
           ...originalSchema,
           borderWidth: {
@@ -36,7 +45,7 @@ export function createCustomLine(originalPlugin: Plugin<any>): Plugin<any> {
     propPanel: {
       ...originalPlugin.propPanel,
       schema: (args: any) => {
-        const originalSchema = originalPlugin.propPanel.schema(args)
+        const originalSchema = getSchema(originalPlugin.propPanel, args)
         // Check if strokeWidth exists in the schema
         if (originalSchema.strokeWidth) {
           return {
