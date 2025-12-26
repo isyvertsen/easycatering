@@ -58,7 +58,7 @@ export default function NewCustomerPage() {
     }
   }
 
-  const handleChange = (field: keyof Customer, value: any) => {
+  const handleChange = (field: keyof Customer, value: string | number | boolean | null) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     // Clear error when user starts typing
     if (errors[field]) {
@@ -223,9 +223,8 @@ export default function NewCustomerPage() {
                     <Label htmlFor="kontaktid">Kontakt ID</Label>
                     <Input
                       id="kontaktid"
-                      type="number"
                       value={formData.kontaktid || ''}
-                      onChange={(e) => handleChange('kontaktid', e.target.value ? Number(e.target.value) : null)}
+                      onChange={(e) => handleChange('kontaktid', e.target.value || null)}
                     />
                   </div>
 

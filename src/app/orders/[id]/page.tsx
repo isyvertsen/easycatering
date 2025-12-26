@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { use } from "react"
-import { OrderForm } from "@/components/orders/order-form"
+import { OrderForm, OrderFormData } from "@/components/orders/order-form"
 import { OrderLines } from "@/components/orders/order-lines"
 import { useOrder, useUpdateOrder, useCancelOrder } from "@/hooks/useOrders"
 import { Order } from "@/types/models"
@@ -48,7 +48,7 @@ export default function OrderEditPage({ params }: OrderEditPageProps) {
   const updateMutation = useUpdateOrder()
   const cancelMutation = useCancelOrder()
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: OrderFormData) => {
     try {
       await updateMutation.mutateAsync({ 
         id: Number(id), 

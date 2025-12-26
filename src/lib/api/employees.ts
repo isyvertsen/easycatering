@@ -8,7 +8,10 @@ export interface EmployeeListParams extends BaseListParams {
 
 export type EmployeeListResponse = BaseListResponse<Employee>
 
+// CreateData type - omit both id and ansattid since they are server-generated
+export type EmployeeCreateData = Omit<Employee, 'id' | 'ansattid'>
+
 // Bruk generisk CRUD factory - reduserer ~60 linjer duplicate kode
-export const employeesApi = createCrudApi<Employee, Omit<Employee, 'id'>, EmployeeListParams>({
+export const employeesApi = createCrudApi<Employee, EmployeeCreateData, EmployeeListParams>({
   endpoint: '/v1/ansatte'
 })

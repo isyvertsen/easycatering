@@ -34,7 +34,7 @@ const employeeSchema = z.object({
   sluttet: z.boolean().default(false),
 })
 
-type EmployeeFormValues = z.infer<typeof employeeSchema>
+export type EmployeeFormValues = z.infer<typeof employeeSchema>
 
 interface EmployeeFormProps {
   employee?: Employee

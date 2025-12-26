@@ -70,12 +70,12 @@ function RecipesPageContent() {
     }
   })
 
-  const handleParamsChange = (newParams: any) => {
+  const handleParamsChange = (newParams: { page?: number; page_size?: number; search?: string }) => {
     setParams(prev => ({
       ...prev,
-      skip: (newParams.page - 1) * prev.limit,
+      skip: newParams.page ? (newParams.page - 1) * prev.limit : prev.skip,
       limit: newParams.page_size || prev.limit,
-      search: newParams.search || prev.search,
+      search: newParams.search ?? prev.search,
     }))
   }
 

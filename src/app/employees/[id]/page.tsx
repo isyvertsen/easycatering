@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter, useParams } from "next/navigation"
-import { EmployeeForm } from "@/components/employees/employee-form"
+import { EmployeeForm, EmployeeFormValues } from "@/components/employees/employee-form"
 import { useEmployee, useUpdateEmployee } from "@/hooks/useEmployees"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,7 +16,7 @@ export default function EditEmployeePage() {
   const { data: employee, isLoading } = useEmployee(employeeId)
   const updateMutation = useUpdateEmployee()
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data: EmployeeFormValues) => {
     updateMutation.mutate(
       { id: employeeId, data },
       {

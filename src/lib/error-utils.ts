@@ -46,19 +46,35 @@ export const norwegianErrorMessages = {
   }
 }
 
+// Helper to safely access properties on unknown error objects
+function getErrorProperty<T>(error: unknown, ...path: string[]): T | undefined {
+  let current: unknown = error
+  for (const key of path) {
+    if (current && typeof current === 'object' && key in current) {
+      current = (current as Record<string, unknown>)[key]
+    } else {
+      return undefined
+    }
+  }
+  return current as T
+}
+
 // Get error type from error object
-export function getErrorType(error: any): ErrorType {
+export function getErrorType(error: unknown): ErrorType {
   if (!error) return ErrorType.UNKNOWN
 
   // Check for network errors
-  if (error.message?.includes('fetch') || error.message?.includes('network')) {
+  const message = getErrorProperty<string>(error, 'message')
+  if (message?.includes('fetch') || message?.includes('network')) {
     return ErrorType.NETWORK
   }
 
   // Check for HTTP status codes
-  if (error.response?.status || error.status) {
-    const status = error.response?.status || error.status
+  const responseStatus = getErrorProperty<number>(error, 'response', 'status')
+  const directStatus = getErrorProperty<number>(error, 'status')
+  const status = responseStatus || directStatus
 
+  if (status) {
     if (status === 401) return ErrorType.AUTHENTICATION
     if (status === 403) return ErrorType.AUTHORIZATION
     if (status === 404) return ErrorType.NOT_FOUND
@@ -70,14 +86,20 @@ export function getErrorType(error: any): ErrorType {
 }
 
 // Get error message from error object
-export function getErrorMessage(error: any): string {
+export function getErrorMessage(error: unknown): string {
   if (!error) return norwegianErrorMessages.generic.somethingWentWrong
 
   // Check for custom error messages
   if (typeof error === 'string') return error
-  if (error.message) return error.message
-  if (error.response?.data?.message) return error.response.data.message
-  if (error.response?.data?.detail) return error.response.data.detail
+
+  const message = getErrorProperty<string>(error, 'message')
+  if (message) return message
+
+  const responseMessage = getErrorProperty<string>(error, 'response', 'data', 'message')
+  if (responseMessage) return responseMessage
+
+  const responseDetail = getErrorProperty<string>(error, 'response', 'data', 'detail')
+  if (responseDetail) return responseDetail
 
   // Fallback to error type message
   const errorType = getErrorType(error)
@@ -101,7 +123,7 @@ export function getErrorMessage(error: any): string {
 export function getCrudErrorMessage(
   operation: 'create' | 'update' | 'delete' | 'read',
   resource: string,
-  error: any
+  error: unknown
 ): string {
   const errorType = getErrorType(error)
   const resourceNorwegian = resource // Could add translation mapping here

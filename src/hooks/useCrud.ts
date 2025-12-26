@@ -5,6 +5,7 @@ import { getCrudErrorMessage, getErrorMessage, logError } from '@/lib/error-util
 
 export interface CrudItem {
   id: number
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
 }
 
@@ -22,7 +23,7 @@ export interface CrudListParams {
   search?: string
   sort_by?: string
   sort_order?: 'asc' | 'desc'
-  [key: string]: any
+  [key: string]: string | number | boolean | undefined
 }
 
 export function useCrudList<T extends CrudItem>(

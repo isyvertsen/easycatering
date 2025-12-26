@@ -1,9 +1,9 @@
 import { Employee } from '@/types/models'
-import { employeesApi, EmployeeListParams } from '@/lib/api/employees'
+import { employeesApi, EmployeeListParams, EmployeeCreateData } from '@/lib/api/employees'
 import { createEntityCrudHooks } from './useEntityCrud'
 
 // Lag type-safe hooks med konsistent error handling og toast-meldinger
-const hooks = createEntityCrudHooks<Employee, Omit<Employee, 'id'>, EmployeeListParams>({
+const hooks = createEntityCrudHooks<Employee, EmployeeCreateData, EmployeeListParams>({
   entityName: 'employees',
   displayName: {
     singular: 'Ansatt',

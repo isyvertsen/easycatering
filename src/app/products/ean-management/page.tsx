@@ -195,9 +195,8 @@ export default function EanManagementPage() {
           // Remove product from list (it now has nutrition data)
           setProducts((prev) => prev.filter(p => p.produktid !== product.produktid))
           return
-        } catch (gtinError: any) {
+        } catch {
           // If GTIN search fails, fall through to name search
-          console.log("GTIN search failed, trying name search...", gtinError)
         }
       }
 
@@ -408,8 +407,8 @@ export default function EanManagementPage() {
             matinfoAllergens = data.allergens || []
             foundInMatinfo = true
           }
-        } catch (gtinError) {
-          console.log("GTIN search failed in Matinfo, trying name search...")
+        } catch {
+          // GTIN search failed, will try name search
         }
       }
 
@@ -442,8 +441,8 @@ export default function EanManagementPage() {
               foundInMatinfo = true
             }
           }
-        } catch (nameError) {
-          console.log("Name search failed in Matinfo")
+        } catch {
+          // Name search failed in Matinfo
         }
       }
 
@@ -494,8 +493,8 @@ export default function EanManagementPage() {
           }))
           return
         }
-      } catch (vetduatError) {
-        console.log("VetDuAt search failed")
+      } catch {
+        // VetDuAt search failed
       }
 
       // Not found anywhere

@@ -23,12 +23,9 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      console.log('[Admin Users] Fetching users...')
       const response = await apiClient.get('/admin/users')
-      console.log('[Admin Users] Received users:', response.data)
       setUsers(response.data)
     } catch (err) {
-      console.error('[Admin Users] Exception:', err)
       setError(err instanceof Error ? err.message : 'Feil ved henting av brukere')
     } finally {
       setLoading(false)

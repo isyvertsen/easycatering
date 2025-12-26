@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import DOMPurify from "dompurify"
 import {
   Dialog,
   DialogContent,
@@ -287,7 +288,7 @@ function ResultCard({
               </summary>
               <p
                 className="mt-1 pl-4"
-                dangerouslySetInnerHTML={{ __html: result.ingredients.substring(0, 200) + (result.ingredients.length > 200 ? "..." : "") }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(result.ingredients.substring(0, 200) + (result.ingredients.length > 200 ? "..." : "")) }}
               />
             </details>
           )}

@@ -105,7 +105,13 @@ export default function ProdukterPage() {
     setCurrentPage(1)
   }, [gtinFilter, searchTerm])
 
-  const handleParamsChange = (newParams: any) => {
+  const handleParamsChange = (newParams: {
+    search?: string;
+    sort_by?: string;
+    sort_order?: 'asc' | 'desc';
+    page?: number;
+    page_size?: number
+  }) => {
     // Handle search
     if (newParams.search !== undefined) {
       setSearchTerm(newParams.search)

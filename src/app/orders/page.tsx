@@ -113,10 +113,10 @@ export default function OrdersPage() {
   const { data: kundegrupper } = useKundegrupper()
   const cancelMutation = useCancelOrder()
 
-  const handleParamsChange = (newParams: any) => {
+  const handleParamsChange = (newParams: { page?: number; page_size?: number; search?: string }) => {
     setParams(prev => ({
       ...prev,
-      skip: (newParams.page - 1) * prev.limit,
+      skip: newParams.page ? (newParams.page - 1) * prev.limit : prev.skip,
       limit: newParams.page_size || prev.limit,
     }))
   }

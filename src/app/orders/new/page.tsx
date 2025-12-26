@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { OrderForm } from "@/components/orders/order-form"
+import { OrderForm, OrderFormData } from "@/components/orders/order-form"
 import { useCreateOrder } from "@/hooks/useOrders"
 import { useToast } from "@/hooks/use-toast"
 
@@ -10,7 +10,7 @@ export default function NewOrderPage() {
   const createMutation = useCreateOrder()
   const { toast } = useToast()
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: OrderFormData) => {
     try {
       const order = await createMutation.mutateAsync(data)
       toast({

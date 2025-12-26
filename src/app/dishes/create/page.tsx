@@ -228,13 +228,10 @@ function CreateDishPageContent() {
         })),
       }
 
-      console.log("Generating label with data:", requestData)
-
       const response = await apiClient.post("/v1/oppskrifter/kombinere/label", requestData, {
         responseType: 'blob'
       })
 
-      console.log("PDF blob received, size:", response.data.size)
       const blob = response.data
 
       // Create filename with date and time

@@ -53,8 +53,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
         try {
-          console.log('[Google Auth] id_token:', account.id_token)
-
           const response = await fetch(`${API_URL}/auth/google`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -63,8 +61,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }),
           })
 
-          console.log('[Google Auth] Backend response status:', response.status)
-
           if (!response.ok) {
             const errorText = await response.text()
             console.error('[Google Auth] Backend error:', errorText)
@@ -72,7 +68,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           const data = await response.json()
-          console.log('[Google Auth] Success, got tokens')
           user.accessToken = data.access_token
           user.refreshToken = data.refresh_token
         } catch (error) {

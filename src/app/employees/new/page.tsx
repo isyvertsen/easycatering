@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { EmployeeForm } from "@/components/employees/employee-form"
+import { EmployeeForm, EmployeeFormValues } from "@/components/employees/employee-form"
 import { useCreateEmployee } from "@/hooks/useEmployees"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,7 +11,7 @@ export default function NewEmployeePage() {
   const { toast } = useToast()
   const createMutation = useCreateEmployee()
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data: EmployeeFormValues) => {
     createMutation.mutate(data, {
       onSuccess: () => {
         toast({

@@ -30,7 +30,7 @@ const orderSchema = z.object({
   informasjon: z.string().optional(),
 })
 
-type OrderFormData = z.infer<typeof orderSchema>
+export type OrderFormData = z.infer<typeof orderSchema>
 
 interface OrderFormProps {
   order?: Order
