@@ -159,6 +159,36 @@ class PdfmeGeneratorService:
         except Exception as e:
             logger.warning(f"Failed to render element '{name}' of type '{element_type}': {e}")
 
+    def _parse_rich_text(self, text: str) -> List[Tuple[str, bool]]:
+        """
+        Parse text with <b>...</b> tags into segments.
+
+        Returns list of (text, is_bold) tuples.
+        Example: "normal <b>bold</b> text" -> [("normal ", False), ("bold", True), (" text", False)]
+        """
+        import re
+        segments = []
+        pattern = r'<b>(.*?)</b>'
+
+        last_end = 0
+        for match in re.finditer(pattern, text, re.IGNORECASE):
+            # Add text before the bold tag
+            if match.start() > last_end:
+                segments.append((text[last_end:match.start()], False))
+            # Add bold text
+            segments.append((match.group(1), True))
+            last_end = match.end()
+
+        # Add remaining text after last bold tag
+        if last_end < len(text):
+            segments.append((text[last_end:], False))
+
+        # If no tags found, return original text
+        if not segments:
+            segments.append((text, False))
+
+        return segments
+
     def _render_text(
         self,
         c: canvas.Canvas,
@@ -169,7 +199,7 @@ class PdfmeGeneratorService:
         height: float,
         value: str
     ):
-        """Render text element with styling."""
+        """Render text element with styling, supporting inline <b> tags for bold."""
         if not value:
             return
 
@@ -177,19 +207,24 @@ class PdfmeGeneratorService:
         font_size = schema.get("fontSize", 12)
         font_color = schema.get("fontColor", "#000000")
         alignment = schema.get("alignment", "left")
-        font_name = schema.get("fontName", "Helvetica")
+        base_font = schema.get("fontName", "Helvetica")
 
-        # Handle bold/italic
-        if schema.get("fontWeight") == "bold" or schema.get("bold"):
-            font_name = "Helvetica-Bold"
-        if schema.get("fontStyle") == "italic" or schema.get("italic"):
-            if "Bold" in font_name:
-                font_name = "Helvetica-BoldOblique"
-            else:
-                font_name = "Helvetica-Oblique"
+        # Handle schema-level bold/italic
+        schema_bold = schema.get("fontWeight") == "bold" or schema.get("bold")
+        schema_italic = schema.get("fontStyle") == "italic" or schema.get("italic")
 
-        # Set font
-        c.setFont(font_name, font_size)
+        def get_font_name(bold: bool, italic: bool) -> str:
+            """Get appropriate font name based on style."""
+            is_bold = bold or schema_bold
+            is_italic = italic or schema_italic
+
+            if is_bold and is_italic:
+                return "Helvetica-BoldOblique"
+            elif is_bold:
+                return "Helvetica-Bold"
+            elif is_italic:
+                return "Helvetica-Oblique"
+            return "Helvetica"
 
         # Set color
         r, g, b = self._hex_to_rgb(font_color)
@@ -198,16 +233,7 @@ class PdfmeGeneratorService:
         # Calculate text position based on alignment
         text_y = y - font_size  # Adjust for text baseline
 
-        if alignment == "center":
-            text_width = c.stringWidth(value, font_name, font_size)
-            text_x = x + (width - text_width) / 2
-        elif alignment == "right":
-            text_width = c.stringWidth(value, font_name, font_size)
-            text_x = x + width - text_width
-        else:
-            text_x = x
-
-        # Draw text (handle multiline)
+        # Handle multiline
         lines = value.split("\n")
         current_y = text_y
         line_height = font_size * 1.2
@@ -215,7 +241,31 @@ class PdfmeGeneratorService:
         for line in lines:
             if current_y < 0:
                 break
-            c.drawString(text_x, current_y, line)
+
+            # Parse line for bold tags
+            segments = self._parse_rich_text(line)
+
+            # Calculate total width for alignment
+            total_width = 0
+            for text, is_bold in segments:
+                font_name = get_font_name(is_bold, False)
+                total_width += c.stringWidth(text, font_name, font_size)
+
+            # Determine starting x position
+            if alignment == "center":
+                text_x = x + (width - total_width) / 2
+            elif alignment == "right":
+                text_x = x + width - total_width
+            else:
+                text_x = x
+
+            # Render each segment
+            for text, is_bold in segments:
+                font_name = get_font_name(is_bold, False)
+                c.setFont(font_name, font_size)
+                c.drawString(text_x, current_y, text)
+                text_x += c.stringWidth(text, font_name, font_size)
+
             current_y -= line_height
 
     def _render_barcode(
