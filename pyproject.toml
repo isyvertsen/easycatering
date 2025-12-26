@@ -1,6 +1,6 @@
 [project]
 name = "catering-backend"
-version = "1.0.0"
+version = "1.0.1"
 description = "Catering System Backend for Larvik Kommune"
 readme = "README.md"
 requires-python = ">=3.11"
