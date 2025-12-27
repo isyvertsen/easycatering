@@ -113,6 +113,7 @@ class LabelTemplateService:
             width_mm=data.width_mm,
             height_mm=data.height_mm,
             is_global=data.is_global,
+            printer_config=data.printer_config.model_dump() if data.printer_config else None,
             owner_id=owner_id
         )
 
@@ -176,6 +177,8 @@ class LabelTemplateService:
             # Only owner can change is_global
             if template.owner_id == user_id:
                 template.is_global = data.is_global
+        if data.printer_config is not None:
+            template.printer_config = data.printer_config.model_dump()
 
         # Update parameters if provided
         if data.parameters is not None:
