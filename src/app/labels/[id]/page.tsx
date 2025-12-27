@@ -6,7 +6,7 @@ import { LabelDesigner } from '@/components/label-designer/LabelDesigner'
 import { useLabelTemplate, useUpdateLabelTemplate } from '@/hooks/useLabelTemplates'
 import { ErrorBoundary } from '@/components/error/error-boundary'
 import { Loader2 } from 'lucide-react'
-import type { PdfmeTemplate } from '@/types/labels'
+import type { PdfmeTemplate, PrinterConfig } from '@/types/labels'
 
 interface LabelEditPageProps {
   params: Promise<{ id: string }>
@@ -17,6 +17,7 @@ interface SaveData {
   template: PdfmeTemplate
   width: number
   height: number
+  printerConfig?: PrinterConfig
 }
 
 function LabelEditPageContent({ params }: LabelEditPageProps) {
@@ -27,7 +28,7 @@ function LabelEditPageContent({ params }: LabelEditPageProps) {
   const { data: template, isLoading, error } = useLabelTemplate(templateId)
   const updateMutation = useUpdateLabelTemplate()
 
-  const handleSave = async ({ name, template: templateJson, width, height }: SaveData) => {
+  const handleSave = async ({ name, template: templateJson, width, height, printerConfig }: SaveData) => {
     await updateMutation.mutateAsync({
       id: templateId,
       data: {
@@ -35,6 +36,7 @@ function LabelEditPageContent({ params }: LabelEditPageProps) {
         template_json: templateJson,
         width_mm: width,
         height_mm: height,
+        printer_config: printerConfig,
       },
     })
     router.push('/labels')
@@ -73,6 +75,7 @@ function LabelEditPageContent({ params }: LabelEditPageProps) {
         initialName={template.name}
         width={Number(template.width_mm)}
         height={Number(template.height_mm)}
+        initialPrinterConfig={template.printer_config}
         onSave={handleSave}
         isSaving={updateMutation.isPending}
       />

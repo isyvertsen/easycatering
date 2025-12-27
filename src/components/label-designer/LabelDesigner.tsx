@@ -22,8 +22,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Save, Undo, Redo, PanelLeftClose, PanelLeft, Eye, Printer, Loader2 } from 'lucide-react'
-import type { LabelDesignerProps } from '@/types/labels'
-import { LABEL_SIZE_PRESETS } from '@/types/labels'
+import type { LabelDesignerProps, PrinterConfig } from '@/types/labels'
+import { LABEL_SIZE_PRESETS, DEFAULT_PRINTER_CONFIG } from '@/types/labels'
 import { VariablesSidebar } from './VariablesSidebar'
 import { LABEL_VARIABLES, type LabelVariable } from '@/config/label-variables'
 import { createCustomRectangle, createCustomLine } from './custom-schemas'
@@ -53,6 +53,7 @@ export function LabelDesigner({
   initialName = '',
   width = 100,
   height = 50,
+  initialPrinterConfig,
   onSave,
   isSaving = false,
 }: LabelDesignerProps) {
@@ -69,8 +70,11 @@ export function LabelDesigner({
   const [textFields, setTextFields] = useState<{ name: string; content: string }[]>([])
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false)
   const [isPrinting, setIsPrinting] = useState(false)
+  const [printerConfig, setPrinterConfig] = useState<PrinterConfig>(
+    initialPrinterConfig ?? DEFAULT_PRINTER_CONFIG
+  )
 
-  const { selectedPrinter, print, isAvailable } = useBrowserPrint()
+  const { selectedPrinter, print, printRaw, isAvailable } = useBrowserPrint()
 
   // Extract text fields from template for preview
   const extractTextFields = useCallback((template: any) => {
@@ -206,11 +210,12 @@ export function LabelDesigner({
         template: pdfmeTemplate,
         width: size.width,
         height: size.height,
+        printerConfig,
       })
     } catch (error) {
       console.error('Failed to get template:', error)
     }
-  }, [name, size, onSave])
+  }, [name, size, printerConfig, onSave])
 
   // Handle undo/redo
   const handleUndo = useCallback(() => {
@@ -323,6 +328,16 @@ export function LabelDesigner({
 
     setIsPrinting(true)
     try {
+      // Send printer configuration as ZPL commands first
+      const configZpl = [
+        '^XA',
+        `~SD${printerConfig.darkness ?? DEFAULT_PRINTER_CONFIG.darkness}`,
+        `^PR${printerConfig.speed ?? DEFAULT_PRINTER_CONFIG.speed}`,
+        '^XZ',
+      ].join('\n')
+
+      await printRaw(configZpl)
+
       const template = designerRef.current.getTemplate()
       const sampleData = generateSampleData(template)
 
@@ -370,7 +385,7 @@ export function LabelDesigner({
     } finally {
       setIsPrinting(false)
     }
-  }, [selectedPrinter, print, generateSampleData, size])
+  }, [selectedPrinter, print, printRaw, generateSampleData, size, printerConfig])
 
   // Add variable as text field to the canvas
   const handleVariableClick = useCallback((variable: LabelVariable) => {
@@ -527,6 +542,8 @@ export function LabelDesigner({
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           textFields={textFields}
+          printerConfig={printerConfig}
+          onPrinterConfigChange={setPrinterConfig}
         />
 
         {/* Designer container */}

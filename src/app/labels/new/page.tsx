@@ -4,26 +4,28 @@ import { useRouter } from 'next/navigation'
 import { LabelDesigner } from '@/components/label-designer/LabelDesigner'
 import { useCreateLabelTemplate } from '@/hooks/useLabelTemplates'
 import { ErrorBoundary } from '@/components/error/error-boundary'
-import type { PdfmeTemplate } from '@/types/labels'
+import type { PdfmeTemplate, PrinterConfig } from '@/types/labels'
 
 interface SaveData {
   name: string
   template: PdfmeTemplate
   width: number
   height: number
+  printerConfig?: PrinterConfig
 }
 
 function NewLabelPageContent() {
   const router = useRouter()
   const createMutation = useCreateLabelTemplate()
 
-  const handleSave = async ({ name, template, width, height }: SaveData) => {
+  const handleSave = async ({ name, template, width, height, printerConfig }: SaveData) => {
     await createMutation.mutateAsync({
       name,
       template_json: template,
       width_mm: width,
       height_mm: height,
       is_global: false,
+      printer_config: printerConfig,
       parameters: [],
     })
     router.push('/labels')

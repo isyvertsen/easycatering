@@ -8,6 +8,17 @@ export type SourceType = 'manual' | 'database' | 'api';
 export type SharePermission = 'view' | 'edit';
 export type PrintStatus = 'success' | 'failed';
 
+// Zebra Printer Configuration
+export interface PrinterConfig {
+  darkness?: number;  // 0-30 (ZPL: ~SD)
+  speed?: number;     // 2-14 inches per second (ZPL: ^PR)
+}
+
+export const DEFAULT_PRINTER_CONFIG: PrinterConfig = {
+  darkness: 15,
+  speed: 4,
+};
+
 // Template Parameter
 export interface TemplateParameter {
   id: number;
@@ -84,6 +95,7 @@ export interface LabelTemplate {
   owner_id?: number;
   is_global: boolean;
   thumbnail_url?: string;
+  printer_config?: PrinterConfig;
   created_at: string;
   updated_at?: string;
   parameters: TemplateParameter[];
@@ -96,6 +108,7 @@ export interface LabelTemplateCreate {
   width_mm?: number;
   height_mm?: number;
   is_global?: boolean;
+  printer_config?: PrinterConfig;
   parameters?: TemplateParameterCreate[];
 }
 
@@ -106,6 +119,7 @@ export interface LabelTemplateUpdate {
   width_mm?: number;
   height_mm?: number;
   is_global?: boolean;
+  printer_config?: PrinterConfig;
   parameters?: TemplateParameterCreate[];
 }
 
@@ -211,11 +225,13 @@ export interface LabelDesignerProps {
   initialName?: string;
   width?: number;
   height?: number;
+  initialPrinterConfig?: PrinterConfig;
   onSave: (data: {
     name: string;
     template: any; // pdfme template structure
     width: number;
     height: number;
+    printerConfig?: PrinterConfig;
   }) => void;
   isSaving?: boolean;
 }
