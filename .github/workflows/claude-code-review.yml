@@ -1,0 +1,80 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    # Optional: Only run on specific file changes
+    # paths:
+    #   - "app/**/*.py"
+    #   - "tests/**/*.py"
+
+jobs:
+  claude-review:
+    # Optional: Filter by PR author
+    # if: |
+    #   github.event.pull_request.user.login == 'external-contributor' ||
+    #   github.event.pull_request.user.login == 'new-developer' ||
+    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Please review this pull request for the LKC Backend (FastAPI + PostgreSQL) and provide feedback on:
+            - Code quality and best practices
+            - Potential bugs or issues
+            - Performance considerations
+            - Security concerns (SQL injection, authentication, authorization)
+            - Test coverage
+            - Database migrations and schema changes
+
+            Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
+
+            CRITICAL BACKEND CHECKS - Pay special attention to:
+
+            1. **Authentication & Authorization**:
+               - All endpoints must use `Depends(get_current_user)` from `app.api.deps`
+               - User model imports from `app.domain.entities.user` (NOT `app.models.user`)
+               - Check for proper role-based access control
+
+            2. **Database Safety**:
+               - SQLAlchemy queries use proper parameterization (no SQL injection)
+               - Check if migrations are needed for schema changes
+               - Verify foreign key relationships and cascades
+
+            3. **API Design**:
+               - Pydantic schemas for request/response validation
+               - Proper HTTP status codes
+               - Error handling with HTTPException
+
+            4. **Environment & Config**:
+               - No secrets in code (use settings from app.core.config)
+               - New config variables documented in .env.example
+
+            5. **Testing**:
+               - Tests require database (check CLAUDE.md)
+               - Proper use of `uv run pytest` (not python3 directly)
+
+            Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
+
+          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
+          # or https://code.claude.com/docs/en/cli-reference for available options
+          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
