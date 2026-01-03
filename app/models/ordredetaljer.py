@@ -1,5 +1,6 @@
 """Order detail model (tblordredetaljer)."""
 from sqlalchemy import Column, BigInteger, Float, Text, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 
 from app.infrastructure.database.session import Base
 
@@ -17,3 +18,6 @@ class Ordredetaljer(Base):
     rabatt = Column(Float)
     ssma_timestamp = Column(Text)
     ident = Column(Text)
+
+    # Relationships
+    produkt = relationship("Produkter", foreign_keys=[produktid], lazy="joined")

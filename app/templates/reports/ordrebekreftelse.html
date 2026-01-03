@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <title>Ordrebekreftelse #{{ ordrenummer }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2cm;
+        }
+        .header h1 {
+            color: #2c5282;
+            margin-bottom: 0.5cm;
+        }
+        .info-section {
+            margin-bottom: 1cm;
+        }
+        .info-section h2 {
+            font-size: 13pt;
+            color: #2c5282;
+            border-bottom: 2px solid #2c5282;
+            padding-bottom: 0.2cm;
+            margin-bottom: 0.5cm;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 0.3cm;
+        }
+        .info-label {
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5cm;
+        }
+        th {
+            background-color: #2c5282;
+            color: white;
+            padding: 0.3cm;
+            text-align: left;
+        }
+        td {
+            padding: 0.3cm;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .total-row {
+            font-weight: bold;
+            font-size: 13pt;
+            background-color: #e6f2ff !important;
+        }
+        .footer {
+            margin-top: 2cm;
+            padding-top: 0.5cm;
+            border-top: 1px solid #ddd;
+            font-size: 9pt;
+            color: #666;
+        }
+        .informasjon {
+            background-color: #fff9e6;
+            padding: 0.5cm;
+            margin-top: 1cm;
+            border-left: 4px solid #f0ad4e;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ORDREBEKREFTELSE</h1>
+        <p>Larvik Kommune Catering</p>
+    </div>
+
+    <div class="info-section">
+        <h2>Ordredetaljer</h2>
+        <div class="info-grid">
+            <div class="info-label">Ordrenummer:</div>
+            <div>{{ ordrenummer }}</div>
+
+            <div class="info-label">Ordredato:</div>
+            <div>{{ ordredato }}</div>
+
+            <div class="info-label">Leveringsdato:</div>
+            <div>{{ leveringsdato }}</div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2>Kunde</h2>
+        <div class="info-grid">
+            <div class="info-label">Navn:</div>
+            <div>{{ kunde.navn }}</div>
+
+            <div class="info-label">Adresse:</div>
+            <div>{{ kunde.adresse }}</div>
+
+            <div class="info-label">Postnr/Sted:</div>
+            <div>{{ kunde.postnr }} {{ kunde.sted }}</div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2>Produkter</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Produktnavn</th>
+                    <th class="text-right">Antall</th>
+                    <th class="text-right">Pris</th>
+                    <th class="text-right">Sum</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for produkt in produkter %}
+                <tr>
+                    <td>{{ produkt.navn }}</td>
+                    <td class="text-right">{{ produkt.antall }} {{ produkt.enhet }}</td>
+                    <td class="text-right">kr {{ produkt.pris }}</td>
+                    <td class="text-right">kr {{ produkt.sum }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="total-row">
+                    <td colspan="3" class="text-right">TOTAL:</td>
+                    <td class="text-right">kr {{ totalsum }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    {% if informasjon %}
+    <div class="informasjon">
+        <strong>Tilleggsinformasjon:</strong><br>
+        {{ informasjon }}
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>Generert: {{ generert_dato }}</p>
+        <p>Larvik Kommune Catering - Telefon: XXX XX XXX - E-post: kontakt@lkc.no</p>
+    </div>
+</body>
+</html>

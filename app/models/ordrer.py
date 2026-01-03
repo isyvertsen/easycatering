@@ -32,3 +32,4 @@ class Ordrer(Base):
     # Relationships
     kunde = relationship("Kunder", foreign_keys=[kundeid], lazy="joined")
     ansatt = relationship("Ansatte", foreign_keys=[ansattid], lazy="joined")
+    detaljer = relationship("Ordredetaljer", foreign_keys="Ordredetaljer.ordreid", lazy="select")

@@ -5,7 +5,9 @@ from app.api.v1 import (
     produkter, kunder, ordrer, ansatte, leverandorer, kategorier,
     asko_ny, meny, oppskrifter, kunde_gruppe, periode, periode_meny, meny_produkt,
     menu_management, reports, matinfo, product_search, stats, combined_dishes,
-    preparation_instructions, ean_management, label_templates, labels, feedback
+    preparation_instructions, ean_management, label_templates, labels, feedback,
+    graphql_endpoint,
+    report_generator
 )
 from app.api.v1.endpoints import matinfo_sync, matinfo_tracker, ngdata_sync, vetduat_sync, hybrid_sync
 
@@ -17,6 +19,7 @@ api_router.include_router(asko_ny.router, prefix="/asko-ny-produkter", tags=["as
 api_router.include_router(combined_dishes.router, prefix="/combined-dishes", tags=["combined-dishes"])
 api_router.include_router(ean_management.router, prefix="/ean-management", tags=["ean-management"])
 api_router.include_router(feedback.router, prefix="/feedback", tags=["feedback"])
+api_router.include_router(graphql_endpoint.router, prefix="/graphql", tags=["graphql"])
 api_router.include_router(hybrid_sync.router, prefix="/hybrid-sync", tags=["hybrid-sync"])
 api_router.include_router(kategorier.router, prefix="/kategorier", tags=["kategorier"])
 api_router.include_router(label_templates.router, prefix="/label-templates", tags=["label-templates"])
@@ -36,6 +39,7 @@ api_router.include_router(periode.router, prefix="/periode", tags=["periode"])
 api_router.include_router(periode_meny.router, prefix="/periode-meny", tags=["periode-meny"])
 api_router.include_router(preparation_instructions.router, prefix="/preparation-instructions", tags=["preparation-instructions"])
 api_router.include_router(produkter.router, prefix="/produkter", tags=["produkter"])
+api_router.include_router(report_generator.router, prefix="/report-generator", tags=["report-generator"])
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 api_router.include_router(stats.router, prefix="/stats", tags=["stats"])
 api_router.include_router(vetduat_sync.router, prefix="/vetduat", tags=["vetduat-sync"])
