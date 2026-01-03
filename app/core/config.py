@@ -68,6 +68,11 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-3.5-turbo"
 
+    # GitHub Integration for Feedback System
+    GITHUB_TOKEN: str = Field(default="", env="GITHUB_TOKEN")
+    GITHUB_REPO_BACKEND: str = Field(default="isyvertsen/LKCserver-backend", env="GITHUB_REPO_BACKEND")
+    GITHUB_REPO_FRONTEND: str = Field(default="isyvertsen/LKCserver-frontend", env="GITHUB_REPO_FRONTEND")
+
     # Matinfo API Configuration
     MATINFO_API_KEY: str = Field(default="", env="MATINFO_API_KEY")
     MATINFO_API_URL: str = Field(default="https://api.matinfo.no/v2", env="MATINFO_API_URL")
