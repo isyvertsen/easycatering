@@ -31,10 +31,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Phone, Mail, Globe } from "lucide-react"
+import { Plus, Search, MoreHorizontal, Edit, Trash2, Phone, Mail, Globe, FileSpreadsheet } from "lucide-react"
+import { reportsApi } from "@/lib/api/reports"
+import { useToast } from "@/hooks/use-toast"
 
 export default function CustomersPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [search, setSearch] = useState("")
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [params, setParams] = useState({
@@ -61,6 +64,22 @@ export default function CustomersPage() {
     }
   }
 
+  const handleExportExcel = async () => {
+    try {
+      await reportsApi.downloadCustomerListExcel()
+      toast({
+        title: "Lykkes",
+        description: "Kundeliste eksportert til Excel",
+      })
+    } catch (error) {
+      toast({
+        title: "Feil",
+        description: "Kunne ikke eksportere kundeliste",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -82,12 +101,18 @@ export default function CustomersPage() {
             />
           </div>
         </div>
-        <Button asChild>
-          <Link href="/customers/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Ny kunde
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={handleExportExcel} variant="outline">
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Eksporter til Excel
+          </Button>
+          <Button asChild>
+            <Link href="/customers/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Ny kunde
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="border rounded-lg">

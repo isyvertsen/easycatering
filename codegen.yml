@@ -1,0 +1,13 @@
+overwrite: true
+schema: "http://localhost:8000/api/v1/graphql"
+documents: "src/**/*.graphql"
+generates:
+  src/lib/graphql/generated.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-urql"
+    config:
+      withHooks: true
+      scalars:
+        DateTime: string

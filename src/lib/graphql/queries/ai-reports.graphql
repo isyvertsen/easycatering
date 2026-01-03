@@ -1,0 +1,9 @@
+mutation GenerateAiReport($period: String, $startDate: String, $endDate: String, $reportType: String, $dataSources: [String!], $customPrompt: String) {
+  generateAiReport(period: $period, startDate: $startDate, endDate: $endDate, reportType: $reportType, dataSources: $dataSources, customPrompt: $customPrompt) {
+    html
+    insights
+    period
+    totalOrders
+    totalRevenue
+  }
+}

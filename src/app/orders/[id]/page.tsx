@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { reportsApi } from "@/lib/api/reports"
+import { Download, FileText, Truck } from "lucide-react"
 
 interface OrderEditPageProps {
   params: Promise<{ id: string }>
@@ -79,6 +81,38 @@ export default function OrderEditPage({ params }: OrderEditPageProps) {
       toast({
         title: "Feil",
         description: "Kunne ikke kansellere ordre",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDownloadOrderConfirmation = async () => {
+    try {
+      await reportsApi.downloadOrderConfirmation(Number(id))
+      toast({
+        title: "Lykkes",
+        description: "Ordrebekreftelse lastet ned",
+      })
+    } catch (error) {
+      toast({
+        title: "Feil",
+        description: "Kunne ikke laste ned ordrebekreftelse",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDownloadDeliveryNote = async () => {
+    try {
+      await reportsApi.downloadDeliveryNote(Number(id))
+      toast({
+        title: "Lykkes",
+        description: "Leveringsseddel lastet ned",
+      })
+    } catch (error) {
+      toast({
+        title: "Feil",
+        description: "Kunne ikke laste ned leveringsseddel",
         variant: "destructive",
       })
     }
@@ -170,6 +204,33 @@ export default function OrderEditPage({ params }: OrderEditPageProps) {
             readOnly={isCancelled || isDelivered}
           />
           
+          <Card>
+            <CardHeader>
+              <CardTitle>Rapporter</CardTitle>
+              <CardDescription>
+                Last ned ordredokumenter
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button
+                onClick={handleDownloadOrderConfirmation}
+                variant="outline"
+                className="w-full justify-start"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Last ned ordrebekreftelse (PDF)
+              </Button>
+              <Button
+                onClick={handleDownloadDeliveryNote}
+                variant="outline"
+                className="w-full justify-start"
+              >
+                <Truck className="mr-2 h-4 w-4" />
+                Last ned leveringsseddel (PDF)
+              </Button>
+            </CardContent>
+          </Card>
+
           {(order.ordredato || order.leveringsdato || order.fakturadato) && (
             <Card>
               <CardHeader>
