@@ -1,7 +1,7 @@
 /**
  * Reports API client for generating and downloading reports
  */
-import { api } from './api'
+import { api } from '../api'
 
 export const reportsApi = {
   /**
