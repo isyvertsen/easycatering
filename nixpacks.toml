@@ -1,0 +1,13 @@
+[phases.setup]
+# Install additional apt packages required for WeasyPrint
+aptPkgs = [
+    "curl",
+    "wget",
+    "libgobject-2.0-0",
+    "libpango-1.0-0",
+    "libpangocairo-1.0-0",
+    "libcairo2",
+    "libgdk-pixbuf2.0-0",
+    "libffi-dev",
+    "fonts-liberation"
+]
