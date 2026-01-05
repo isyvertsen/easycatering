@@ -201,7 +201,6 @@ export default function AIReportGeneratorPage() {
                           selected={startDate}
                           onSelect={setStartDate}
                           initialFocus
-                          locale={nb}
                         />
                       </PopoverContent>
                     </Popover>
@@ -224,7 +223,6 @@ export default function AIReportGeneratorPage() {
                           selected={endDate}
                           onSelect={setEndDate}
                           initialFocus
-                          locale={nb}
                           disabled={(date) => startDate ? date < startDate : false}
                         />
                       </PopoverContent>

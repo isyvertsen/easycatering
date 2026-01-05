@@ -2,12 +2,23 @@
 
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker } from "react-day-picker"
+import { DayPicker, type Formatters } from "react-day-picker"
+import { nb } from "date-fns/locale"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>
+
+// Custom formatters for better Norwegian display
+const formatters: Partial<Formatters> = {
+  formatCaption: (date, options) => {
+    return date.toLocaleDateString('nb-NO', { month: 'long', year: 'numeric' })
+  },
+  formatWeekdayName: (date, options) => {
+    return date.toLocaleDateString('nb-NO', { weekday: 'short' })
+  },
+}
 
 function Calendar({
   className,
@@ -19,6 +30,8 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
+      locale={nb}
+      formatters={formatters}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
