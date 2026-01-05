@@ -2,7 +2,8 @@
 # Use Nix packages instead of apt to avoid library path conflicts
 # This keeps everything in the same ecosystem (Nix) and prevents vdso errors
 nixPkgs = ["python3", "gcc", "glib", "pango", "cairo", "gdk-pixbuf", "libffi", "pkg-config"]
-nixLibs = ["glib", "pango", "cairo", "gdk-pixbuf", "libffi"]
+# Include gcc in nixLibs to provide C++ standard library (libstdc++.so.6) for greenlet
+nixLibs = ["gcc", "glib", "pango", "cairo", "gdk-pixbuf", "libffi"]
 
 [start]
 cmd = "uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4"
