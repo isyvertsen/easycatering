@@ -24,8 +24,7 @@ aptPkgs = [
     "libpangoft2-1.0-0"
 ]
 
-# Update library cache after installing apt packages
-cmds = ["ldconfig"]
-
 [start]
-cmd = "uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4"
+# Set LD_LIBRARY_PATH to help CFFI find WeasyPrint libraries at runtime
+# Using /usr/lib/* pattern to work with both x86_64 and aarch64 architectures
+cmd = "sh -c 'export LD_LIBRARY_PATH=/usr/lib/$(uname -m)-linux-gnu:$LD_LIBRARY_PATH && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4'"
