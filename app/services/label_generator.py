@@ -183,23 +183,40 @@ class LabelGenerator:
         return table
 
     def _format_ingredients(self, ingredients: List[Dict[str, Any]], allergens: List[str]) -> str:
-        """Format ingredients list with allergens in bold."""
-        allergen_names_lower = [a.lower() for a in allergens]
+        """Format ingredients list with allergens in bold.
+
+        Only highlights exact allergen matches, not partial matches.
+        Example: allergen "melk" will NOT highlight "helmelk", only "melk"
+        """
+        allergen_names_lower = [a.lower().strip() for a in allergens]
 
         formatted_ingredients = []
         for ing in ingredients:
             name = ing.get('name', ing.get('ingrediensnavn', ''))
 
-            # Check if ingredient contains allergens
-            name_lower = name.lower()
-            is_allergen = any(allergen in name_lower for allergen in allergen_names_lower)
+            # Check if ingredient name matches an allergen (exact match or allergen is in the name as a word)
+            name_lower = name.lower().strip()
+
+            # Exact match check - ingredient name equals allergen name
+            is_allergen = name_lower in allergen_names_lower
+
+            # If not exact match, check if any allergen is a complete word in the ingredient name
+            if not is_allergen:
+                for allergen in allergen_names_lower:
+                    # Check if allergen appears as a complete word (not substring)
+                    # e.g., "melk" should match "melk" but not "helmelk"
+                    import re
+                    pattern = r'\b' + re.escape(allergen) + r'\b'
+                    if re.search(pattern, name_lower):
+                        is_allergen = True
+                        break
 
             # Format ingredient string - kun navn, ingen mengder
             ing_str = name
 
             # Make allergens bold
             if is_allergen:
-                ing_str = f"<b>{ing_str}</b>"
+                ing_str = f"<b>{ing_str.upper()}</b>"  # Uppercase allergens for emphasis
 
             formatted_ingredients.append(ing_str)
 

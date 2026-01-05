@@ -37,21 +37,37 @@ router = APIRouter()
 
 
 def map_allergen_level(level: Optional[int]) -> str:
-    """Map allergen level integer to string."""
+    """Map allergen level integer to string.
+
+    Database allergen levels (from actual data):
+    0 = FREE_FROM (explicitly free from)
+    1 = CROSS_CONTAMINATION (may contain traces / produced in same facility)
+    2 = MAY_CONTAIN (may contain)
+    3 = CONTAINS (contains)
+    """
     level_map = {
         0: "FREE_FROM",
-        1: "CONTAINS",
-        2: "MAY_CONTAIN"
+        1: "CROSS_CONTAMINATION",
+        2: "MAY_CONTAIN",
+        3: "CONTAINS"
     }
     return level_map.get(level, "UNKNOWN")
 
 
 def map_allergen_level_to_int(level: str) -> int:
-    """Map allergen level string to integer."""
+    """Map allergen level string to integer.
+
+    Database allergen levels (from actual data):
+    0 = FREE_FROM (explicitly free from)
+    1 = CROSS_CONTAMINATION (may contain traces / produced in same facility)
+    2 = MAY_CONTAIN (may contain)
+    3 = CONTAINS (contains)
+    """
     level_map = {
         "FREE_FROM": 0,
-        "CONTAINS": 1,
-        "MAY_CONTAIN": 2
+        "CROSS_CONTAMINATION": 1,
+        "MAY_CONTAIN": 2,
+        "CONTAINS": 3
     }
     return level_map.get(level.upper(), 0)
 

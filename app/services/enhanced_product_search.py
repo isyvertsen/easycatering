@@ -389,11 +389,19 @@ class EnhancedProductSearchService:
             return "stk"
 
     def _map_allergen_level(self, level: Optional[int]) -> str:
-        """Map allergen level integer to string."""
+        """Map allergen level integer to string.
+
+        Database allergen levels (from actual data):
+        0 = FREE_FROM (explicitly free from)
+        1 = CROSS_CONTAMINATION (may contain traces / produced in same facility)
+        2 = MAY_CONTAIN (may contain)
+        3 = CONTAINS (contains)
+        """
         level_map = {
             0: "FREE_FROM",
-            1: "CONTAINS",
-            2: "MAY_CONTAIN"
+            1: "CROSS_CONTAMINATION",
+            2: "MAY_CONTAIN",
+            3: "CONTAINS"
         }
         return level_map.get(level, "UNKNOWN")
 

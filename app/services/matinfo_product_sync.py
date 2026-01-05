@@ -190,11 +190,20 @@ class MatinfoProductSync:
 
         # Insert new allergens
         for allergen in allergens_data:
+            # Map allergen level to integer (same as matinfo_sync.py)
+            level_map = {
+                "FREE_FROM": 0,
+                "MAY_CONTAIN": 1,
+                "CONTAINS": 2
+            }
+            level_str = allergen.get("level", "FREE_FROM")
+            level_int = level_map.get(level_str, 0)
+
             allergen_dict = {
                 "product_id": product_id,
                 "gtin": gtin,
                 "code": allergen.get("code"),
-                "level": allergen.get("level", "FREE_FROM"),  # Store as string
+                "level": level_int,  # Store as integer (0=FREE_FROM, 1=MAY_CONTAIN, 2=CONTAINS)
                 "name": allergen.get("name"),
             }
 

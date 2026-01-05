@@ -13,6 +13,7 @@ from app.models.matinfo_products import MatinfoProduct, MatinfoNutrient, Matinfo
 from app.models.produkter import Produkter
 from app.domain.entities.user import User
 from app.services.label_generator import get_label_generator
+from app.services.zpl_label_generator import get_zpl_label_generator
 from app.services.dish_name_generator import get_dish_name_generator
 from pydantic import BaseModel
 from datetime import datetime
@@ -366,9 +367,21 @@ UNIT_TO_GRAMS = {
 
 # Mapping av allergennivå fra int til string
 def map_allergen_level(level: int) -> str:
-    """Map allergen level integer to string."""
-    if level == 1:
+    """Map allergen level integer to string.
+
+    Database allergen levels (from actual data):
+    0 = FREE_FROM (explicitly free from)
+    1 = CROSS_CONTAMINATION (may contain traces / produced in same facility)
+    2 = MAY_CONTAIN (may contain)
+    3 = CONTAINS (contains)
+
+    Note: Level 1 (cross-contamination) should typically NOT be displayed,
+    only levels 2 and 3 are relevant for allergen warnings.
+    """
+    if level == 0:
         return "FREE_FROM"
+    elif level == 1:
+        return "CROSS_CONTAMINATION"  # Produced in same facility
     elif level == 2:
         return "MAY_CONTAIN"
     elif level == 3:
@@ -376,11 +389,20 @@ def map_allergen_level(level: int) -> str:
     return "UNKNOWN"
 
 def combine_allergen_levels(levels: list[str]) -> str:
-    """Combine multiple allergen levels to the most restrictive."""
+    """Combine multiple allergen levels to the most restrictive.
+
+    Priority (most to least restrictive):
+    1. CONTAINS (actual ingredient)
+    2. MAY_CONTAIN (may contain)
+    3. CROSS_CONTAMINATION (traces from same facility) - usually not displayed
+    4. FREE_FROM (explicitly free from)
+    """
     if "CONTAINS" in levels:
         return "CONTAINS"
     elif "MAY_CONTAIN" in levels:
         return "MAY_CONTAIN"
+    elif "CROSS_CONTAMINATION" in levels:
+        return "CROSS_CONTAMINATION"
     elif "FREE_FROM" in levels:
         return "FREE_FROM"
     return "UNKNOWN"
@@ -799,6 +821,7 @@ async def combine_recipes(
     for allergen_code, allergen_data in allergens_dict.items():
         combined_level = combine_allergen_levels(allergen_data["levels"])
         # Bare vis allergener som inneholder eller kan inneholde
+        # Skip CROSS_CONTAMINATION (level 1) - only show actual allergens
         if combined_level in ["CONTAINS", "MAY_CONTAIN"]:
             combined_allergens.append({
                 "code": allergen_code,
@@ -894,14 +917,15 @@ async def generate_recipe_label(
 
     for detalj in detaljer:
         # Bruk visningsnavn fra produkter for bedre lesbarhet på etiketter
+        # Lowercase for konsistent formatting og bedre allergen-matching
         if detalj.produkt and detalj.produkt.visningsnavn:
-            name = detalj.produkt.visningsnavn
+            name = detalj.produkt.visningsnavn.lower()
         elif detalj.produktnavn:
-            name = detalj.produktnavn
+            name = detalj.produktnavn.lower()
         elif detalj.produkt:
-            name = detalj.produkt.produktnavn
+            name = detalj.produkt.produktnavn.lower()
         else:
-            name = "Ukjent"
+            name = "ukjent"
 
         amount = detalj.porsjonsmengde or 0
         unit = detalj.enh or "g"
@@ -948,7 +972,9 @@ async def generate_recipe_label(
                 allergens = allergens_result.scalars().all()
 
                 for allergen in allergens:
-                    if allergen.level in [1, 2]:  # 1 = CONTAINS, 2 = MAY_CONTAIN
+                    # Only include level 2 (MAY_CONTAIN) and level 3 (CONTAINS)
+                    # Skip level 1 (CROSS_CONTAMINATION) as it's too broad
+                    if allergen.level in [2, 3]:
                         allergens_set.add(allergen.name)
 
     # Beregn per 100g
@@ -1158,7 +1184,9 @@ async def generate_combined_label(
                 allergens = allergens_result.scalars().all()
 
                 for allergen in allergens:
-                    if allergen.level in [1, 2]:  # 1 = CONTAINS, 2 = MAY_CONTAIN
+                    # Only include level 2 (MAY_CONTAIN) and level 3 (CONTAINS)
+                    # Skip level 1 (CROSS_CONTAMINATION) as it's too broad
+                    if allergen.level in [2, 3]:
                         allergens_set.add(allergen.name)
 
     # Beregn per 100g
@@ -1193,6 +1221,257 @@ async def generate_combined_label(
         media_type="application/pdf",
         headers={
             "Content-Disposition": f'attachment; filename="{safe_filename}.pdf"'
+        }
+    )
+
+
+@router.post("/kombinere/label-zpl")
+async def generate_combined_label_zpl(
+    request: CombineRecipesRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Generer ZPL etikett for en kombinert rett (for Zebra printer).
+
+    Bruker samme logikk som /kombinere endepunktet for å beregne næring og allergener,
+    og genererer deretter en ZPL etikett for Zebra-printer.
+
+    Technical debt: Denne koden dupliserer beregningslogikken fra PDF endpoint.
+    Bør refaktoreres til felles helper-funksjon i fremtidig sprint.
+    """
+    # SAMME BEREGNINGSLOGIKK SOM PDF ENDPOINT (lines 1005-1171)
+    # Technical debt: Bør refaktoreres til felles helper
+
+    ingredients_list = []
+    allergens_set = set()
+    total_weight = 0.0
+    combined_nutrition = {
+        "energy_kj": 0.0,
+        "energy_kcal": 0.0,
+        "protein": 0.0,
+        "fat": 0.0,
+        "saturated_fat": 0.0,
+        "carbs": 0.0,
+        "sugars": 0.0,
+        "fiber": 0.0,
+        "salt": 0.0,
+        "polyunsaturated_fat": 0.0,
+        "monounsaturated_fat": 0.0,
+        "sugar_alcohols": 0.0
+    }
+
+    # Prosesser oppskrifter
+    for recipe_component in request.recipes:
+        # Hent oppskrift
+        kalkyle_result = await db.execute(
+            select(Kalkyle).where(Kalkyle.kalkylekode == recipe_component.kalkylekode)
+        )
+        kalkyle = kalkyle_result.scalar_one_or_none()
+
+        if not kalkyle:
+            raise HTTPException(status_code=404, detail=f"Oppskrift {recipe_component.kalkylekode} ikke funnet")
+
+        # Hent detaljer
+        detaljer_result = await db.execute(
+            select(Kalkyledetaljer)
+            .options(selectinload(Kalkyledetaljer.produkt))
+            .where(Kalkyledetaljer.kalkylekode == recipe_component.kalkylekode)
+        )
+        detaljer = detaljer_result.scalars().all()
+
+        # Beregn total oppskriftsvekt i gram (konverter enheter først)
+        recipe_weight_grams = 0.0
+        for d in detaljer:
+            unit_lower = (d.enh or "g").lower().strip()
+            amount_grams = (d.porsjonsmengde or 0) * UNIT_TO_GRAMS.get(unit_lower, 1.0)
+            recipe_weight_grams += amount_grams
+
+        scale_factor = recipe_component.amount_grams / recipe_weight_grams if recipe_weight_grams > 0 else 0
+
+        for detalj in detaljer:
+            # Bruk visningsnavn fra produkter for bedre lesbarhet på etiketter
+            if detalj.produkt and detalj.produkt.visningsnavn:
+                name = detalj.produkt.visningsnavn
+            elif detalj.produktnavn:
+                name = detalj.produktnavn
+            elif detalj.produkt:
+                name = detalj.produkt.produktnavn
+            else:
+                name = "Ukjent"
+
+            amount = (detalj.porsjonsmengde or 0) * scale_factor
+            unit = detalj.enh or "g"
+
+            # Konverter mengde til gram for vekt og næringsberegning
+            unit_lower = unit.lower().strip()
+            amount_grams = amount * UNIT_TO_GRAMS.get(unit_lower, 1.0)
+            total_weight += amount_grams
+
+            # Format for ZPL (kun navn, ikke mengde/enhet som i ingredients_list)
+            # ZPL vil vise bare ingrediens-navn adskilt med komma
+            # Hent næring og allergener fra Matinfo
+            if detalj.produkt and detalj.produkt.ean_kode:
+                clean_ean = detalj.produkt.ean_kode.lstrip('-')
+
+                matinfo_result = await db.execute(
+                    select(MatinfoProduct).where(MatinfoProduct.gtin == clean_ean)
+                )
+                matinfo_product = matinfo_result.scalar_one_or_none()
+
+                if matinfo_product:
+                    # Hent næringsverdier
+                    nutrients_result = await db.execute(
+                        select(MatinfoNutrient).where(MatinfoNutrient.productid == matinfo_product.id)
+                    )
+                    nutrients = nutrients_result.scalars().all()
+
+                    # Beregn næring (Matinfo gir verdier per 100g)
+                    for nutrient in nutrients:
+                        nutrient_key = NUTRIENT_CODES.get(nutrient.code)
+                        if nutrient_key and nutrient.measurement:
+                            value = float(nutrient.measurement) * (amount_grams / 100.0)
+                            combined_nutrition[nutrient_key] += value
+
+                    # Hent allergener
+                    allergens_result = await db.execute(
+                        select(MatinfoAllergen).where(MatinfoAllergen.productid == matinfo_product.id)
+                    )
+                    allergens = allergens_result.scalars().all()
+
+                    for allergen in allergens:
+                        if allergen.level in [1, 2]:  # 1 = CONTAINS, 2 = MAY_CONTAIN
+                            allergens_set.add(allergen.name)
+
+            # Legg til ingrediens-navn (for ZPL: bare navn, ikke mengde)
+            if name not in [ing for ing in ingredients_list]:
+                ingredients_list.append(name)
+
+    # Prosesser produkter
+    for product_component in request.products:
+        # Hent produkt info
+        product_result = await db.execute(
+            select(Produkter).where(Produkter.produktid == product_component.produktid)
+        )
+        product = product_result.scalar_one_or_none()
+
+        if not product:
+            raise HTTPException(status_code=404, detail=f"Produkt {product_component.produktid} ikke funnet")
+
+        # Bruk visningsnavn for bedre lesbarhet på etiketter
+        product_name = product.visningsnavn or product.produktnavn
+
+        total_weight += product_component.amount_grams
+
+        # Hent næring og allergener fra Matinfo hvis EAN-kode finnes
+        if product.ean_kode:
+            clean_ean = product.ean_kode.lstrip('-')
+
+            matinfo_result = await db.execute(
+                select(MatinfoProduct).where(MatinfoProduct.gtin == clean_ean)
+            )
+            matinfo_product = matinfo_result.scalar_one_or_none()
+
+            if matinfo_product:
+                # Hent næringsverdier
+                nutrients_result = await db.execute(
+                    select(MatinfoNutrient).where(MatinfoNutrient.productid == matinfo_product.id)
+                )
+                nutrients = nutrients_result.scalars().all()
+
+                # Beregn næring (Matinfo gir verdier per 100g)
+                for nutrient in nutrients:
+                    nutrient_key = NUTRIENT_CODES.get(nutrient.code)
+                    if nutrient_key and nutrient.measurement:
+                        value = float(nutrient.measurement) * (product_component.amount_grams / 100.0)
+                        combined_nutrition[nutrient_key] += value
+
+                # Hent allergener
+                allergens_result = await db.execute(
+                    select(MatinfoAllergen).where(MatinfoAllergen.productid == matinfo_product.id)
+                )
+                allergens = allergens_result.scalars().all()
+
+                for allergen in allergens:
+                    # Only include level 2 (MAY_CONTAIN) and level 3 (CONTAINS)
+                    # Skip level 1 (CROSS_CONTAMINATION) as it's too broad
+                    if allergen.level in [2, 3]:
+                        allergens_set.add(allergen.name)
+
+        # Legg til produkt-navn
+        if product_name not in ingredients_list:
+            ingredients_list.append(product_name)
+
+    # Beregn per 100g
+    nutrition_per_100g = {}
+    if total_weight > 0:
+        factor = 100.0 / total_weight
+        for key, value in combined_nutrition.items():
+            nutrition_per_100g[key] = value * factor
+    else:
+        nutrition_per_100g = combined_nutrition
+
+    # Map nutrition keys to match ZPL generator expectations
+    zpl_nutrition = {
+        "energi_kj": nutrition_per_100g.get("energy_kj", 0),
+        "energi_kcal": nutrition_per_100g.get("energy_kcal", 0),
+        "protein": nutrition_per_100g.get("protein", 0),
+        "fett": nutrition_per_100g.get("fat", 0),
+        "mettet_fett": nutrition_per_100g.get("saturated_fat", 0),
+        "karbohydrat": nutrition_per_100g.get("carbs", 0),
+        "sukker": nutrition_per_100g.get("sugars", 0),
+        "kostfiber": nutrition_per_100g.get("fiber", 0),
+        "salt": nutrition_per_100g.get("salt", 0),
+    }
+
+    # Generer ZPL
+    allergens_list = list(allergens_set)
+
+    # Debug logging
+    print(f"DEBUG ZPL - Ingredients: {ingredients_list}")
+    print(f"DEBUG ZPL - Allergens: {allergens_list}")
+
+    # DEBUG: Print allergen levels from database
+    for recipe_component in request.recipes:
+        kalkyle_result = await db.execute(
+            select(Kalkyle).where(Kalkyle.kalkylekode == recipe_component.kalkylekode)
+        )
+        kalkyle = kalkyle_result.scalar_one_or_none()
+        if kalkyle:
+            print(f"DEBUG - Recipe: {kalkyle.kalkylenavn}")
+            for prod in kalkyle.products:
+                if prod.ean_kode:
+                    matinfo_result = await db.execute(
+                        select(MatinfoProduct).where(MatinfoProduct.gtin == prod.ean_kode)
+                    )
+                    matinfo_product = matinfo_result.scalar_one_or_none()
+                    if matinfo_product:
+                        allergens_result = await db.execute(
+                            select(MatinfoAllergen).where(MatinfoAllergen.productid == matinfo_product.id)
+                        )
+                        allergens_db = allergens_result.scalars().all()
+                        for allergen in allergens_db:
+                            print(f"  DEBUG - Allergen: {allergen.name}, Level: {allergen.level}, Mapped: {map_allergen_level(allergen.level)}")
+
+    zpl_generator = get_zpl_label_generator()
+    zpl_code = zpl_generator.generate_recipe_label(
+        recipe_name=request.name,
+        ingredients=ingredients_list,
+        allergens=allergens_list,
+        nutrition_per_100g=zpl_nutrition,
+        preparation_info=request.preparation_instructions or "Oppbevares kjølig. Oppvarmes til 75°C.",
+        weight_grams=total_weight
+    )
+
+    # Sanitize filename for Content-Disposition header
+    safe_filename = request.name.replace(' ', '_').replace('"', '').replace("'", '')
+
+    # Returner ZPL som plain text
+    return Response(
+        content=zpl_code,
+        media_type="text/plain",
+        headers={
+            "Content-Disposition": f'attachment; filename="{safe_filename}.zpl"'
         }
     )
 
