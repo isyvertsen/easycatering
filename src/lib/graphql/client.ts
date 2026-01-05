@@ -3,10 +3,11 @@
  */
 import { createClient, cacheExchange, fetchExchange } from 'urql'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
-
+// Use relative URL to go through Next.js API proxy
+// This works both in development and production
+// The proxy at /api/v1/[...proxy] will forward to backend
 export const graphqlClient = createClient({
-  url: `${API_URL}/v1/graphql`,
+  url: '/api/v1/graphql',
   exchanges: [cacheExchange, fetchExchange],
   fetchOptions: () => {
     // Get auth token from sessionStorage (adjust based on your auth implementation)
