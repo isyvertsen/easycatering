@@ -60,12 +60,9 @@ async def generate_order_confirmation_pdf(
         "generert_dato": datetime.now().strftime("%d.%m.%Y %H:%M")
     }
 
-    # Generate PDF
+    # Generate PDF using ReportLab
     report_service = ReportService()
-    pdf_bytes = await report_service.generate_pdf_from_html(
-        "ordrebekreftelse.html",
-        data
-    )
+    pdf_bytes = await report_service.generate_order_confirmation_pdf(data)
 
     # Return PDF
     return Response(
@@ -121,12 +118,9 @@ async def generate_delivery_note_pdf(
         "generert_dato": datetime.now().strftime("%d.%m.%Y %H:%M")
     }
 
-    # Generate PDF
+    # Generate PDF using ReportLab
     report_service = ReportService()
-    pdf_bytes = await report_service.generate_pdf_from_html(
-        "leveringsseddel.html",
-        data
-    )
+    pdf_bytes = await report_service.generate_delivery_note_pdf(data)
 
     return Response(
         content=pdf_bytes,
