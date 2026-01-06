@@ -967,7 +967,7 @@ function CreateDishPageContent() {
                         {recipeComponents.map((component, index) => (
                           <div
                             key={index}
-                            className="flex items-center justify-between p-3 border rounded-lg bg-blue-50"
+                            className="flex items-center justify-between p-3 border rounded-lg highlight-recipe"
                           >
                             <div>
                               <p className="font-medium">{component.kalkylenavn}</p>
@@ -995,7 +995,7 @@ function CreateDishPageContent() {
                         {productComponents.map((product, index) => (
                           <div
                             key={index}
-                            className="flex items-center justify-between p-3 border rounded-lg bg-green-50"
+                            className="flex items-center justify-between p-3 border rounded-lg highlight-product"
                           >
                             <div>
                               <p className="font-medium">{product.produktnavn}</p>

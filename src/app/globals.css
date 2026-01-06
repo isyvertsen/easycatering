@@ -33,6 +33,16 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
+
+    /* Component highlight colors */
+    --recipe-highlight: 213 94% 95%;
+    --recipe-highlight-foreground: 213 94% 30%;
+    --product-highlight: 142 76% 94%;
+    --product-highlight-foreground: 142 71% 29%;
+    --success-highlight: 142 76% 94%;
+    --success-highlight-foreground: 142 71% 29%;
+    --info-highlight: 213 94% 95%;
+    --info-highlight-foreground: 213 94% 30%;
   }
 
   .dark {
@@ -63,6 +73,16 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
+    /* Component highlight colors - dark mode */
+    --recipe-highlight: 213 94% 12%;
+    --recipe-highlight-foreground: 213 94% 80%;
+    --product-highlight: 142 76% 12%;
+    --product-highlight-foreground: 142 71% 75%;
+    --success-highlight: 142 76% 12%;
+    --success-highlight-foreground: 142 71% 75%;
+    --info-highlight: 213 94% 12%;
+    --info-highlight-foreground: 213 94% 80%;
   }
 }
 
@@ -72,5 +92,25 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Semantic highlight cards for recipes and products */
+  .highlight-recipe {
+    background-color: hsl(var(--recipe-highlight));
+    color: hsl(var(--recipe-highlight-foreground));
+  }
+  .highlight-product {
+    background-color: hsl(var(--product-highlight));
+    color: hsl(var(--product-highlight-foreground));
+  }
+  .highlight-success {
+    background-color: hsl(var(--success-highlight));
+    color: hsl(var(--success-highlight-foreground));
+  }
+  .highlight-info {
+    background-color: hsl(var(--info-highlight));
+    color: hsl(var(--info-highlight-foreground));
   }
 }
