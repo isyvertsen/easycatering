@@ -7,7 +7,7 @@ from app.api.v1 import (
     menu_management, reports, matinfo, product_search, stats, combined_dishes,
     preparation_instructions, ean_management, label_templates, labels, feedback,
     graphql_endpoint,
-    report_generator, documentation
+    report_generator, documentation, documentation_chat
 )
 from app.api.v1.endpoints import matinfo_sync, matinfo_tracker, ngdata_sync, vetduat_sync, hybrid_sync
 
@@ -18,6 +18,7 @@ api_router.include_router(ansatte.router, prefix="/ansatte", tags=["ansatte"])
 api_router.include_router(asko_ny.router, prefix="/asko-ny-produkter", tags=["asko-ny-produkter"])
 api_router.include_router(combined_dishes.router, prefix="/combined-dishes", tags=["combined-dishes"])
 api_router.include_router(documentation.router, prefix="/documentation", tags=["documentation"])
+api_router.include_router(documentation_chat.router, prefix="/documentation", tags=["documentation-chat"])
 api_router.include_router(ean_management.router, prefix="/ean-management", tags=["ean-management"])
 api_router.include_router(feedback.router, prefix="/feedback", tags=["feedback"])
 api_router.include_router(graphql_endpoint.router, prefix="/graphql", tags=["graphql"])
