@@ -79,3 +79,21 @@ Disse kolonnene skal IKKE være i modellen:
 - allergenprodukt, energikj, kalorier, fett, mettetfett
 - karbohydrater, sukkerarter, kostfiber, protein, salt
 - monodisakk, matvareid, webshopsted
+
+## Pull Requests - VIKTIG
+
+**ALLTID sjekk om PR eksisterer før du refererer til den:**
+
+```bash
+# Sjekk PR status før du sier at den er opprettet
+gh pr list --state all -L 10
+
+# Sjekk spesifikk PR
+gh pr view <PR_NUMBER>
+```
+
+**Workflow:**
+1. Lag PR med `gh pr create`
+2. Verifiser at PR ble opprettet med `gh pr view <number>`
+3. IKKE anta at PR eksisterer - sjekk alltid først
+4. Hvis PR allerede er merget, lag ny branch for nye endringer
