@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SessionProvider } from 'next-auth/react'
 import { useState } from 'react'
 import { GraphQLProvider } from '@/lib/graphql/provider'
+import { ThemeProvider } from '@/components/theme/theme-provider'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -22,7 +23,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
         <GraphQLProvider>
-          {children}
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
         </GraphQLProvider>
       </QueryClientProvider>
     </SessionProvider>

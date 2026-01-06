@@ -27,7 +27,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers>
           <ErrorBoundary showDetails={true}>
-            <div className="flex h-screen bg-gray-50">
+            <div className="flex h-screen bg-muted/30">
               <Sidebar />
               <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto">
