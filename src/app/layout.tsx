@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import { Providers } from './providers'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Toaster } from '@/components/ui/toaster'
+import { DocumentationChatbot } from '@/components/chatbot'
 import { ErrorBoundary } from '@/components/error/error-boundary'
 import './globals.css'
 
@@ -39,6 +40,7 @@ export default function RootLayout({
             </div>
           </ErrorBoundary>
           <Toaster />
+          <DocumentationChatbot />
         </Providers>
       </body>
     </html>
