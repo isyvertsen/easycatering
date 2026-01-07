@@ -218,17 +218,17 @@ export function TopNav() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center px-4">
-          {/* Mobile menu */}
-          <MobileNav />
+        <div className="flex h-14 items-center justify-between px-4 max-w-7xl mx-auto">
+          {/* Left: Mobile menu + Logo */}
+          <div className="flex items-center gap-2">
+            <MobileNav />
+            <Link href="/" className="flex items-center gap-2">
+              <ChefHat className="h-6 w-6 text-primary" />
+              <span className="font-bold hidden sm:inline">LKC</span>
+            </Link>
+          </div>
 
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 mr-6">
-            <ChefHat className="h-6 w-6 text-primary" />
-            <span className="font-bold hidden sm:inline">LKC</span>
-          </Link>
-
-          {/* Desktop navigation */}
+          {/* Center: Desktop navigation */}
           <nav className="hidden lg:flex items-center gap-1">
             <Link
               href="/"
@@ -249,7 +249,7 @@ export function TopNav() {
           </nav>
 
           {/* Right side */}
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <ThemeToggle collapsed={true} />
 
             <Button
