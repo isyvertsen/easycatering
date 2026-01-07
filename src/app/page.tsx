@@ -13,13 +13,21 @@ import {
   Calendar,
   ChefHat,
   Truck,
-  AlertCircle,
   Clock,
-  CheckCircle,
-  ArrowRight
+  ArrowRight,
+  BarChart3
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts"
 
 interface TodayDelivery {
   total_orders: number
@@ -48,6 +56,16 @@ interface DashboardStats {
   pendingOrders: number
   todayDeliveries: TodayDelivery
   upcomingPeriods: UpcomingPeriod[]
+}
+
+interface DailySales {
+  date: string
+  order_count: number
+}
+
+interface SalesHistoryResponse {
+  data: DailySales[]
+  period_days: number
 }
 
 async function fetchDashboardStats(): Promise<DashboardStats> {
@@ -87,12 +105,34 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
   }
 }
 
+async function fetchSalesHistory(days: number = 30): Promise<SalesHistoryResponse> {
+  try {
+    const response = await apiClient.get(`/v1/stats/sales-history?days=${days}`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching sales history:', error)
+    return { data: [], period_days: days }
+  }
+}
+
 export default function HomePage() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: fetchDashboardStats,
     refetchInterval: 30000, // Refresh every 30 seconds
   })
+
+  const { data: salesHistory } = useQuery({
+    queryKey: ['sales-history', 30],
+    queryFn: () => fetchSalesHistory(30),
+    refetchInterval: 60000, // Refresh every minute
+  })
+
+  // Prepare chart data
+  const chartData = salesHistory?.data?.map(item => ({
+    date: new Date(item.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' }),
+    ordrer: item.order_count,
+  })) || []
 
   if (isLoading) {
     return (
@@ -181,6 +221,71 @@ export default function HomePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Sales Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Ordrer siste 30 dager
+          </CardTitle>
+          <CardDescription>Antall ordrer per dag</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {chartData.length > 0 ? (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorOrdrer" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                    }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="ordrer"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorOrdrer)"
+                    name="Ordrer"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              <div className="text-center">
+                <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>Ingen data tilgjengelig</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Stats Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
