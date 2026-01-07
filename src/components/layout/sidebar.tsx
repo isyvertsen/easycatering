@@ -24,7 +24,10 @@ import {
   Tag,
   MessageSquare,
   BookOpen,
-  Star
+  Star,
+  FolderTree,
+  Factory,
+  Clock
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -61,7 +64,10 @@ const iconMap: Record<string, any> = {
   UtensilsCrossed,
   Barcode,
   Tag,
-  BookOpen
+  BookOpen,
+  FolderTree,
+  Factory,
+  Clock
 }
 
 // Reverse map to get icon name from component
@@ -78,31 +84,39 @@ const navigationGroups = [
     ]
   },
   {
-    name: "Meny & Oppskrifter",
+    name: "Meny",
     items: [
       { name: "Menyer", href: "/menus", icon: CalendarDays },
+      { name: "Perioder", href: "/perioder", icon: Clock },
       { name: "Oppskrifter", href: "/recipes", icon: ChefHat },
       { name: "Retter", href: "/dishes/create", icon: UtensilsCrossed },
     ]
   },
   {
-    name: "Drift",
+    name: "Produkter",
     items: [
-      { name: "Kunder", href: "/customers", icon: Users },
-      { name: "Ordrer", href: "/orders", icon: ShoppingCart },
       { name: "Produkter", href: "/produkter", icon: Package },
+      { name: "Kategorier", href: "/kategorier", icon: FolderTree },
+      { name: "Leverandører", href: "/leverandorer", icon: Factory },
       { name: "EAN-kodestyring", href: "/products/ean-management", icon: Barcode },
-      { name: "Etiketter", href: "/labels", icon: Tag },
-      { name: "Leveranser", href: "/deliveries", icon: Truck },
     ]
   },
   {
-    name: "Administrasjon",
+    name: "Ordre & Levering",
+    items: [
+      { name: "Kunder", href: "/customers", icon: Users },
+      { name: "Ordrer", href: "/orders", icon: ShoppingCart },
+      { name: "Leveranser", href: "/deliveries", icon: Truck },
+      { name: "Etiketter", href: "/labels", icon: Tag },
+    ]
+  },
+  {
+    name: "Admin",
     items: [
       { name: "Ansatte", href: "/employees", icon: UserCheck },
       { name: "Brukere", href: "/admin/users", icon: UserCheck },
-      { name: "Dokumentasjon", href: "/admin/documentation", icon: BookOpen },
       { name: "Rapporter", href: "/reports", icon: BarChart3 },
+      { name: "Dokumentasjon", href: "/admin/documentation", icon: BookOpen },
       { name: "Innstillinger", href: "/settings", icon: Settings },
     ]
   }
