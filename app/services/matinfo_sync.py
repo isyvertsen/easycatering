@@ -330,8 +330,6 @@ class MatinfoSyncService:
         try:
             # Transform data
             product_data = self._transform_product_data(matinfo_data)
-            allergen_data = self._transform_allergens(product_data["id"], matinfo_data)
-            nutrient_data = self._transform_nutrients(product_data["id"], matinfo_data)
 
             # Check if product exists (using normalized GTIN)
             stmt = select(MatinfoProduct).where(MatinfoProduct.gtin == normalized_gtin)
@@ -339,26 +337,35 @@ class MatinfoSyncService:
             existing_product = result.scalar_one_or_none()
 
             if existing_product:
-                # Update existing product
-                for key, value in product_data.items():
-                    setattr(existing_product, key, value)
+                # Keep the existing product id for foreign key consistency
+                product_id = existing_product.id
 
-                # Delete existing allergens and nutrients using raw delete
+                # Delete existing allergens and nutrients FIRST (before any updates)
                 from sqlalchemy import delete
                 await self.db.execute(
                     delete(MatinfoAllergen).where(
-                        MatinfoAllergen.productid == existing_product.id
+                        MatinfoAllergen.productid == product_id
                     )
                 )
                 await self.db.execute(
                     delete(MatinfoNutrient).where(
-                        MatinfoNutrient.productid == existing_product.id
+                        MatinfoNutrient.productid == product_id
                     )
                 )
+
+                # Update existing product - but DON'T change the id
+                for key, value in product_data.items():
+                    if key != "id":  # Skip id to maintain foreign key integrity
+                        setattr(existing_product, key, value)
             else:
                 # Create new product
+                product_id = product_data["id"]
                 existing_product = MatinfoProduct(**product_data)
                 self.db.add(existing_product)
+
+            # Use the correct product_id for allergens and nutrients
+            allergen_data = self._transform_allergens(product_id, matinfo_data)
+            nutrient_data = self._transform_nutrients(product_id, matinfo_data)
 
             # Flush to ensure product is saved
             await self.db.flush()
