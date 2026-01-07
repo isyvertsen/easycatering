@@ -25,7 +25,8 @@ import {
   Clock,
   ChevronDown,
   MessageSquare,
-  User
+  User,
+  Database
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -79,6 +80,7 @@ const navigationGroups: NavGroup[] = [
       { name: "Kategorier", href: "/kategorier", icon: FolderTree },
       { name: "Leverandører", href: "/leverandorer", icon: Factory },
       { name: "EAN-kodestyring", href: "/products/ean-management", icon: Barcode },
+      { name: "Matinfo", href: "/matinfo", icon: Database },
     ]
   },
   {
