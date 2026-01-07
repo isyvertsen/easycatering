@@ -11,7 +11,6 @@ from app.models.kalkyle import Kalkyle
 from app.models.meny import Meny
 from app.models.ordrer import Ordrer
 from app.models.ordredetaljer import Ordredetaljer
-from app.models.periode import Perioder
 from app.domain.entities.user import User
 from pydantic import BaseModel
 from typing import Optional, List
@@ -185,26 +184,9 @@ async def get_dashboard_stats(
         pending=today_total - delivered
     )
 
-    # Upcoming periods (next 30 days)
-    upcoming_periods_result = await db.execute(
-        select(Perioder).where(
-            and_(
-                Perioder.startdato >= today,
-                Perioder.startdato <= today + timedelta(days=30)
-            )
-        ).order_by(Perioder.startdato).limit(5)
-    )
-    upcoming_periods_rows = upcoming_periods_result.scalars().all()
-    upcoming_periods = [
-        UpcomingPeriod(
-            periodeid=p.periodeid,
-            beskrivelse=p.beskrivelse,
-            startdato=p.startdato,
-            sluttdato=p.sluttdato,
-            days_until=(p.startdato - today).days
-        )
-        for p in upcoming_periods_rows
-    ]
+    # Upcoming periods - currently not implemented (table structure differs)
+    # TODO: Implement when periode table schema is clarified
+    upcoming_periods: List[UpcomingPeriod] = []
 
     return DashboardStats(
         total_customers=total_customers,
