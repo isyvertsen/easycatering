@@ -2,12 +2,10 @@
 
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ChefHat } from 'lucide-react'
 
 export default function SignInPage() {
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -28,7 +26,8 @@ export default function SignInPage() {
       if (result?.error) {
         setError('Ugyldig e-post eller passord')
       } else {
-        router.push('/')
+        // Full page reload to ensure session is properly loaded
+        window.location.href = '/'
       }
     } catch (error) {
       setError('Noe gikk galt. Prøv igjen.')
