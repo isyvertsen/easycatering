@@ -80,6 +80,26 @@ Disse kolonnene skal IKKE være i modellen:
 - karbohydrater, sukkerarter, kostfiber, protein, salt
 - monodisakk, matvareid, webshopsted
 
+## Matinfo Sync - Viktige mønster
+
+**AsyncSession håndtering:**
+- Bruk alltid `AsyncSession` (ikke `Session`) med `get_db`
+- IKKE del AsyncSession mellom samtidige operasjoner
+- Prosesser synkronisering sekvensielt, ikke parallelt
+
+**Foreign key constraints:**
+- Ved oppdatering av `matinfo_products`: slett allergener/nutrients FØRST
+- IKKE endre `id`-feltet på eksisterende produkter
+- Bruk eksisterende product ID for nye relaterte records
+
+**Feilhåndtering:**
+```python
+try:
+    await self.db.rollback()
+except Exception:
+    pass  # Session kan allerede være i ugyldig tilstand
+```
+
 ## Pull Requests - VIKTIG
 
 **ALLTID sjekk om PR eksisterer før du refererer til den:**
