@@ -51,6 +51,18 @@ class DashboardStats(BaseModel):
     upcoming_periods: List[UpcomingPeriod]
 
 
+class DailySales(BaseModel):
+    """Daily sales data."""
+    date: date
+    order_count: int
+
+
+class SalesHistoryResponse(BaseModel):
+    """Sales history response."""
+    data: List[DailySales]
+    period_days: int
+
+
 @router.get("/", response_model=DashboardStats)
 async def get_dashboard_stats(
     db: AsyncSession = Depends(get_db),
@@ -192,4 +204,51 @@ async def get_dashboard_stats(
         pending_orders=pending_orders,
         today_deliveries=today_deliveries,
         upcoming_periods=upcoming_periods
+    )
+
+
+@router.get("/sales-history", response_model=SalesHistoryResponse)
+async def get_sales_history(
+    days: int = 30,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Hent ordrehistorikk per dag for de siste N dagene.
+    Brukes for dashboard-grafer.
+    """
+    today = date.today()
+    start_date = today - timedelta(days=days - 1)
+
+    # Get order counts per day
+    result = await db.execute(
+        select(
+            func.date(Ordrer.ordredato).label('order_date'),
+            func.count().label('count')
+        ).where(
+            func.date(Ordrer.ordredato) >= start_date
+        ).group_by(
+            func.date(Ordrer.ordredato)
+        ).order_by(
+            func.date(Ordrer.ordredato)
+        )
+    )
+    rows = result.all()
+
+    # Create a dict for quick lookup
+    sales_by_date = {row.order_date: row.count for row in rows}
+
+    # Fill in all days (including days with no orders)
+    data = []
+    current_date = start_date
+    while current_date <= today:
+        data.append(DailySales(
+            date=current_date,
+            order_count=sales_by_date.get(current_date, 0)
+        ))
+        current_date += timedelta(days=1)
+
+    return SalesHistoryResponse(
+        data=data,
+        period_days=days
     )
