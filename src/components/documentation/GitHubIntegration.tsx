@@ -18,6 +18,7 @@ interface GitHubIssue {
     name: string
     color: string
   }>
+  repository_url: string
 }
 
 interface GitHubPR {
@@ -30,6 +31,7 @@ interface GitHubPR {
     login: string
   }
   draft: boolean
+  repository_url?: string
 }
 
 export function GitHubIntegration() {
@@ -38,8 +40,11 @@ export function GitHubIntegration() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // GitHub repository (kan konfigureres via environment variables)
-  const GITHUB_REPO = 'isyvertsen/LKCserver-frontend'
+  // GitHub repositories (kan konfigureres via environment variables)
+  const GITHUB_REPOS = [
+    'isyvertsen/LKCserver-frontend',
+    'isyvertsen/LKCserver-backend'
+  ]
   const GITHUB_API = 'https://api.github.com'
 
   useEffect(() => {
@@ -51,41 +56,73 @@ export function GitHubIntegration() {
       setLoading(true)
       setError(null)
 
-      // Fetch issues
-      const issuesResponse = await fetch(
-        `${GITHUB_API}/repos/${GITHUB_REPO}/issues?state=open&per_page=10`,
-        {
-          headers: {
-            'Accept': 'application/vnd.github.v3+json',
-          },
-        }
+      // Fetch issues from all repositories
+      const issuesPromises = GITHUB_REPOS.map(repo =>
+        fetch(
+          `${GITHUB_API}/repos/${repo}/issues?state=open&per_page=10`,
+          {
+            headers: {
+              'Accept': 'application/vnd.github.v3+json',
+            },
+          }
+        )
       )
 
-      if (!issuesResponse.ok) {
+      const issuesResponses = await Promise.all(issuesPromises)
+
+      // Check if all responses are ok
+      const failedResponse = issuesResponses.find(r => !r.ok)
+      if (failedResponse) {
         throw new Error('Kunne ikke hente issues fra GitHub')
       }
 
-      const issuesData = await issuesResponse.json()
-      // Filter out pull requests (GitHub API returns PRs as issues)
-      const filteredIssues = issuesData.filter((item: any) => !item.pull_request)
-      setIssues(filteredIssues)
-
-      // Fetch pull requests
-      const prsResponse = await fetch(
-        `${GITHUB_API}/repos/${GITHUB_REPO}/pulls?state=open&per_page=10`,
-        {
-          headers: {
-            'Accept': 'application/vnd.github.v3+json',
-          },
-        }
+      // Parse all responses and combine issues
+      const allIssuesData = await Promise.all(
+        issuesResponses.map(response => response.json())
       )
 
-      if (!prsResponse.ok) {
+      // Flatten and filter out pull requests (GitHub API returns PRs as issues)
+      const allIssues = allIssuesData
+        .flat()
+        .filter((item: any) => !item.pull_request)
+        .sort((a: any, b: any) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
+
+      setIssues(allIssues)
+
+      // Fetch pull requests from all repositories
+      const prsPromises = GITHUB_REPOS.map(repo =>
+        fetch(
+          `${GITHUB_API}/repos/${repo}/pulls?state=open&per_page=10`,
+          {
+            headers: {
+              'Accept': 'application/vnd.github.v3+json',
+            },
+          }
+        )
+      )
+
+      const prsResponses = await Promise.all(prsPromises)
+
+      // Check if all responses are ok
+      const failedPrResponse = prsResponses.find(r => !r.ok)
+      if (failedPrResponse) {
         throw new Error('Kunne ikke hente pull requests fra GitHub')
       }
 
-      const prsData = await prsResponse.json()
-      setPullRequests(prsData)
+      // Parse all responses and combine PRs
+      const allPrsData = await Promise.all(
+        prsResponses.map(response => response.json())
+      )
+
+      const allPrs = allPrsData
+        .flat()
+        .sort((a: any, b: any) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
+
+      setPullRequests(allPrs)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ukjent feil')
     } finally {
@@ -100,6 +137,13 @@ export function GitHubIntegration() {
       month: 'short',
       day: 'numeric',
     }).format(date)
+  }
+
+  const getRepoName = (repositoryUrl: string) => {
+    // Extract repo name from URL like "https://api.github.com/repos/isyvertsen/LKCserver-frontend"
+    const parts = repositoryUrl.split('/')
+    const repoName = parts[parts.length - 1]
+    return repoName.replace('LKCserver-', '')
   }
 
   const getStateIcon = (state: string, draft?: boolean) => {
@@ -176,6 +220,9 @@ export function GitHubIntegration() {
                         </a>
                       </div>
                       <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                        <Badge variant="secondary" className="text-xs">
+                          {getRepoName(issue.repository_url)}
+                        </Badge>
                         <span>#{issue.number}</span>
                         <span>•</span>
                         <span>åpnet {formatDate(issue.created_at)}</span>
@@ -241,6 +288,13 @@ export function GitHubIntegration() {
                         </a>
                       </div>
                       <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                        {pr.repository_url && (
+                          <>
+                            <Badge variant="secondary" className="text-xs">
+                              {getRepoName(pr.repository_url)}
+                            </Badge>
+                          </>
+                        )}
                         <span>#{pr.number}</span>
                         <span>•</span>
                         <span>åpnet {formatDate(pr.created_at)}</span>
@@ -257,15 +311,21 @@ export function GitHubIntegration() {
       </Tabs>
 
       <div className="border-t pt-4">
-        <a
-          href={`https://github.com/${GITHUB_REPO}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-2"
-        >
-          <ExternalLink className="h-4 w-4" />
-          Se alle på GitHub
-        </a>
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-gray-600 font-medium">GitHub Repositories:</p>
+          {GITHUB_REPOS.map(repo => (
+            <a
+              key={repo}
+              href={`https://github.com/${repo}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              {repo}
+            </a>
+          ))}
+        </div>
       </div>
     </div>
   )
