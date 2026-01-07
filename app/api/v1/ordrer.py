@@ -24,6 +24,7 @@ async def get_ordrer(
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
+    search: Optional[str] = Query(None, description="Search by customer name or order ID"),
     kunde_id: Optional[int] = Query(None, description="Filter by customer ID"),
     fra_dato: Optional[date] = Query(None, description="From date"),
     til_dato: Optional[date] = Query(None, description="To date"),
@@ -32,12 +33,38 @@ async def get_ordrer(
     sort_order: Optional[str] = Query("asc", description="Sort order (asc or desc)"),
 ) -> PaginatedResponse[Ordrer]:
     """Get all orders."""
+    from sqlalchemy import or_, cast, String
+
     # Base query for counting
     count_query = select(func.count()).select_from(OrdrerModel)
-    
+
     # Data query with customer join
     query = select(OrdrerModel).options(joinedload(OrdrerModel.kunde))
-    
+
+    # Search filter - search by customer name or order ID
+    if search:
+        search_term = f"%{search}%"
+        # Join with customers for search
+        count_query = count_query.outerjoin(KunderModel, OrdrerModel.kundeid == KunderModel.kundeid)
+        query = query.outerjoin(KunderModel, OrdrerModel.kundeid == KunderModel.kundeid, full=False)
+
+        try:
+            # If search is a number, also search by order ID
+            order_id = int(search)
+            search_filter = or_(
+                KunderModel.kundenavn.ilike(search_term),
+                OrdrerModel.ordreid == order_id,
+                OrdrerModel.kundenavn.ilike(search_term),
+            )
+        except ValueError:
+            search_filter = or_(
+                KunderModel.kundenavn.ilike(search_term),
+                OrdrerModel.kundenavn.ilike(search_term),
+            )
+
+        count_query = count_query.where(search_filter)
+        query = query.where(search_filter)
+
     # Apply filters to both queries
     if kunde_id:
         count_query = count_query.where(OrdrerModel.kundeid == kunde_id)

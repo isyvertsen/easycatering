@@ -74,5 +74,6 @@ class CombinedDishListResponse(BaseModel):
     """Response for liste over kombinerte retter."""
     items: List[CombinedDishResponse]
     total: int
-    skip: int
-    limit: int
+    page: int
+    page_size: int
+    total_pages: int
