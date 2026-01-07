@@ -2,7 +2,7 @@
 
 import { Suspense, useMemo } from "react"
 import { DataTable, DataTableColumn } from "@/components/crud/data-table"
-import { useEmployeesList, useDeleteEmployee } from "@/hooks/useEmployees"
+import { useEmployeesList, useDeleteEmployee, useBulkDeleteEmployees } from "@/hooks/useEmployees"
 import { Employee } from "@/types/models"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -81,9 +81,19 @@ const defaultParams: EmployeeListParams = {
   aktiv: true,
 }
 
+const bulkExportColumns = [
+  { key: 'fornavn', label: 'Fornavn' },
+  { key: 'etternavn', label: 'Etternavn' },
+  { key: 'tittel', label: 'Tittel' },
+  { key: 'avdeling', label: 'Avdeling' },
+  { key: 'e_postjobb', label: 'E-post' },
+  { key: 'tlfprivat', label: 'Telefon' },
+]
+
 function EmployeesPageContent() {
   const { params, setParams } = useUrlParams<EmployeeListParams>(defaultParams)
   const deleteMutation = useDeleteEmployee()
+  const bulkDeleteMutation = useBulkDeleteEmployees()
 
   // Convert page/page_size to skip/limit for API
   const apiParams = {
@@ -115,6 +125,10 @@ function EmployeesPageContent() {
 
   const handleDelete = (id: number) => {
     deleteMutation.mutate(id)
+  }
+
+  const handleBulkDelete = (ids: number[]) => {
+    bulkDeleteMutation.mutate(ids)
   }
 
   const handleExportCSV = () => {
@@ -199,9 +213,11 @@ function EmployeesPageContent() {
         totalPages={data?.total_pages || 1}
         onParamsChange={handleParamsChange}
         onDelete={handleDelete}
+        onBulkDelete={handleBulkDelete}
         loading={isLoading}
         idField="ansattid"
         searchPlaceholder="Søk etter navn, e-post eller telefon..."
+        bulkExportColumns={bulkExportColumns}
       />
     </div>
   )
