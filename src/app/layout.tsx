@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Providers } from './providers'
-import { Sidebar } from '@/components/layout/sidebar'
+import { TopNav } from '@/components/layout/top-nav'
 import { Toaster } from '@/components/ui/toaster'
 import { DocumentationChatbot } from '@/components/chatbot'
 import { ErrorBoundary } from '@/components/error/error-boundary'
@@ -28,15 +28,11 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers>
           <ErrorBoundary showDetails={true}>
-            <div className="flex h-screen bg-muted/30">
-              <Sidebar />
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <main className="flex-1 overflow-y-auto">
-                  <div className="container mx-auto px-6 py-8 max-w-7xl">
-                    {children}
-                  </div>
-                </main>
-              </div>
+            <div className="min-h-screen bg-muted/30">
+              <TopNav />
+              <main className="container mx-auto px-6 py-8 max-w-7xl">
+                {children}
+              </main>
             </div>
           </ErrorBoundary>
           <Toaster />
