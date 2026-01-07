@@ -68,6 +68,18 @@ interface SalesHistoryResponse {
   period_days: number
 }
 
+interface TopProduct {
+  produktid: number
+  produktnavn: string
+  total_quantity: number
+  order_count: number
+}
+
+interface TopProductsResponse {
+  products: TopProduct[]
+  period_days: number
+}
+
 async function fetchDashboardStats(): Promise<DashboardStats> {
   try {
     const response = await apiClient.get('/v1/stats/')
@@ -115,6 +127,16 @@ async function fetchSalesHistory(days: number = 30): Promise<SalesHistoryRespons
   }
 }
 
+async function fetchTopProducts(days: number = 30, limit: number = 10): Promise<TopProductsResponse> {
+  try {
+    const response = await apiClient.get(`/v1/stats/top-products?days=${days}&limit=${limit}`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching top products:', error)
+    return { products: [], period_days: days }
+  }
+}
+
 export default function HomePage() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -125,6 +147,12 @@ export default function HomePage() {
   const { data: salesHistory } = useQuery({
     queryKey: ['sales-history', 30],
     queryFn: () => fetchSalesHistory(30),
+    refetchInterval: 60000, // Refresh every minute
+  })
+
+  const { data: topProducts } = useQuery({
+    queryKey: ['top-products', 30],
+    queryFn: () => fetchTopProducts(30, 10),
     refetchInterval: 60000, // Refresh every minute
   })
 
@@ -448,6 +476,49 @@ export default function HomePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Top Products */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Topp 10 produkter
+          </CardTitle>
+          <CardDescription>Mest bestilte produkter siste 30 dager</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {topProducts?.products && topProducts.products.length > 0 ? (
+            <div className="space-y-3">
+              {topProducts.products.map((product, index) => (
+                <div
+                  key={product.produktid}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{product.produktnavn}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {product.order_count} ordrer
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary">
+                    {product.total_quantity.toLocaleString('nb-NO')} stk
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6 text-muted-foreground">
+              <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>Ingen produktdata tilgjengelig</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* System Overview */}
       <Card>
