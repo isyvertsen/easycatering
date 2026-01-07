@@ -147,16 +147,18 @@ async def create_combined_dish(
 
 @router.get("/", response_model=CombinedDishListResponse)
 async def list_combined_dishes(
-    skip: int = 0,
-    limit: int = 100,
+    page: int = 1,
+    page_size: int = 20,
     search: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    sort_order: str = "desc",
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
     Hent liste over alle lagrede kombinerte retter.
 
-    Støtter søk etter navn og paginering.
+    Støtter søk etter navn, paginering og sortering.
     """
     query = select(CombinedDish).options(
         selectinload(CombinedDish.recipe_components).selectinload(CombinedDishRecipe.recipe),
@@ -172,18 +174,34 @@ async def list_combined_dishes(
     if search:
         count_query = count_query.where(CombinedDish.name.ilike(f"%{search}%"))
     total_result = await db.execute(count_query)
-    total = total_result.scalar()
+    total = total_result.scalar() or 0
 
-    # Hent data med paginering
-    query = query.order_by(CombinedDish.created_at.desc()).offset(skip).limit(limit)
+    # Sortering
+    sort_column = getattr(CombinedDish, sort_by, None) if sort_by else CombinedDish.created_at
+    if sort_column is None:
+        sort_column = CombinedDish.created_at
+
+    from sqlalchemy import asc, desc as sql_desc
+    if sort_order == "asc":
+        query = query.order_by(asc(sort_column))
+    else:
+        query = query.order_by(sql_desc(sort_column))
+
+    # Paginering
+    offset = (page - 1) * page_size
+    query = query.offset(offset).limit(page_size)
+
     result = await db.execute(query)
     dishes = result.scalars().all()
+
+    total_pages = (total + page_size - 1) // page_size if total > 0 else 1
 
     return CombinedDishListResponse(
         items=[_format_combined_dish_response(dish) for dish in dishes],
         total=total,
-        skip=skip,
-        limit=limit,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
     )
 
 

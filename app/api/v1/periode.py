@@ -1,10 +1,11 @@
 """API endpoints for Periode management."""
-from typing import List, Optional
+from typing import List, Optional, Literal
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func, asc, desc
 from sqlalchemy.orm import selectinload
+from pydantic import BaseModel
 
 from app.api.deps import get_db
 from app.models import Periode, PeriodeMeny, Meny
@@ -18,25 +19,78 @@ from app.schemas.periode import (
 router = APIRouter()
 
 
-@router.get("/", response_model=List[PeriodeSchema])
+class PeriodeListResponse(BaseModel):
+    """Paginated response for perioder list."""
+    items: List[PeriodeSchema]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+@router.get("/", response_model=PeriodeListResponse)
 async def get_perioder(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(20, ge=1, le=100, description="Items per page"),
+    search: Optional[str] = Query(None, description="Search by week number"),
+    sort_by: Optional[str] = Query(None, description="Field to sort by"),
+    sort_order: Literal["asc", "desc"] = Query("desc", description="Sort order"),
     from_date: Optional[datetime] = None,
     to_date: Optional[datetime] = None,
     db: AsyncSession = Depends(get_db)
 ):
-    """Get all periods with optional date filtering."""
+    """Get all periods with pagination, search and sorting."""
+    # Base query
     query = select(Periode)
-    
+    count_query = select(func.count()).select_from(Periode)
+
+    # Date filtering
     if from_date:
         query = query.where(Periode.tildato >= from_date)
+        count_query = count_query.where(Periode.tildato >= from_date)
     if to_date:
         query = query.where(Periode.fradato <= to_date)
-    
-    query = query.offset(skip).limit(limit)
+        count_query = count_query.where(Periode.fradato <= to_date)
+
+    # Search filter (by week number)
+    if search:
+        try:
+            week_num = int(search)
+            query = query.where(Periode.ukenr == week_num)
+            count_query = count_query.where(Periode.ukenr == week_num)
+        except ValueError:
+            pass  # If not a number, don't filter by week
+
+    # Get total count
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+
+    # Sorting
+    sort_column = getattr(Periode, sort_by, None) if sort_by else Periode.fradato
+    if sort_column is None:
+        sort_column = Periode.fradato
+
+    if sort_order == "asc":
+        query = query.order_by(asc(sort_column))
+    else:
+        query = query.order_by(desc(sort_column))
+
+    # Pagination
+    offset = (page - 1) * page_size
+    query = query.offset(offset).limit(page_size)
+
     result = await db.execute(query)
-    return result.scalars().all()
+    items = result.scalars().all()
+
+    total_pages = (total + page_size - 1) // page_size if total > 0 else 1
+
+    return PeriodeListResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages
+    )
 
 
 @router.get("/active", response_model=List[PeriodeWithMenus])
