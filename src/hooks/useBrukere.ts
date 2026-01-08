@@ -27,7 +27,7 @@ export const useDeleteBruker = hooks.useDelete
 export function useActivateBruker() {
   const queryClient = useQueryClient()
 
-  return useMutation<void, Error, number>({
+  return useMutation<void, Error, string | number>({
     mutationFn: brukereApi.activate,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brukere'] })
@@ -47,12 +47,3 @@ export function useActivateBruker() {
   })
 }
 
-/**
- * Hook for å hente bruker basert på ansatt-ID
- */
-export function useBrukerByAnsatt(ansattid: number | undefined) {
-  return hooks.useList(
-    ansattid ? { page: 1, page_size: 1 } : undefined,
-    { enabled: false }
-  )
-}

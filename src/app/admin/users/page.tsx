@@ -142,8 +142,9 @@ export default function AdminUsersPage() {
     setIsFormOpen(true)
   }
 
-  const handleDelete = (id: number) => {
-    const bruker = data?.items.find((b) => b.id === id)
+  const handleDelete = (id: string | number) => {
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id
+    const bruker = data?.items.find((b) => b.id === numericId)
     if (bruker) {
       setDeleteConfirm(bruker)
     }

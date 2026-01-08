@@ -25,7 +25,7 @@ export const brukereApi = {
   /**
    * Update user with proper typing
    */
-  update: async (id: number, data: BrukerUpdate): Promise<Bruker> => {
+  update: async (id: string | number, data: BrukerUpdate): Promise<Bruker> => {
     const response = await apiClient.put(`/v1/brukere/${id}`, data)
     return response.data
   },
@@ -33,7 +33,7 @@ export const brukereApi = {
   /**
    * Activate a deactivated user
    */
-  activate: async (id: number): Promise<void> => {
+  activate: async (id: string | number): Promise<void> => {
     await apiClient.post(`/v1/brukere/${id}/activate`)
   },
 }
