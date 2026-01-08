@@ -157,15 +157,21 @@ export default function AdminUsersPage() {
   }
 
   const handleFormSubmit = (formData: BrukerFormValues) => {
+    // Convert null to undefined for ansattid to match API types
+    const data = {
+      ...formData,
+      ansattid: formData.ansattid ?? undefined,
+    }
+
     if (editingBruker) {
       updateMutation.mutate(
-        { id: editingBruker.id, data: formData },
+        { id: editingBruker.id, data },
         {
           onSuccess: () => setIsFormOpen(false),
         }
       )
     } else {
-      createMutation.mutate(formData as any, {
+      createMutation.mutate(data as any, {
         onSuccess: () => setIsFormOpen(false),
       })
     }
