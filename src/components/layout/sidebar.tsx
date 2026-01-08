@@ -32,7 +32,9 @@ import {
   Activity,
   TreePine,
   ClipboardList,
-  Printer
+  Printer,
+  PenLine,
+  Link2
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -77,7 +79,9 @@ const iconMap: Record<string, any> = {
   Activity,
   TreePine,
   ClipboardList,
-  Printer
+  Printer,
+  PenLine,
+  Link2
 }
 
 // Reverse map to get icon name from component
@@ -124,9 +128,11 @@ const navigationGroups = [
     ]
   },
   {
-    name: "Utskrifter",
+    name: "Bestilling",
     items: [
       { name: "Bestillingsskjema", href: "/bestilling/skjema", icon: ClipboardList },
+      { name: "Registrer Bestilling", href: "/bestilling/registrer", icon: PenLine },
+      { name: "Send Kundelenke", href: "/bestilling/send-link", icon: Link2 },
     ]
   },
   {
