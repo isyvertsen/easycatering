@@ -49,7 +49,7 @@ export default function MenuDetailPage() {
 
   const fetchMenuGroups = async () => {
     try {
-      const response = await api.get("/menygruppe")
+      const response = await api.get("/v1/menygruppe")
       setMenuGroups(response.data)
     } catch (error) {
       console.error("Failed to fetch menu groups:", error)
@@ -58,7 +58,7 @@ export default function MenuDetailPage() {
 
   const fetchMenu = async () => {
     try {
-      const response = await api.get(`/meny/${menuId}`)
+      const response = await api.get(`/v1/meny/${menuId}`)
       setFormData({
         beskrivelse: response.data.beskrivelse || "",
         menygruppe: response.data.menygruppe,
@@ -81,13 +81,13 @@ export default function MenuDetailPage() {
 
     try {
       if (isNew) {
-        await api.post("/meny", formData)
+        await api.post("/v1/meny", formData)
         toast({
           title: "Success",
           description: "Menu created successfully",
         })
       } else {
-        await api.put(`/meny/${menuId}`, formData)
+        await api.put(`/v1/meny/${menuId}`, formData)
         toast({
           title: "Success",
           description: "Menu updated successfully",

@@ -97,7 +97,7 @@ export default function MenuManagementPage() {
 
   const fetchAllMenus = async () => {
     try {
-      const response = await api.get("/meny");
+      const response = await api.get("/v1/meny");
       setAllMenus(response.data);
     } catch (error) {
       console.error("Failed to load menus:", error);
