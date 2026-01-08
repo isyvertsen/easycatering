@@ -20,6 +20,7 @@ from .matinfo_products import MatinfoProduct, MatinfoAllergen, MatinfoNutrient
 from .combined_dish import CombinedDish, CombinedDishRecipe, CombinedDishProduct
 from .preparation_instruction import PreparationInstruction
 from .label_template import LabelTemplate, TemplateParameter, TemplateShare, PrintHistory
+from .customer_access_token import CustomerAccessToken
 
 __all__ = [
     "Ansatte",
@@ -50,4 +51,5 @@ __all__ = [
     "TemplateParameter",
     "TemplateShare",
     "PrintHistory",
+    "CustomerAccessToken",
 ]

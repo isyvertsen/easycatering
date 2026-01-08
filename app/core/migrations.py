@@ -440,6 +440,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(AddPrinterConfigToLabelTemplates())
         migration_runner.add_migration(AddAnsattIdAndRolleToUsers())
         migration_runner.add_migration(AddSequenceToTblperiode())
+        migration_runner.add_migration(CreateCustomerAccessTokensTable())
     return migration_runner
 
 
@@ -717,6 +718,47 @@ class AddSequenceToTblperiode(Migration):
             await conn.execute(text("""
                 ALTER TABLE tblperiode
                 ALTER COLUMN menyperiodeid SET DEFAULT nextval('tblperiode_menyperiodeid_seq')
+            """))
+
+
+class CreateCustomerAccessTokensTable(Migration):
+    """Create table for customer access tokens."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260108_003_customer_access_tokens",
+            description="Create customer_access_tokens table for self-service ordering"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Create customer_access_tokens table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS customer_access_tokens (
+                    id SERIAL PRIMARY KEY,
+                    kundeid BIGINT NOT NULL REFERENCES tblkunder(kundeid),
+                    token VARCHAR(255) UNIQUE NOT NULL,
+                    expires_at TIMESTAMP NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    created_by INTEGER REFERENCES users(id),
+                    used_count INTEGER DEFAULT 0,
+                    last_used_at TIMESTAMP,
+                    is_active BOOLEAN DEFAULT TRUE
+                )
+            """))
+
+            # Create indexes
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_customer_access_tokens_kundeid
+                ON customer_access_tokens(kundeid)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_customer_access_tokens_token
+                ON customer_access_tokens(token)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_customer_access_tokens_expires
+                ON customer_access_tokens(expires_at)
             """))
 
 
