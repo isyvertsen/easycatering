@@ -74,7 +74,7 @@ async def get_period_overview(
     for periode in perioder:
         for pm in periode.periode_menyer:
             if pm.meny and pm.meny.gruppe:
-                all_menu_group_ids.add(pm.meny.gruppe.gruppeid)
+                all_menu_group_ids.add(pm.meny.gruppe.menygruppeid)
 
     # Batch query: Get customer counts for all menu groups in one query
     customer_counts = {}
@@ -107,7 +107,7 @@ async def get_period_overview(
             all_menus.append(menu_dict)
 
             if menu.gruppe:
-                menu_groups.add((menu.gruppe.gruppeid, menu.gruppe.gruppe))
+                menu_groups.add((menu.gruppe.menygruppeid, menu.gruppe.beskrivelse))
 
             for mp in menu.meny_produkter:
                 all_products.add(mp.produktid)
@@ -206,7 +206,7 @@ async def get_customer_period_report(
             period_start=periode.fradato,
             period_end=periode.tildato,
             menu_group={
-                "gruppeid": menu.gruppe.gruppeid if menu.gruppe else None,
+                "gruppeid": menu.gruppe.menygruppeid if menu.gruppe else None,
                 "gruppe": menu.gruppe.gruppe if menu.gruppe else None
             },
             customers=[{

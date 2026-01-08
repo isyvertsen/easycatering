@@ -192,8 +192,8 @@ async def generate_period_menu_pdf(
         
         report_data.append({
             "menu_group": {
-                "gruppeid": menu.gruppe.gruppeid if menu.gruppe else None,
-                "gruppe": menu.gruppe.gruppe if menu.gruppe else None
+                "gruppeid": menu.gruppe.menygruppeid if menu.gruppe else None,
+                "gruppe": menu.gruppe.beskrivelse if menu.gruppe else None
             },
             "customers": [{
                 "kundeid": k.kundeid,
