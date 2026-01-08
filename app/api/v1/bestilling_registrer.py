@@ -11,6 +11,8 @@ from pydantic import BaseModel
 from app.api.deps import get_db, get_current_user
 from app.domain.entities.user import User
 from app.models.kunder import Kunder as KunderModel
+from app.services.email_service import email_service
+from app.core.config import settings
 from app.models.kunde_gruppe import Kundegruppe
 from app.models.periode import Periode
 from app.models.periode_meny import PeriodeMeny
@@ -64,6 +66,8 @@ class GenererLenkeResponse(BaseModel):
     expires_at: datetime
     kundeid: int
     kundenavn: Optional[str] = None
+    email_sent: bool = False
+    email_address: Optional[str] = None
 
 
 class ProduktForKunde(BaseModel):
@@ -189,6 +193,7 @@ async def generer_kundelenke(
     Generer en unik lenke for kunde-selvbetjening.
 
     Lenken er gyldig i angitt antall dager.
+    Sender e-post til kunden hvis e-postadresse er registrert.
     """
     # Verifiser at kunden finnes
     kunde_query = select(KunderModel).where(KunderModel.kundeid == request.kundeid)
@@ -215,15 +220,27 @@ async def generer_kundelenke(
     db.add(access_token)
     await db.commit()
 
-    # Generer lenke (frontend URL)
-    link = f"/bestilling/kunde/{token}"
+    # Generer full lenke (inkluderer frontend URL)
+    full_link = f"{settings.FRONTEND_URL}/bestilling/kunde/{token}"
+
+    # Send e-post til kunde hvis e-postadresse er registrert
+    email_sent = False
+    if kunde.epost and email_service.is_configured():
+        email_sent = email_service.send_customer_order_link(
+            to_email=kunde.epost,
+            customer_name=kunde.kundenavn or "kunde",
+            order_link=full_link,
+            expires_at=expires_at,
+        )
 
     return GenererLenkeResponse(
         token=token,
-        link=link,
+        link=full_link,
         expires_at=expires_at,
         kundeid=request.kundeid,
         kundenavn=kunde.kundenavn,
+        email_sent=email_sent,
+        email_address=kunde.epost if email_sent else None,
     )
 
 
@@ -256,10 +273,12 @@ async def list_active_tokens(
     return [
         GenererLenkeResponse(
             token=t.token,
-            link=f"/bestilling/kunde/{t.token}",
+            link=f"{settings.FRONTEND_URL}/bestilling/kunde/{t.token}",
             expires_at=t.expires_at,
             kundeid=t.kundeid,
             kundenavn=t.kunde.kundenavn if t.kunde else None,
+            email_sent=False,  # Not tracked historically
+            email_address=None,
         )
         for t in tokens
     ]

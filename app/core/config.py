@@ -79,6 +79,18 @@ class Settings(BaseSettings):
     REDIS_HOST: str = Field(default="localhost", env="REDIS_HOST")
     REDIS_PORT: int = Field(default=6379, env="REDIS_PORT")
 
+    # SMTP Email Configuration
+    SMTP_HOST: str = Field(default="", env="SMTP_HOST")
+    SMTP_PORT: int = Field(default=587, env="SMTP_PORT")
+    SMTP_USER: str = Field(default="", env="SMTP_USER")
+    SMTP_PASSWORD: str = Field(default="", env="SMTP_PASSWORD")
+    SMTP_FROM_EMAIL: str = Field(default="noreply@lkc.no", env="SMTP_FROM_EMAIL")
+    SMTP_FROM_NAME: str = Field(default="Larvik Kommunale Catering", env="SMTP_FROM_NAME")
+    SMTP_USE_TLS: bool = Field(default=True, env="SMTP_USE_TLS")
+
+    # Frontend URL for email links
+    FRONTEND_URL: str = Field(default="http://localhost:3000", env="FRONTEND_URL")
+
     @field_validator("CORS_ORIGINS", mode="after")
     @classmethod
     def ensure_cors_origins_list(cls, v: Union[str, List[str]]) -> List[str]:
