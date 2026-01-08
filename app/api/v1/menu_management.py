@@ -107,7 +107,7 @@ async def get_period_overview(
             all_menus.append(menu_dict)
 
             if menu.gruppe:
-                menu_groups.add((menu.gruppe.gruppeid, menu.gruppe.gruppe))
+                menu_groups.add((menu.gruppe.gruppeid, menu.gruppe.beskrivelse))
 
             for mp in menu.meny_produkter:
                 all_products.add(mp.produktid)
@@ -207,7 +207,7 @@ async def get_customer_period_report(
             period_end=periode.tildato,
             menu_group={
                 "gruppeid": menu.gruppe.gruppeid if menu.gruppe else None,
-                "gruppe": menu.gruppe.gruppe if menu.gruppe else None
+                "gruppe": menu.gruppe.beskrivelse if menu.gruppe else None
             },
             customers=[{
                 "kundeid": k.kundeid,
