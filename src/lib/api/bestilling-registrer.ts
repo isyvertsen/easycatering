@@ -111,13 +111,12 @@ export const bestillingRegistrerApi = {
   },
 
   /**
-   * Hent kundemeny via token (PUBLIC - ingen auth)
+   * Hent kundemeny via token (PUBLIC - via proxy)
    */
   async getKundeMeny(token: string): Promise<KundeMenyResponse> {
-    // Use fetch directly for public endpoint (no auth header)
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+    // Use Next.js API route as proxy (handles HTTPS/internal backend)
     const response = await fetch(
-      `${baseUrl}/v1/bestilling-registrer/kunde/meny?token=${encodeURIComponent(token)}`
+      `/api/bestilling/kunde/meny?token=${encodeURIComponent(token)}`
     )
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Ukjent feil' }))
@@ -127,16 +126,15 @@ export const bestillingRegistrerApi = {
   },
 
   /**
-   * Send inn kundebestilling via token (PUBLIC - ingen auth)
+   * Send inn kundebestilling via token (PUBLIC - via proxy)
    */
   async submitKundeBestilling(
     token: string,
     request: KundeBestillingRequest
   ): Promise<KundeBestillingResponse> {
-    // Use fetch directly for public endpoint (no auth header)
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+    // Use Next.js API route as proxy (handles HTTPS/internal backend)
     const response = await fetch(
-      `${baseUrl}/v1/bestilling-registrer/kunde/submit?token=${encodeURIComponent(token)}`,
+      `/api/bestilling/kunde/submit?token=${encodeURIComponent(token)}`,
       {
         method: 'POST',
         headers: {
