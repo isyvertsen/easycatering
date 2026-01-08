@@ -1,11 +1,11 @@
 """API endpoints for Periode management."""
 from typing import List, Optional, Literal
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func, asc, desc
 from sqlalchemy.orm import selectinload
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.api.deps import get_db
 from app.models import Periode, PeriodeMeny, Meny
@@ -26,6 +26,28 @@ class PeriodeListResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+
+class OpprettUkeRequest(BaseModel):
+    """Request for å opprette periode basert på ukenummer."""
+    aar: int = Field(..., description="År (f.eks. 2024)")
+    ukenr: int = Field(..., ge=1, le=53, description="Ukenummer (1-53)")
+
+
+def _get_week_dates(year: int, week: int) -> tuple[datetime, datetime]:
+    """Beregn mandag og søndag for en gitt uke i et år (ISO 8601)."""
+    # ISO 8601: Uke 1 er uken som inneholder 4. januar
+    # Finn 4. januar og gå tilbake til mandag i den uken
+    jan4 = datetime(year, 1, 4)
+    # Finn mandag i uke 1 (weekday() returnerer 0 for mandag)
+    week1_monday = jan4 - timedelta(days=jan4.weekday())
+
+    # Beregn mandag i ønsket uke
+    monday = week1_monday + timedelta(weeks=week - 1)
+    # Søndag er 6 dager etter mandag, kl 23:59:59
+    sunday = monday + timedelta(days=6, hours=23, minutes=59, seconds=59)
+
+    return monday, sunday
 
 
 @router.get("/", response_model=PeriodeListResponse)
@@ -91,6 +113,77 @@ async def get_perioder(
         page_size=page_size,
         total_pages=total_pages
     )
+
+
+@router.get("/siste", response_model=PeriodeSchema)
+async def get_siste_periode(
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Hent siste opprettede periode (basert på tildato).
+
+    Nyttig for å foreslå neste periode ved opprettelse.
+    Returnerer også forslag til neste uke.
+    """
+    query = select(Periode).order_by(desc(Periode.tildato)).limit(1)
+    result = await db.execute(query)
+    periode = result.scalar_one_or_none()
+
+    if not periode:
+        raise HTTPException(status_code=404, detail="Ingen perioder funnet")
+
+    return periode
+
+
+@router.get("/neste-forslag")
+async def get_neste_periode_forslag(
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Foreslå neste periode basert på siste eksisterende periode.
+
+    Returnerer forslag til ukenummer, år og datoer for neste uke.
+    """
+    query = select(Periode).order_by(desc(Periode.tildato)).limit(1)
+    result = await db.execute(query)
+    siste = result.scalar_one_or_none()
+
+    if siste and siste.tildato:
+        # Neste periode starter dagen etter siste periode slutter
+        neste_start = siste.tildato + timedelta(days=1)
+        # Normaliser til mandag hvis ikke allerede
+        if neste_start.weekday() != 0:  # Ikke mandag
+            dager_til_mandag = (7 - neste_start.weekday()) % 7
+            if dager_til_mandag == 0:
+                dager_til_mandag = 7
+            neste_start = neste_start + timedelta(days=dager_til_mandag)
+    else:
+        # Ingen eksisterende perioder - foreslå neste mandag
+        neste_start = datetime.now()
+        dager_til_mandag = (7 - neste_start.weekday()) % 7
+        if dager_til_mandag == 0:
+            dager_til_mandag = 7
+        neste_start = neste_start + timedelta(days=dager_til_mandag)
+        neste_start = neste_start.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Beregn ukenummer og år
+    ukenr = neste_start.isocalendar()[1]
+    aar = neste_start.isocalendar()[0]
+
+    # Beregn søndag (slutt på uken)
+    neste_slutt = neste_start + timedelta(days=6, hours=23, minutes=59, seconds=59)
+
+    return {
+        "aar": aar,
+        "ukenr": ukenr,
+        "fradato": neste_start,
+        "tildato": neste_slutt,
+        "siste_periode": {
+            "menyperiodeid": siste.menyperiodeid if siste else None,
+            "ukenr": siste.ukenr if siste else None,
+            "tildato": siste.tildato if siste else None,
+        } if siste else None
+    }
 
 
 @router.get("/active", response_model=List[PeriodeWithMenus])
@@ -170,6 +263,47 @@ async def create_periode(
     return periode
 
 
+@router.post("/opprett-uke", response_model=PeriodeSchema)
+async def opprett_periode_fra_uke(
+    request: OpprettUkeRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Opprett en ny periode basert på ukenummer og år.
+
+    Beregner automatisk fradato (mandag kl 00:00) og tildato (søndag kl 23:59:59)
+    for den angitte uken i henhold til ISO 8601.
+    """
+    # Beregn datoer først
+    fradato, tildato = _get_week_dates(request.aar, request.ukenr)
+
+    # Sjekk om periode for disse datoene allerede eksisterer
+    existing_query = select(Periode).where(
+        and_(
+            Periode.fradato >= fradato,
+            Periode.fradato <= tildato
+        )
+    )
+    existing_result = await db.execute(existing_query)
+    if existing_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=400,
+            detail=f"Periode for uke {request.ukenr} i {request.aar} eksisterer allerede"
+        )
+
+    # Opprett periode
+    periode = Periode(
+        ukenr=request.ukenr,
+        fradato=fradato,
+        tildato=tildato
+    )
+    db.add(periode)
+    await db.commit()
+    await db.refresh(periode)
+
+    return periode
+
+
 @router.put("/{periode_id}", response_model=PeriodeSchema)
 async def update_periode(
     periode_id: int,
@@ -202,10 +336,36 @@ async def delete_periode(
     query = select(Periode).where(Periode.menyperiodeid == periode_id)
     result = await db.execute(query)
     periode = result.scalar_one_or_none()
-    
+
     if not periode:
         raise HTTPException(status_code=404, detail="Period not found")
-    
+
     await db.delete(periode)
     await db.commit()
     return {"message": "Period deleted successfully"}
+
+
+@router.post("/bulk-delete")
+async def bulk_delete_perioder(
+    ids: List[int],
+    db: AsyncSession = Depends(get_db)
+):
+    """Bulk delete periods."""
+    if not ids:
+        raise HTTPException(status_code=400, detail="Ingen IDer oppgitt")
+
+    result = await db.execute(
+        select(Periode).where(Periode.menyperiodeid.in_(ids))
+    )
+    perioder = result.scalars().all()
+
+    if not perioder:
+        raise HTTPException(status_code=404, detail="Ingen perioder funnet")
+
+    count = len(perioder)
+    for periode in perioder:
+        await db.delete(periode)
+
+    await db.commit()
+
+    return {"message": f"{count} perioder slettet"}

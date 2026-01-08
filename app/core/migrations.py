@@ -439,6 +439,9 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(CreateLabelTemplateTables())
         migration_runner.add_migration(AddPrinterConfigToLabelTemplates())
         migration_runner.add_migration(AddAnsattIdAndRolleToUsers())
+        migration_runner.add_migration(AddSequenceToTblperiode())
+        migration_runner.add_migration(AddSequenceToTblordrer())
+        migration_runner.add_migration(CreateCustomerAccessTokensTable())
     return migration_runner
 
 
@@ -683,6 +686,113 @@ class AddAnsattIdAndRolleToUsers(Migration):
             # Create index on rolle for filtering
             await conn.execute(text("""
                 CREATE INDEX IF NOT EXISTS idx_users_rolle ON users(rolle)
+            """))
+
+
+class AddSequenceToTblperiode(Migration):
+    """Add sequence for menyperiodeid in tblperiode."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260108_002_periode_sequence",
+            description="Add auto-increment sequence to tblperiode.menyperiodeid"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Create sequence starting from max id + 1
+            await conn.execute(text("""
+                DO $$
+                DECLARE
+                    max_id INTEGER;
+                BEGIN
+                    SELECT COALESCE(MAX(menyperiodeid), 0) + 1 INTO max_id FROM tblperiode;
+
+                    -- Create sequence if not exists
+                    IF NOT EXISTS (SELECT 1 FROM pg_sequences WHERE schemaname = 'public' AND sequencename = 'tblperiode_menyperiodeid_seq') THEN
+                        EXECUTE format('CREATE SEQUENCE tblperiode_menyperiodeid_seq START WITH %s', max_id);
+                    END IF;
+                END $$
+            """))
+
+            # Set column default to use sequence
+            await conn.execute(text("""
+                ALTER TABLE tblperiode
+                ALTER COLUMN menyperiodeid SET DEFAULT nextval('tblperiode_menyperiodeid_seq')
+            """))
+
+
+class AddSequenceToTblordrer(Migration):
+    """Add sequence for ordreid in tblordrer."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260108_003_ordrer_sequence",
+            description="Add auto-increment sequence to tblordrer.ordreid"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Create sequence starting from max id + 1
+            await conn.execute(text("""
+                DO $$
+                DECLARE
+                    max_id INTEGER;
+                BEGIN
+                    SELECT COALESCE(MAX(ordreid), 0) + 1 INTO max_id FROM tblordrer;
+
+                    -- Create sequence if not exists
+                    IF NOT EXISTS (SELECT 1 FROM pg_sequences WHERE schemaname = 'public' AND sequencename = 'tblordrer_ordreid_seq') THEN
+                        EXECUTE format('CREATE SEQUENCE tblordrer_ordreid_seq START WITH %s', max_id);
+                    END IF;
+                END $$
+            """))
+
+            # Set column default to use sequence
+            await conn.execute(text("""
+                ALTER TABLE tblordrer
+                ALTER COLUMN ordreid SET DEFAULT nextval('tblordrer_ordreid_seq')
+            """))
+
+
+class CreateCustomerAccessTokensTable(Migration):
+    """Create table for customer access tokens."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260108_003_customer_access_tokens",
+            description="Create customer_access_tokens table for self-service ordering"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Create customer_access_tokens table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS customer_access_tokens (
+                    id SERIAL PRIMARY KEY,
+                    kundeid BIGINT NOT NULL REFERENCES tblkunder(kundeid),
+                    token VARCHAR(255) UNIQUE NOT NULL,
+                    expires_at TIMESTAMP NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    created_by INTEGER REFERENCES users(id),
+                    used_count INTEGER DEFAULT 0,
+                    last_used_at TIMESTAMP,
+                    is_active BOOLEAN DEFAULT TRUE
+                )
+            """))
+
+            # Create indexes
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_customer_access_tokens_kundeid
+                ON customer_access_tokens(kundeid)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_customer_access_tokens_token
+                ON customer_access_tokens(token)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_customer_access_tokens_expires
+                ON customer_access_tokens(expires_at)
             """))
 
 

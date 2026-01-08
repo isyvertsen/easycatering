@@ -108,6 +108,74 @@ async def delete_meny_produkt(
     return {"message": "Association deleted successfully"}
 
 
+@router.put("/swap")
+async def swap_meny_produkt(
+    meny_id: int,
+    old_produkt_id: int,
+    new_produkt_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Swap a product in a menu with another product.
+
+    Removes the old product association and creates a new one.
+    """
+    # Verify the old association exists
+    old_query = select(MenyProdukt).where(
+        and_(
+            MenyProdukt.menyid == meny_id,
+            MenyProdukt.produktid == old_produkt_id
+        )
+    )
+    old_result = await db.execute(old_query)
+    old_assoc = old_result.scalar_one_or_none()
+
+    if not old_assoc:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Product {old_produkt_id} not found in menu {meny_id}"
+        )
+
+    # Verify the new product exists
+    new_produkt_query = select(Produkter).where(Produkter.produktid == new_produkt_id)
+    new_produkt_result = await db.execute(new_produkt_query)
+    new_produkt = new_produkt_result.scalar_one_or_none()
+
+    if not new_produkt:
+        raise HTTPException(status_code=404, detail="New product not found")
+
+    # Check if new association already exists
+    existing_query = select(MenyProdukt).where(
+        and_(
+            MenyProdukt.menyid == meny_id,
+            MenyProdukt.produktid == new_produkt_id
+        )
+    )
+    existing_result = await db.execute(existing_query)
+    if existing_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=400,
+            detail=f"Product {new_produkt_id} already exists in menu {meny_id}"
+        )
+
+    # Delete old association
+    await db.delete(old_assoc)
+
+    # Create new association
+    new_assoc = MenyProdukt(menyid=meny_id, produktid=new_produkt_id)
+    db.add(new_assoc)
+
+    await db.commit()
+
+    return {
+        "message": "Product swapped successfully",
+        "meny_id": meny_id,
+        "old_produkt_id": old_produkt_id,
+        "new_produkt_id": new_produkt_id,
+        "new_produkt_navn": new_produkt.produktnavn
+    }
+
+
 @router.post("/bulk", response_model=List[MenyProduktSchema])
 async def create_meny_produkter_bulk(
     meny_id: int,

@@ -9,8 +9,14 @@ class Menygruppe(Base):
     """Menu group table (tblmenygruppe)."""
     __tablename__ = "tblmenygruppe"
 
-    gruppeid = Column(Integer, primary_key=True, index=True)
+    menygruppeid = Column(Integer, primary_key=True, index=True)
     beskrivelse = Column(Text)
-    
+    kode = Column(Text)
+
+    # Alias for backward compatibility
+    @property
+    def gruppeid(self):
+        return self.menygruppeid
+
     # Relationships
     menyer = relationship("Meny", back_populates="gruppe")

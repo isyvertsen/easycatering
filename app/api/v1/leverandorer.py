@@ -1,8 +1,9 @@
 """Supplier API endpoints."""
-from typing import List, Optional
-from sqlalchemy import select, or_
+from typing import List, Optional, Literal
+from sqlalchemy import select, or_, func, asc, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 
 from app.api.deps import get_db, get_current_user
 from app.domain.entities.user import User
@@ -12,42 +13,82 @@ from app.schemas.leverandorer import Leverandorer, LeverandorerCreate, Leverando
 router = APIRouter()
 
 
-@router.get("/", response_model=List[Leverandorer])
+class LeverandorListResponse(BaseModel):
+    """Paginated response for leverandorer list."""
+    items: List[Leverandorer]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+@router.get("/", response_model=LeverandorListResponse)
 async def get_leverandorer(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     aktiv: Optional[bool] = Query(True, description="Filter by active status"),
     search: Optional[str] = Query(None, description="Search by name, email, or phone"),
-) -> List[Leverandorer]:
-    """Get all suppliers."""
+    sort_by: Optional[str] = Query(None, description="Field to sort by"),
+    sort_order: Literal["asc", "desc"] = Query("asc", description="Sort order"),
+) -> LeverandorListResponse:
+    """Get all suppliers with pagination, search and sorting."""
+    # Base query
     query = select(LeverandorerModel)
+    count_query = select(func.count()).select_from(LeverandorerModel)
 
     # Filter by utgatt status (inverted - utgatt=False means active)
     if aktiv is not None:
         if aktiv:
-            query = query.where(
-                or_(LeverandorerModel.utgatt == False, LeverandorerModel.utgatt == None)
-            )
+            filter_cond = or_(LeverandorerModel.utgatt == False, LeverandorerModel.utgatt == None)
         else:
-            query = query.where(LeverandorerModel.utgatt == True)
+            filter_cond = LeverandorerModel.utgatt == True
+        query = query.where(filter_cond)
+        count_query = count_query.where(filter_cond)
 
     # Search filter
     if search:
         search_term = f"%{search}%"
-        query = query.where(
-            or_(
-                LeverandorerModel.leverandornavn.ilike(search_term),
-                LeverandorerModel.e_post.ilike(search_term),
-                LeverandorerModel.telefonnummer.ilike(search_term),
-                LeverandorerModel.poststed.ilike(search_term),
-            )
+        search_cond = or_(
+            LeverandorerModel.leverandornavn.ilike(search_term),
+            LeverandorerModel.e_post.ilike(search_term),
+            LeverandorerModel.telefonnummer.ilike(search_term),
+            LeverandorerModel.poststed.ilike(search_term),
         )
+        query = query.where(search_cond)
+        count_query = count_query.where(search_cond)
 
-    query = query.order_by(LeverandorerModel.leverandornavn).offset(skip).limit(limit)
+    # Get total count
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+
+    # Sorting
+    sort_column = getattr(LeverandorerModel, sort_by, None) if sort_by else LeverandorerModel.leverandornavn
+    if sort_column is None:
+        sort_column = LeverandorerModel.leverandornavn
+
+    if sort_order == "desc":
+        query = query.order_by(desc(sort_column))
+    else:
+        query = query.order_by(asc(sort_column))
+
+    # Pagination
+    offset = (page - 1) * page_size
+    query = query.offset(offset).limit(page_size)
+
     result = await db.execute(query)
-    return result.scalars().all()
+    items = result.scalars().all()
+
+    total_pages = (total + page_size - 1) // page_size if total > 0 else 1
+
+    return LeverandorListResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages
+    )
 
 
 @router.get("/{leverandor_id}", response_model=Leverandorer)
@@ -118,11 +159,39 @@ async def delete_leverandor(
         select(LeverandorerModel).where(LeverandorerModel.leverandorid == leverandor_id)
     )
     leverandor = result.scalar_one_or_none()
-    
+
     if not leverandor:
         raise HTTPException(status_code=404, detail="Leverandør ikke funnet")
-    
+
     leverandor.utgatt = True
     await db.commit()
-    
+
     return {"message": "Leverandør deaktivert"}
+
+
+@router.post("/bulk-delete")
+async def bulk_delete_leverandorer(
+    ids: List[int],
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Bulk soft delete suppliers by setting utgatt=True."""
+    if not ids:
+        raise HTTPException(status_code=400, detail="Ingen IDer oppgitt")
+
+    result = await db.execute(
+        select(LeverandorerModel).where(LeverandorerModel.leverandorid.in_(ids))
+    )
+    leverandorer = result.scalars().all()
+
+    if not leverandorer:
+        raise HTTPException(status_code=404, detail="Ingen leverandører funnet")
+
+    count = 0
+    for leverandor in leverandorer:
+        leverandor.utgatt = True
+        count += 1
+
+    await db.commit()
+
+    return {"message": f"{count} leverandører deaktivert"}

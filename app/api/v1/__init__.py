@@ -7,7 +7,8 @@ from app.api.v1 import (
     menu_management, reports, matinfo, product_search, stats, combined_dishes,
     preparation_instructions, ean_management, label_templates, labels, feedback,
     graphql_endpoint,
-    report_generator, documentation, documentation_chat, bruker
+    report_generator, documentation, documentation_chat, bruker, periode_view,
+    bestilling_skjema, bestilling_registrer
 )
 from app.api.v1.endpoints import matinfo_sync, matinfo_tracker, ngdata_sync, vetduat_sync, hybrid_sync
 
@@ -16,6 +17,8 @@ api_router = APIRouter()
 # Include all routers (sorted alphabetically by prefix)
 api_router.include_router(ansatte.router, prefix="/ansatte", tags=["ansatte"])
 api_router.include_router(asko_ny.router, prefix="/asko-ny-produkter", tags=["asko-ny-produkter"])
+api_router.include_router(bestilling_skjema.router, prefix="/bestilling-skjema", tags=["bestilling-skjema"])
+api_router.include_router(bestilling_registrer.router, prefix="/bestilling-registrer", tags=["bestilling-registrer"])
 api_router.include_router(bruker.router, prefix="/brukere", tags=["brukere"])
 api_router.include_router(combined_dishes.router, prefix="/combined-dishes", tags=["combined-dishes"])
 api_router.include_router(documentation.router, prefix="/documentation", tags=["documentation"])
@@ -41,6 +44,7 @@ api_router.include_router(oppskrifter.router, prefix="/oppskrifter", tags=["opps
 api_router.include_router(ordrer.router, prefix="/ordrer", tags=["ordrer"])
 api_router.include_router(periode.router, prefix="/periode", tags=["periode"])
 api_router.include_router(periode_meny.router, prefix="/periode-meny", tags=["periode-meny"])
+api_router.include_router(periode_view.router, prefix="/periode-view", tags=["periode-view"])
 api_router.include_router(preparation_instructions.router, prefix="/preparation-instructions", tags=["preparation-instructions"])
 api_router.include_router(produkter.router, prefix="/produkter", tags=["produkter"])
 api_router.include_router(report_generator.router, prefix="/report-generator", tags=["report-generator"])

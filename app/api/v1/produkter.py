@@ -35,6 +35,7 @@ async def get_produkter(
     sok: Optional[str] = Query(None, description="Search in product name"),
     rett_komponent: Optional[bool] = Query(None, description="Filter by dish component status"),
     has_gtin: Optional[bool] = Query(None, description="Filter by GTIN presence: true=has GTIN, false=missing GTIN"),
+    leverandor_ids: Optional[str] = Query(None, description="Comma-separated list of leverandor IDs to filter by"),
     sort_by: Optional[str] = Query(None, description="Sort by field (produktid, produktnavn, pris, ean_kode)"),
     sort_order: Optional[str] = Query("asc", description="Sort order: asc or desc"),
 ) -> ProdukterListResponse:
@@ -54,6 +55,15 @@ async def get_produkter(
     # Filter by category
     if kategori:
         base_query = base_query.where(ProdukterModel.kategoriid == kategori)
+
+    # Filter by leverandor IDs (comma-separated list)
+    if leverandor_ids:
+        try:
+            ids = [int(id.strip()) for id in leverandor_ids.split(",") if id.strip()]
+            if ids:
+                base_query = base_query.where(ProdukterModel.levrandorid.in_(ids))
+        except ValueError:
+            pass  # Ignore invalid IDs
 
     # Filter by rett_komponent (dish component)
     if rett_komponent is not None:

@@ -150,3 +150,30 @@ async def delete_kundegruppe(
     await db.delete(gruppe)
     await db.commit()
     return {"message": "Kundegruppe slettet"}
+
+
+@router.post("/bulk-delete")
+async def bulk_delete_kundegrupper(
+    ids: List[int],
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Bulk delete customer groups."""
+    if not ids:
+        raise HTTPException(status_code=400, detail="Ingen IDer oppgitt")
+
+    result = await db.execute(
+        select(KundegruppeModel).where(KundegruppeModel.gruppeid.in_(ids))
+    )
+    grupper = result.scalars().all()
+
+    if not grupper:
+        raise HTTPException(status_code=404, detail="Ingen kundegrupper funnet")
+
+    count = len(grupper)
+    for gruppe in grupper:
+        await db.delete(gruppe)
+
+    await db.commit()
+
+    return {"message": f"{count} kundegrupper slettet"}

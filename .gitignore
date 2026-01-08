@@ -31,3 +31,4 @@ exportcatalog/
 .coverage
 htmlcov/
 .pytest_cache/
+dumps/

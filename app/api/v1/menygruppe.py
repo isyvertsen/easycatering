@@ -84,7 +84,7 @@ async def get_menygruppe(
 ) -> Menygruppe:
     """Get a menu group by ID."""
     result = await db.execute(
-        select(MenygruppeModel).where(MenygruppeModel.gruppeid == gruppe_id)
+        select(MenygruppeModel).where(MenygruppeModel.menygruppeid == gruppe_id)
     )
     gruppe = result.scalar_one_or_none()
 
@@ -117,7 +117,7 @@ async def update_menygruppe(
 ) -> Menygruppe:
     """Update a menu group."""
     result = await db.execute(
-        select(MenygruppeModel).where(MenygruppeModel.gruppeid == gruppe_id)
+        select(MenygruppeModel).where(MenygruppeModel.menygruppeid == gruppe_id)
     )
     gruppe = result.scalar_one_or_none()
 
@@ -141,7 +141,7 @@ async def delete_menygruppe(
 ) -> dict:
     """Delete a menu group."""
     result = await db.execute(
-        select(MenygruppeModel).where(MenygruppeModel.gruppeid == gruppe_id)
+        select(MenygruppeModel).where(MenygruppeModel.menygruppeid == gruppe_id)
     )
     gruppe = result.scalar_one_or_none()
 
@@ -164,7 +164,7 @@ async def bulk_delete_menygrupper(
         raise HTTPException(status_code=400, detail="Ingen IDer oppgitt")
 
     result = await db.execute(
-        select(MenygruppeModel).where(MenygruppeModel.gruppeid.in_(ids))
+        select(MenygruppeModel).where(MenygruppeModel.menygruppeid.in_(ids))
     )
     grupper = result.scalars().all()
 

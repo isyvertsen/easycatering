@@ -11,7 +11,7 @@ class Meny(Base):
 
     menyid = Column(Integer, primary_key=True, index=True)
     beskrivelse = Column(Text)
-    menygruppe = Column(Integer, ForeignKey("tblmenygruppe.gruppeid"))
+    menygruppe = Column(Integer, ForeignKey("tblmenygruppe.menygruppeid"))
     
     # Relationships
     gruppe = relationship("Menygruppe", back_populates="menyer")
