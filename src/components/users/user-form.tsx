@@ -191,9 +191,9 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
                 <FormLabel>Tilknyttet ansatt</FormLabel>
                 <Select
                   onValueChange={(value) =>
-                    field.onChange(value ? parseInt(value) : null)
+                    field.onChange(value === "__none__" ? null : parseInt(value))
                   }
-                  value={field.value?.toString() || ""}
+                  value={field.value?.toString() || "__none__"}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -201,7 +201,7 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Ingen tilknytning</SelectItem>
+                    <SelectItem value="__none__">Ingen tilknytning</SelectItem>
                     {sortedEmployees.map((emp) => (
                       <SelectItem
                         key={emp.ansattid}

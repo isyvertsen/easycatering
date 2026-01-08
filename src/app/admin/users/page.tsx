@@ -207,6 +207,7 @@ export default function AdminUsersPage() {
         loading={isLoading}
         idField="id"
         searchPlaceholder="Sok etter navn eller e-post..."
+        hideAddButton
       />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
