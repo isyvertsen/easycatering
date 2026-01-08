@@ -438,6 +438,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(CreatePreparationInstructionsTable())
         migration_runner.add_migration(CreateLabelTemplateTables())
         migration_runner.add_migration(AddPrinterConfigToLabelTemplates())
+        migration_runner.add_migration(AddAnsattIdAndRolleToUsers())
     return migration_runner
 
 
@@ -648,6 +649,40 @@ class AddPrinterConfigToLabelTemplates(Migration):
             await conn.execute(text("""
                 ALTER TABLE label_templates
                 ADD COLUMN IF NOT EXISTS printer_config JSONB
+            """))
+
+
+class AddAnsattIdAndRolleToUsers(Migration):
+    """Add ansattid foreign key and rolle column to users table."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260108_001_users_ansatt_rolle",
+            description="Add ansattid (FK to tblansatte) and rolle columns to users table"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Add ansattid column with foreign key to tblansatte
+            await conn.execute(text("""
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS ansattid BIGINT REFERENCES tblansatte(ansattid)
+            """))
+
+            # Add rolle column with default 'bruker'
+            await conn.execute(text("""
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS rolle VARCHAR(50) DEFAULT 'bruker'
+            """))
+
+            # Create index on ansattid for faster lookups
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_users_ansattid ON users(ansattid)
+            """))
+
+            # Create index on rolle for filtering
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_users_rolle ON users(rolle)
             """))
 
 

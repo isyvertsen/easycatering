@@ -3,11 +3,11 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     produkter, kunder, ordrer, ansatte, leverandorer, kategorier,
-    asko_ny, meny, oppskrifter, kunde_gruppe, periode, periode_meny, meny_produkt,
+    asko_ny, meny, menygruppe, oppskrifter, kunde_gruppe, periode, periode_meny, meny_produkt,
     menu_management, reports, matinfo, product_search, stats, combined_dishes,
     preparation_instructions, ean_management, label_templates, labels, feedback,
     graphql_endpoint,
-    report_generator, documentation, documentation_chat
+    report_generator, documentation, documentation_chat, bruker
 )
 from app.api.v1.endpoints import matinfo_sync, matinfo_tracker, ngdata_sync, vetduat_sync, hybrid_sync
 
@@ -16,6 +16,7 @@ api_router = APIRouter()
 # Include all routers (sorted alphabetically by prefix)
 api_router.include_router(ansatte.router, prefix="/ansatte", tags=["ansatte"])
 api_router.include_router(asko_ny.router, prefix="/asko-ny-produkter", tags=["asko-ny-produkter"])
+api_router.include_router(bruker.router, prefix="/brukere", tags=["brukere"])
 api_router.include_router(combined_dishes.router, prefix="/combined-dishes", tags=["combined-dishes"])
 api_router.include_router(documentation.router, prefix="/documentation", tags=["documentation"])
 api_router.include_router(documentation_chat.router, prefix="/documentation", tags=["documentation-chat"])
@@ -33,6 +34,7 @@ api_router.include_router(matinfo_sync.router, prefix="/matinfo", tags=["matinfo
 api_router.include_router(matinfo_tracker.router, prefix="/matinfo", tags=["matinfo-tracker"])
 api_router.include_router(menu_management.router, prefix="/menu-management", tags=["menu-management"])
 api_router.include_router(meny.router, prefix="/meny", tags=["meny"])
+api_router.include_router(menygruppe.router, prefix="/menygruppe", tags=["menygruppe"])
 api_router.include_router(meny_produkt.router, prefix="/meny-produkt", tags=["meny-produkt"])
 api_router.include_router(ngdata_sync.router, prefix="/ngdata", tags=["ngdata-sync"])
 api_router.include_router(oppskrifter.router, prefix="/oppskrifter", tags=["oppskrifter"])

@@ -1,5 +1,6 @@
 """Employee model (tblansatte)."""
 from sqlalchemy import Column, BigInteger, Boolean, Float, Text
+from sqlalchemy.orm import relationship
 
 from app.infrastructure.database.session import Base
 
@@ -27,3 +28,6 @@ class Ansatte(Base):
     ssma_timestamp = Column(Text)
     windowsbruker = Column(Text)
     defaultprinter = Column(Text)
+
+    # Relationship to User (one-to-one)
+    bruker = relationship("User", back_populates="ansatt", uselist=False)
