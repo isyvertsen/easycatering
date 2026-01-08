@@ -225,9 +225,9 @@ async def generer_kundelenke(
 
     # Send e-post til kunde hvis e-postadresse er registrert
     email_sent = False
-    if kunde.epost and email_service.is_configured():
+    if kunde.e_post and email_service.is_configured():
         email_sent = email_service.send_customer_order_link(
-            to_email=kunde.epost,
+            to_email=kunde.e_post,
             customer_name=kunde.kundenavn or "kunde",
             order_link=full_link,
             expires_at=expires_at,
@@ -240,7 +240,7 @@ async def generer_kundelenke(
         kundeid=request.kundeid,
         kundenavn=kunde.kundenavn,
         email_sent=email_sent,
-        email_address=kunde.epost if email_sent else None,
+        email_address=kunde.e_post if email_sent else None,
     )
 
 
