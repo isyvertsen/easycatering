@@ -28,7 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Check, ChevronsUpDown, Link2, Copy, CheckCircle2, Loader2, Trash2 } from 'lucide-react'
+import { Check, ChevronsUpDown, Link2, Copy, CheckCircle2, Loader2, Mail, MailX } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useKunderList } from '@/hooks/useKunder'
 import { useGenererKundelenke, useAktiveTokens } from '@/hooks/useBestillingRegistrer'
@@ -39,6 +39,8 @@ export default function SendLinkPage() {
   const [selectedKundeId, setSelectedKundeId] = useState<number | null>(null)
   const [expiresDays, setExpiresDays] = useState(7)
   const [generatedLink, setGeneratedLink] = useState<string | null>(null)
+  const [emailSent, setEmailSent] = useState(false)
+  const [emailAddress, setEmailAddress] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   // Hent kunder
@@ -73,7 +75,16 @@ export default function SendLinkPage() {
         expires_days: expiresDays,
       })
       setGeneratedLink(result.link)
-      toast.success('Lenke generert!')
+      setEmailSent(result.email_sent)
+      setEmailAddress(result.email_address)
+
+      if (result.email_sent) {
+        toast.success(`Lenke generert og sendt til ${result.email_address}`)
+      } else if (selectedKunde?.epost) {
+        toast.warning('Lenke generert, men e-post kunne ikke sendes')
+      } else {
+        toast.success('Lenke generert (kunden har ingen e-postadresse)')
+      }
     } catch (error) {
       toast.error('Kunne ikke generere lenke')
     }
@@ -148,6 +159,8 @@ export default function SendLinkPage() {
                           setSelectedKundeId(kunde.kundeid)
                           setKundeOpen(false)
                           setGeneratedLink(null)
+                          setEmailSent(false)
+                          setEmailAddress(null)
                         }}
                       >
                         <Check
@@ -222,24 +235,50 @@ export default function SendLinkPage() {
             </div>
 
             {generatedLink && (
-              <Alert className="bg-green-50 border-green-200">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertDescription className="flex items-center justify-between gap-4">
-                  <code className="text-sm break-all">{generatedLink}</code>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleCopyLink}
-                    className="shrink-0"
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                </AlertDescription>
-              </Alert>
+              <div className="space-y-3">
+                <Alert className="bg-green-50 border-green-200">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="flex items-center justify-between gap-4">
+                    <code className="text-sm break-all">{generatedLink}</code>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleCopyLink}
+                      className="shrink-0"
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+
+                {/* E-poststatus */}
+                {emailSent ? (
+                  <Alert className="bg-blue-50 border-blue-200">
+                    <Mail className="h-4 w-4 text-blue-600" />
+                    <AlertDescription className="text-blue-800">
+                      E-post sendt til <strong>{emailAddress}</strong>
+                    </AlertDescription>
+                  </Alert>
+                ) : selectedKunde?.epost ? (
+                  <Alert className="bg-yellow-50 border-yellow-200">
+                    <MailX className="h-4 w-4 text-yellow-600" />
+                    <AlertDescription className="text-yellow-800">
+                      E-post kunne ikke sendes. Kopier lenken og send manuelt til {selectedKunde.epost}
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Alert className="bg-gray-50 border-gray-200">
+                    <MailX className="h-4 w-4 text-gray-500" />
+                    <AlertDescription className="text-gray-600">
+                      Kunden har ingen e-postadresse registrert. Kopier lenken og del den manuelt.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>

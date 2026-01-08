@@ -34,6 +34,8 @@ export interface GenererLenkeResponse {
   expires_at: string
   kundeid: number
   kundenavn: string | null
+  email_sent: boolean
+  email_address: string | null
 }
 
 export interface ProduktForKunde {
