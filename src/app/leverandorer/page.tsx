@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { DataTable, DataTableColumn } from "@/components/crud/data-table"
-import { useLeverandorerList, useDeleteLeverandor } from "@/hooks/useLeverandorer"
+import { useLeverandorerList, useDeleteLeverandor, useBulkDeleteLeverandorer } from "@/hooks/useLeverandorer"
 import { Leverandor } from "@/types/models"
 import { Badge } from "@/components/ui/badge"
 import { CrudListParams } from "@/hooks/useCrud"
@@ -51,24 +51,32 @@ const columns: DataTableColumn<Leverandor>[] = [
 
 export default function LeverandorerPage() {
   const [params, setParams] = useState({
-    skip: 0,
-    limit: 20,
+    page: 1,
+    page_size: 20,
     aktiv: true,
   })
 
   const { data, isLoading } = useLeverandorerList(params)
   const deleteMutation = useDeleteLeverandor()
+  const bulkDeleteMutation = useBulkDeleteLeverandorer()
 
   const handleParamsChange = (newParams: CrudListParams) => {
     setParams(prev => ({
       ...prev,
-      skip: ((newParams.page ?? 1) - 1) * prev.limit,
-      limit: newParams.page_size || prev.limit,
+      page: newParams.page ?? prev.page,
+      page_size: newParams.page_size ?? prev.page_size,
+      search: newParams.search || undefined,
+      sort_by: newParams.sort_by,
+      sort_order: newParams.sort_order,
     }))
   }
 
-  const handleDelete = (id: number) => {
-    deleteMutation.mutate(id)
+  const handleDelete = (id: number | string) => {
+    deleteMutation.mutate(Number(id))
+  }
+
+  const handleBulkDelete = (ids: (number | string)[]) => {
+    bulkDeleteMutation.mutate(ids.map(Number))
   }
 
   return (
@@ -90,8 +98,12 @@ export default function LeverandorerPage() {
         totalPages={data?.total_pages || 1}
         onParamsChange={handleParamsChange}
         onDelete={handleDelete}
+        onBulkDelete={handleBulkDelete}
         loading={isLoading}
         idField="leverandorid"
+        searchPlaceholder="Søk etter leverandør..."
+        enableDelete={true}
+        enableBulkOperations={true}
       />
     </div>
   )

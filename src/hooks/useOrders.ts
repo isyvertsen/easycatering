@@ -122,12 +122,61 @@ export function useDeleteOrderLine(
   options?: UseMutationOptions<void, Error, { orderId: number; lineId: number }>
 ) {
   const queryClient = useQueryClient()
-  
+
   return useMutation<void, Error, { orderId: number; lineId: number }>({
     mutationFn: ({ orderId, lineId }) => ordersApi.deleteOrderLine(orderId, lineId),
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ['orders', variables.orderId, 'lines'] })
       queryClient.invalidateQueries({ queryKey: ['orders', variables.orderId] })
+      options?.onSuccess?.(data, variables, context)
+    },
+    ...options
+  })
+}
+
+// Duplicate order hook
+export function useDuplicateOrder(
+  options?: UseMutationOptions<Order, Error, number>
+) {
+  const queryClient = useQueryClient()
+
+  return useMutation<Order, Error, number>({
+    mutationFn: ordersApi.duplicate,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      options?.onSuccess?.(data, variables, context)
+    },
+    ...options
+  })
+}
+
+// Update order status hook
+export function useUpdateOrderStatus(
+  options?: UseMutationOptions<{ message: string }, Error, { id: number; statusId: number }>
+) {
+  const queryClient = useQueryClient()
+
+  return useMutation<{ message: string }, Error, { id: number; statusId: number }>({
+    mutationFn: ({ id, statusId }) => ordersApi.updateStatus(id, statusId),
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      queryClient.invalidateQueries({ queryKey: ['orders', variables.id] })
+      options?.onSuccess?.(data, variables, context)
+    },
+    ...options
+  })
+}
+
+// Batch update order status hook
+export function useBatchUpdateOrderStatus(
+  options?: UseMutationOptions<{ message: string; updated_count: number }, Error, { orderIds: number[]; statusId: number }>
+) {
+  const queryClient = useQueryClient()
+
+  return useMutation<{ message: string; updated_count: number }, Error, { orderIds: number[]; statusId: number }>({
+    mutationFn: ({ orderIds, statusId }) => ordersApi.batchUpdateStatus(orderIds, statusId),
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
       options?.onSuccess?.(data, variables, context)
     },
     ...options

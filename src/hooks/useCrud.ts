@@ -4,7 +4,7 @@ import { toast } from '@/hooks/use-toast'
 import { getCrudErrorMessage, getErrorMessage, logError } from '@/lib/error-utils'
 
 export interface CrudItem {
-  id: number
+  id: number | string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
 }

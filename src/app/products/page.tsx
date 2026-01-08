@@ -102,8 +102,8 @@ export default function ProductsPage() {
     }))
   }
 
-  const handleDelete = (id: number) => {
-    deleteMutation.mutate(id)
+  const handleDelete = (id: number | string) => {
+    deleteMutation.mutate(Number(id))
   }
 
   const handleSearch = (term: string) => {

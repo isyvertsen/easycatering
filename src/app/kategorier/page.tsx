@@ -1,55 +1,64 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import {
   useKategorierList,
   useCreateKategori,
   useUpdateKategori,
-  useDeleteKategori
+  useDeleteKategori,
+  useBulkDeleteKategorier
 } from "@/hooks/useKategorier"
-import { Kategori } from "@/lib/api/kategorier"
+import { Kategori, KategoriListParams } from "@/lib/api/kategorier"
 import { KategoriDialog, KategoriFormValues } from "@/components/kategorier/kategori-dialog"
-import { Button } from "@/components/ui/button"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { DataTable, DataTableColumn } from "@/components/crud/data-table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { CrudListParams } from "@/hooks/useCrud"
+
+const columns: DataTableColumn<Kategori>[] = [
+  {
+    key: "kategori",
+    label: "Navn",
+    sortable: true,
+  },
+  {
+    key: "beskrivelse",
+    label: "Beskrivelse",
+    sortable: true,
+    render: (value) => value || "-",
+  },
+]
 
 export default function KategorierPage() {
+  // Query parameters state
+  const [params, setParams] = useState<KategoriListParams>({
+    page: 1,
+    page_size: 20,
+  })
+
+  // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingKategori, setEditingKategori] = useState<Kategori | null>(null)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [deletingKategori, setDeletingKategori] = useState<Kategori | null>(null)
 
-  const { data, isLoading } = useKategorierList()
+  // Hooks
+  const { data, isLoading } = useKategorierList(params)
   const createMutation = useCreateKategori()
   const updateMutation = useUpdateKategori()
   const deleteMutation = useDeleteKategori()
+  const bulkDeleteMutation = useBulkDeleteKategorier()
 
   const kategorier = data?.items || []
+  const total = data?.total || 0
+  const page = data?.page || 1
+  const pageSize = data?.page_size || 20
+  const totalPages = data?.total_pages || 1
+
+  const handleParamsChange = useCallback((newParams: CrudListParams) => {
+    setParams(prev => ({
+      ...prev,
+      ...newParams,
+    }))
+  }, [])
 
   const handleCreate = () => {
     setEditingKategori(null)
@@ -61,9 +70,12 @@ export default function KategorierPage() {
     setDialogOpen(true)
   }
 
-  const handleDelete = (kategori: Kategori) => {
-    setDeletingKategori(kategori)
-    setDeleteDialogOpen(true)
+  const handleDelete = (id: number | string) => {
+    deleteMutation.mutate(Number(id))
+  }
+
+  const handleBulkDelete = (ids: (number | string)[]) => {
+    bulkDeleteMutation.mutate(ids.map(Number))
   }
 
   const handleSubmit = (data: KategoriFormValues) => {
@@ -86,18 +98,7 @@ export default function KategorierPage() {
     }
   }
 
-  const confirmDelete = () => {
-    if (deletingKategori) {
-      deleteMutation.mutate(deletingKategori.kategoriid, {
-        onSuccess: () => {
-          setDeleteDialogOpen(false)
-          setDeletingKategori(null)
-        },
-      })
-    }
-  }
-
-  if (isLoading) {
+  if (isLoading && kategorier.length === 0) {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
@@ -119,77 +120,42 @@ export default function KategorierPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Kategorier</h1>
-          <p className="text-muted-foreground">
-            Administrer produktkategorier
-          </p>
-        </div>
-        <Button onClick={handleCreate}>
-          <Plus className="mr-2 h-4 w-4" />
-          Ny kategori
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Kategorier</h1>
+        <p className="text-muted-foreground">
+          Administrer produktkategorier
+        </p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Alle kategorier</CardTitle>
           <CardDescription>
-            {kategorier.length} kategorier totalt
+            {total} kategorier totalt
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Navn</TableHead>
-                <TableHead>Beskrivelse</TableHead>
-                <TableHead className="w-[100px]">Handlinger</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {kategorier.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    Ingen kategorier funnet. Opprett en ny kategori for å komme i gang.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                kategorier.map((kategori) => (
-                  <TableRow key={kategori.kategoriid}>
-                    <TableCell className="font-medium">{kategori.kategori}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {kategori.beskrivelse || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Åpne meny</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(kategori)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Rediger
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => handleDelete(kategori)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Slett
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <DataTable
+            tableName="kategorier"
+            columns={columns}
+            data={kategorier}
+            total={total}
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            onParamsChange={handleParamsChange}
+            onDelete={handleDelete}
+            onBulkDelete={handleBulkDelete}
+            loading={isLoading}
+            idField="kategoriid"
+            searchPlaceholder="Søk etter kategori..."
+            enableEdit={true}
+            enableDelete={true}
+            enableBulkOperations={true}
+            onEdit={handleEdit}
+            onCreate={handleCreate}
+            createButtonLabel="Ny kategori"
+          />
         </CardContent>
       </Card>
 
@@ -200,27 +166,6 @@ export default function KategorierPage() {
         onSubmit={handleSubmit}
         loading={createMutation.isPending || updateMutation.isPending}
       />
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Er du sikker?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Dette vil slette kategorien &quot;{deletingKategori?.kategori}&quot;.
-              Handlingen kan ikke angres.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteMutation.isPending ? "Sletter..." : "Slett"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }

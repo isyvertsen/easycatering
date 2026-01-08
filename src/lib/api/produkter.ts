@@ -176,6 +176,13 @@ export const produkterApi = {
   },
 
   /**
+   * Delete produkt
+   */
+  async delete(id: number): Promise<void> {
+    await apiClient.delete(`/v1/produkter/${id}`)
+  },
+
+  /**
    * Search Matinfo products with fuzzy matching
    */
   async searchMatinfo(query: string, limit: number = 20): Promise<MatinfoSearchResult[]> {

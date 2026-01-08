@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -36,11 +37,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { 
-  Plus, 
-  Search, 
-  MoreHorizontal, 
-  Edit, 
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Edit,
   Trash2,
   ChevronLeft,
   ChevronRight,
@@ -48,7 +49,9 @@ import {
   ChevronsRight,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Download,
+  X
 } from "lucide-react"
 import { CrudItem, CrudListParams } from "@/hooks/useCrud"
 
@@ -68,14 +71,21 @@ interface DataTableProps<T extends CrudItem> {
   pageSize: number
   totalPages: number
   onParamsChange: (params: CrudListParams) => void
-  onDelete: (id: number) => void
+  onDelete: (id: number | string) => void
+  onBulkDelete?: (ids: (number | string)[]) => void
   loading?: boolean
   customActions?: (item: T) => React.ReactNode
-  idField?: string  // Allow custom ID field
-  searchPlaceholder?: string  // Custom search placeholder
-  hideAddButton?: boolean  // Hide the add button
-  enableEdit?: boolean  // Enable/disable edit button (default: true)
-  enableDelete?: boolean  // Enable/disable delete button (default: true)
+  idField?: string
+  searchPlaceholder?: string
+  hideAddButton?: boolean
+  enableEdit?: boolean
+  enableDelete?: boolean
+  enableBulkOperations?: boolean
+  bulkExportColumns?: { key: string; label: string }[]
+  // Optional callbacks for dialog-based editing (overrides routing)
+  onEdit?: (item: T) => void
+  onCreate?: () => void
+  createButtonLabel?: string
 }
 
 export function DataTable<T extends CrudItem>({
@@ -88,19 +98,27 @@ export function DataTable<T extends CrudItem>({
   totalPages,
   onParamsChange,
   onDelete,
+  onBulkDelete,
   loading = false,
   customActions,
   idField = 'id',
   enableEdit = true,
   enableDelete = true,
+  enableBulkOperations = true,
   searchPlaceholder = "Search...",
-  hideAddButton = false
+  hideAddButton = false,
+  bulkExportColumns,
+  onEdit,
+  onCreate,
+  createButtonLabel = "Add New"
 }: DataTableProps<T>) {
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [sortBy, setSortBy] = useState<string | undefined>()
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
-  const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [deleteId, setDeleteId] = useState<number | string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<number | string>>(new Set())
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false)
 
   const handleSearch = (value: string) => {
     setSearch(value)
@@ -136,13 +154,108 @@ export function DataTable<T extends CrudItem>({
 
   const getSortIcon = (column: string) => {
     if (sortBy !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />
-    return sortOrder === 'asc' 
+    return sortOrder === 'asc'
       ? <ArrowUp className="ml-2 h-4 w-4" />
       : <ArrowDown className="ml-2 h-4 w-4" />
   }
 
+  // Bulk selection handlers
+  const handleSelectAll = useCallback((checked: boolean) => {
+    if (checked) {
+      const allIds = data.map(item => item[idField] as number)
+      setSelectedIds(new Set(allIds))
+    } else {
+      setSelectedIds(new Set())
+    }
+  }, [data, idField])
+
+  const handleSelectRow = useCallback((id: number, checked: boolean) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev)
+      if (checked) {
+        newSet.add(id)
+      } else {
+        newSet.delete(id)
+      }
+      return newSet
+    })
+  }, [])
+
+  const isAllSelected = data.length > 0 && data.every(item => selectedIds.has(item[idField] as number))
+  const isSomeSelected = selectedIds.size > 0
+
+  // Bulk delete handler
+  const handleBulkDelete = () => {
+    if (onBulkDelete && selectedIds.size > 0) {
+      onBulkDelete(Array.from(selectedIds))
+      setSelectedIds(new Set())
+      setShowBulkDeleteDialog(false)
+    }
+  }
+
+  // Bulk export handler
+  const handleBulkExport = useCallback(() => {
+    const selectedItems = data.filter(item => selectedIds.has(item[idField] as number))
+    if (selectedItems.length === 0) return
+
+    const exportCols = bulkExportColumns || columns
+    const headers = exportCols.map(col => col.label)
+    const rows = selectedItems.map(item =>
+      exportCols.map(col => {
+        const value = item[col.key]
+        if (value === null || value === undefined) return ''
+        if (typeof value === 'boolean') return value ? 'Ja' : 'Nei'
+        return String(value)
+      })
+    )
+
+    const csv = [headers, ...rows].map(row => row.join(';')).join('\n')
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${tableName}-eksport-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [data, selectedIds, idField, columns, bulkExportColumns, tableName])
+
+  const clearSelection = () => {
+    setSelectedIds(new Set())
+  }
+
   return (
     <div className="space-y-4">
+      {/* Bulk Action Bar */}
+      {enableBulkOperations && isSomeSelected && (
+        <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">
+              {selectedIds.size} {selectedIds.size === 1 ? 'rad' : 'rader'} valgt
+            </span>
+            <Button variant="ghost" size="sm" onClick={clearSelection}>
+              <X className="h-4 w-4 mr-1" />
+              Fjern valg
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleBulkExport}>
+              <Download className="h-4 w-4 mr-2" />
+              Eksporter valgte
+            </Button>
+            {enableDelete && onBulkDelete && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowBulkDeleteDialog(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Slett valgte
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
@@ -157,12 +270,19 @@ export function DataTable<T extends CrudItem>({
           </div>
         </div>
         {!hideAddButton && (
-          <Button asChild>
-            <Link href={`/${tableName}/new`}>
+          onCreate ? (
+            <Button onClick={onCreate}>
               <Plus className="mr-2 h-4 w-4" />
-              Add New
-            </Link>
-          </Button>
+              {createButtonLabel}
+            </Button>
+          ) : (
+            <Button asChild>
+              <Link href={`/${tableName}/new`}>
+                <Plus className="mr-2 h-4 w-4" />
+                {createButtonLabel}
+              </Link>
+            </Button>
+          )
         )}
       </div>
 
@@ -171,6 +291,15 @@ export function DataTable<T extends CrudItem>({
         <Table>
           <TableHeader>
             <TableRow>
+              {enableBulkOperations && (
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Velg alle"
+                  />
+                </TableHead>
+              )}
               {columns.map((column) => (
                 <TableHead key={column.key}>
                   {column.sortable ? (
@@ -193,58 +322,71 @@ export function DataTable<T extends CrudItem>({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={columns.length + 1} className="text-center">
+                <TableCell colSpan={columns.length + (enableBulkOperations ? 2 : 1)} className="text-center">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length + 1} className="text-center">
+                <TableCell colSpan={columns.length + (enableBulkOperations ? 2 : 1)} className="text-center">
                   No results found
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((item) => (
-                <TableRow key={item[idField]}>
-                  {columns.map((column) => (
-                    <TableCell key={column.key}>
-                      {column.render 
-                        ? column.render(item[column.key], item)
-                        : item[column.key]
-                      }
+              data.map((item) => {
+                const itemId = item[idField] as number
+                const isSelected = selectedIds.has(itemId)
+                return (
+                  <TableRow key={itemId} className={isSelected ? "bg-primary/5" : undefined}>
+                    {enableBulkOperations && (
+                      <TableCell>
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={(checked) => handleSelectRow(itemId, checked as boolean)}
+                          aria-label={`Velg rad ${itemId}`}
+                        />
+                      </TableCell>
+                    )}
+                    {columns.map((column) => (
+                      <TableCell key={column.key}>
+                        {column.render
+                          ? column.render(item[column.key], item)
+                          : item[column.key]
+                        }
+                      </TableCell>
+                    ))}
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {enableEdit && (
+                            <DropdownMenuItem
+                              onClick={() => onEdit ? onEdit(item) : router.push(`/${tableName}/${itemId}`)}
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                          )}
+                          {enableDelete && (
+                            <DropdownMenuItem
+                              onClick={() => setDeleteId(itemId)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          )}
+                          {customActions && customActions(item)}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
-                  ))}
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {enableEdit && (
-                          <DropdownMenuItem
-                            onClick={() => router.push(`/${tableName}/${item[idField]}`)}
-                          >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                        )}
-                        {enableDelete && (
-                          <DropdownMenuItem
-                            onClick={() => setDeleteId(item[idField] as number)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        )}
-                        {customActions && customActions(item)}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>
@@ -320,6 +462,24 @@ export function DataTable<T extends CrudItem>({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-red-600">
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Slett {selectedIds.size} elementer?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Denne handlingen kan ikke angres. Dette vil permanent slette de valgte elementene.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600">
+              Slett {selectedIds.size} elementer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

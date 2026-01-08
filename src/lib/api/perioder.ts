@@ -14,7 +14,13 @@ export interface PeriodeWithMenus extends Periode {
   menus: Menu[]
 }
 
-export interface PeriodeListParams extends BaseListParams {}
+export interface PeriodeListParams extends BaseListParams {
+  page?: number
+  page_size?: number
+  search?: string
+  sort_by?: string
+  sort_order?: 'asc' | 'desc'
+}
 
 export type PeriodeListResponse = BaseListResponse<Periode>
 
@@ -39,6 +45,11 @@ export const perioderApi = {
 
   async getWithMenus(id: number): Promise<PeriodeWithMenus> {
     const response = await apiClient.get<PeriodeWithMenus>(`/v1/periode/${id}`)
+    return response.data
+  },
+
+  async bulkDelete(ids: number[]): Promise<{ message: string }> {
+    const response = await apiClient.post('/v1/periode/bulk-delete', ids)
     return response.data
   }
 }

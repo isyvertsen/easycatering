@@ -50,8 +50,8 @@ export function TemplateLibrary({ onSelect }: TemplateLibraryProps) {
     }
   })
 
-  const handleDelete = (id: number) => {
-    deleteMutation.mutate(id)
+  const handleDelete = (id: number | string) => {
+    deleteMutation.mutate(Number(id))
   }
 
   const handleDuplicate = async (template: LabelTemplate) => {

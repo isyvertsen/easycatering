@@ -44,7 +44,11 @@ export interface CombinedDish {
 }
 
 export interface CombinedDishListParams extends BaseListParams {
+  page?: number
+  page_size?: number
   search?: string
+  sort_by?: string
+  sort_order?: 'asc' | 'desc'
 }
 
 /**

@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCustomersList, useDeleteCustomer } from "@/hooks/useCustomers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import {
   Table,
   TableBody,
@@ -30,28 +32,92 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Phone, Mail, Globe, FileSpreadsheet } from "lucide-react"
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Phone,
+  Mail,
+  Globe,
+  FileSpreadsheet,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
+} from "lucide-react"
 import { reportsApi } from "@/lib/api/reports"
 import { useToast } from "@/hooks/use-toast"
+import { useUrlParams } from "@/hooks/useUrlParams"
+import { useState } from "react"
 
-export default function CustomersPage() {
+type CustomerListParams = {
+  page: number
+  page_size: number
+  search: string
+  aktiv: boolean
+  sort_by?: string
+  sort_order?: "asc" | "desc"
+}
+
+const defaultParams: CustomerListParams = {
+  page: 1,
+  page_size: 20,
+  search: "",
+  aktiv: true,
+}
+
+function CustomersPageContent() {
   const router = useRouter()
   const { toast } = useToast()
-  const [search, setSearch] = useState("")
   const [deleteId, setDeleteId] = useState<number | null>(null)
-  const [params, setParams] = useState({
-    skip: 0,
-    limit: 20,
-    search: "",
-  })
+  const { params, setParams } = useUrlParams<CustomerListParams>(defaultParams)
 
-  const { data, isLoading } = useCustomersList(params)
   const deleteMutation = useDeleteCustomer()
 
+  // Convert page/page_size to skip/limit for API
+  const apiParams = {
+    skip: ((params.page || 1) - 1) * (params.page_size || 20),
+    limit: params.page_size || 20,
+    search: params.search || undefined,
+    aktiv: params.aktiv,
+    sort_by: params.sort_by,
+    sort_order: params.sort_order,
+  }
+
+  const { data, isLoading } = useCustomersList(apiParams)
+
   const handleSearch = (value: string) => {
-    setSearch(value)
-    setParams(prev => ({ ...prev, search: value, skip: 0 }))
+    setParams({ search: value, page: 1 })
+  }
+
+  const handleSort = (column: string) => {
+    if (params.sort_by === column) {
+      const newOrder = params.sort_order === "asc" ? "desc" : "asc"
+      setParams({ sort_order: newOrder })
+    } else {
+      setParams({ sort_by: column, sort_order: "asc" })
+    }
+  }
+
+  const handlePageChange = (newPage: number) => {
+    setParams({ page: newPage })
+  }
+
+  const handlePageSizeChange = (newSize: string) => {
+    setParams({ page_size: parseInt(newSize), page: 1 })
   }
 
   const handleDelete = () => {
@@ -80,6 +146,18 @@ export default function CustomersPage() {
     }
   }
 
+  const getSortIcon = (column: string) => {
+    if (params.sort_by !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />
+    return params.sort_order === "asc"
+      ? <ArrowUp className="ml-2 h-4 w-4" />
+      : <ArrowDown className="ml-2 h-4 w-4" />
+  }
+
+  const total = data?.total || 0
+  const pageSize = params.page_size || 20
+  const currentPage = params.page || 1
+  const totalPages = Math.ceil(total / pageSize)
+
   return (
     <div className="space-y-6">
       <div>
@@ -89,13 +167,25 @@ export default function CustomersPage() {
         </p>
       </div>
 
+      {/* Filters */}
+      <div className="flex items-center gap-6 p-4 bg-muted/50 rounded-lg">
+        <div className="flex items-center gap-2">
+          <Switch
+            id="aktiv-filter"
+            checked={params.aktiv}
+            onCheckedChange={(checked) => setParams({ aktiv: checked, page: 1 })}
+          />
+          <Label htmlFor="aktiv-filter">Kun aktive kunder</Label>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
             <Input
               placeholder="Søk etter kunder..."
-              value={search}
+              value={params.search || ""}
               onChange={(e) => handleSearch(e.target.value)}
               className="pl-9 w-[300px]"
             />
@@ -119,7 +209,16 @@ export default function CustomersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Kundenavn</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort("kundenavn")}
+                  className="h-auto p-0 font-medium"
+                >
+                  Kundenavn
+                  {getSortIcon("kundenavn")}
+                </Button>
+              </TableHead>
               <TableHead>Avdeling</TableHead>
               <TableHead>Adresse</TableHead>
               <TableHead>Kontakt</TableHead>
@@ -142,7 +241,7 @@ export default function CustomersPage() {
               </TableRow>
             ) : (
               data?.items.map((customer) => (
-                <TableRow 
+                <TableRow
                   key={customer.kundeid}
                   className="cursor-pointer hover:bg-gray-50"
                   onClick={() => router.push(`/customers/${customer.kundeid}`)}
@@ -174,7 +273,7 @@ export default function CustomersPage() {
                       {customer.e_post && (
                         <div className="flex items-center text-sm">
                           <Mail className="mr-1 h-3 w-3" />
-                          <a href={`mailto:${customer.e_post}`} className="text-blue-600 hover:underline">
+                          <a href={`mailto:${customer.e_post}`} className="text-blue-600 hover:underline" onClick={(e) => e.stopPropagation()}>
                             {customer.e_post}
                           </a>
                         </div>
@@ -182,7 +281,7 @@ export default function CustomersPage() {
                       {customer.webside && (
                         <div className="flex items-center text-sm">
                           <Globe className="mr-1 h-3 w-3" />
-                          <a href={customer.webside} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                          <a href={customer.webside} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline" onClick={(e) => e.stopPropagation()}>
                             Nettside
                           </a>
                         </div>
@@ -225,6 +324,65 @@ export default function CustomersPage() {
         </Table>
       </div>
 
+      {/* Pagination */}
+      {total > 0 && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <p className="text-sm text-muted-foreground">
+              Viser {((currentPage - 1) * pageSize) + 1} til {Math.min(currentPage * pageSize, total)} av {total} kunder
+            </p>
+            <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+              <SelectTrigger className="w-[70px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm">
+              Side {currentPage} av {totalPages || 1}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage >= totalPages}
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -242,5 +400,13 @@ export default function CustomersPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  )
+}
+
+export default function CustomersPage() {
+  return (
+    <Suspense fallback={<div className="p-6">Laster...</div>}>
+      <CustomersPageContent />
+    </Suspense>
   )
 }

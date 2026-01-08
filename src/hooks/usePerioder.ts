@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Periode, PeriodeWithMenus, perioderApi, PeriodeCreateData, PeriodeListParams } from '@/lib/api/perioder'
 import { createEntityCrudHooks } from './useEntityCrud'
+import { toast } from '@/hooks/use-toast'
 
 // Lag type-safe hooks med konsistent error handling og toast-meldinger
 const hooks = createEntityCrudHooks<Periode, PeriodeCreateData, PeriodeListParams>({
@@ -20,6 +21,29 @@ export const usePeriode = hooks.useGet
 export const useCreatePeriode = hooks.useCreate
 export const useUpdatePeriode = hooks.useUpdate
 export const useDeletePeriode = hooks.useDelete
+
+// Bulk delete hook
+export function useBulkDeletePerioder() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (ids: number[]) => perioderApi.bulkDelete(ids),
+    onSuccess: (_, ids) => {
+      queryClient.invalidateQueries({ queryKey: ['perioder'] })
+      toast({
+        title: 'Slettet',
+        description: `${ids.length} perioder ble slettet`,
+      })
+    },
+    onError: () => {
+      toast({
+        title: 'Feil',
+        description: 'Kunne ikke slette perioder',
+        variant: 'destructive',
+      })
+    },
+  })
+}
 
 // Ekstra hooks for perioder
 export function useActivePerioder() {

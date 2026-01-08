@@ -248,6 +248,45 @@ export interface Leverandor {
   ssma_timestamp?: string
 }
 
+// User Types
+export interface AnsattInfo {
+  ansattid: number
+  fornavn?: string
+  etternavn?: string
+  e_postjobb?: string
+}
+
+export interface Bruker {
+  id: number
+  email: string
+  full_name: string
+  ansattid?: number
+  rolle: string
+  is_active: boolean
+  is_superuser: boolean
+  created_at?: string
+  updated_at?: string
+  ansatt?: AnsattInfo
+}
+
+export interface BrukerCreate {
+  email: string
+  full_name: string
+  password: string
+  ansattid?: number
+  rolle?: string
+  is_active?: boolean
+}
+
+export interface BrukerUpdate {
+  email?: string
+  full_name?: string
+  password?: string
+  ansattid?: number | null
+  rolle?: string
+  is_active?: boolean
+}
+
 // Common Types
 export interface Allergen {
   id: number

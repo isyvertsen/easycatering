@@ -194,3 +194,55 @@ export function useBulkUpdateGtin(
     },
   })
 }
+
+/**
+ * Hook for sletting av ett produkt
+ */
+export function useDeleteProdukt() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => produkterApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['produkter'] })
+      toast({
+        title: 'Produkt slettet',
+        description: 'Produktet ble slettet',
+      })
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Feil ved sletting',
+        description: error.message,
+        variant: 'destructive',
+      })
+    },
+  })
+}
+
+/**
+ * Hook for masse-sletting av produkter
+ */
+export function useBulkDeleteProdukter() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (ids: number[]) => {
+      await Promise.all(ids.map(id => produkterApi.delete(id)))
+    },
+    onSuccess: (_, ids) => {
+      queryClient.invalidateQueries({ queryKey: ['produkter'] })
+      toast({
+        title: 'Produkter slettet',
+        description: `${ids.length} produkter ble slettet`,
+      })
+    },
+    onError: () => {
+      toast({
+        title: 'Feil',
+        description: 'Kunne ikke slette produkter',
+        variant: 'destructive',
+      })
+    },
+  })
+}

@@ -61,7 +61,7 @@ export function ChatWindow({
 
   return (
     <Card className={cn(
-      'fixed bottom-24 right-6 z-[90] w-[380px] shadow-xl',
+      'fixed bottom-24 right-6 z-[90] w-[380px] shadow-xl print:hidden',
       'flex flex-col animate-in slide-in-from-bottom-5 fade-in duration-200'
     )}
     style={{ height: '500px' }}

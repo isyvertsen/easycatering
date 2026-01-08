@@ -1,8 +1,11 @@
 import { apiClient } from '@/lib/api-client'
 
 export interface BaseListParams {
-  skip?: number
-  limit?: number
+  page?: number
+  page_size?: number
+  search?: string
+  sort_by?: string
+  sort_order?: 'asc' | 'desc'
   [key: string]: any
 }
 

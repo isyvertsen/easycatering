@@ -4,6 +4,7 @@ import { createCrudApi, BaseListParams, BaseListResponse } from './base'
 export interface EmployeeListParams extends BaseListParams {
   aktiv?: boolean
   avdeling?: string
+  search?: string
 }
 
 export type EmployeeListResponse = BaseListResponse<Employee>

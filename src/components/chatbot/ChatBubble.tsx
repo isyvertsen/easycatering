@@ -15,7 +15,7 @@ export function ChatBubble({ isOpen, onClick }: ChatBubbleProps) {
       onClick={onClick}
       size="icon"
       className={cn(
-        'fixed bottom-6 right-6 z-[90] h-14 w-14 rounded-full shadow-lg',
+        'fixed bottom-6 right-6 z-[90] h-14 w-14 rounded-full shadow-lg print:hidden',
         'transition-all duration-200 hover:scale-105',
         isOpen && 'rotate-90'
       )}

@@ -27,7 +27,14 @@ import {
   Star,
   FolderTree,
   Factory,
-  Clock
+  Clock,
+  Beaker,
+  Activity,
+  TreePine,
+  ClipboardList,
+  Printer,
+  PenLine,
+  Link2
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -67,7 +74,14 @@ const iconMap: Record<string, any> = {
   BookOpen,
   FolderTree,
   Factory,
-  Clock
+  Clock,
+  Beaker,
+  Activity,
+  TreePine,
+  ClipboardList,
+  Printer,
+  PenLine,
+  Link2
 }
 
 // Reverse map to get icon name from component
@@ -88,8 +102,9 @@ const navigationGroups = [
     items: [
       { name: "Menyer", href: "/menus", icon: CalendarDays },
       { name: "Perioder", href: "/perioder", icon: Clock },
+      { name: "Periodevisning", href: "/perioder/view", icon: TreePine },
       { name: "Oppskrifter", href: "/recipes", icon: ChefHat },
-      { name: "Retter", href: "/dishes/create", icon: UtensilsCrossed },
+      { name: "Retter", href: "/dishes", icon: UtensilsCrossed },
     ]
   },
   {
@@ -99,15 +114,25 @@ const navigationGroups = [
       { name: "Kategorier", href: "/kategorier", icon: FolderTree },
       { name: "Leverandører", href: "/leverandorer", icon: Factory },
       { name: "EAN-kodestyring", href: "/products/ean-management", icon: Barcode },
+      { name: "Matinfo", href: "/matinfo", icon: Beaker },
     ]
   },
   {
     name: "Ordre & Levering",
     items: [
       { name: "Kunder", href: "/customers", icon: Users },
+      { name: "Kundegrupper", href: "/kundegrupper", icon: Users },
       { name: "Ordrer", href: "/orders", icon: ShoppingCart },
       { name: "Leveranser", href: "/deliveries", icon: Truck },
       { name: "Etiketter", href: "/labels", icon: Tag },
+    ]
+  },
+  {
+    name: "Bestilling",
+    items: [
+      { name: "Bestillingsskjema", href: "/bestilling/skjema", icon: ClipboardList },
+      { name: "Registrer Bestilling", href: "/bestilling/registrer", icon: PenLine },
+      { name: "Send Kundelenke", href: "/bestilling/send-link", icon: Link2 },
     ]
   },
   {
@@ -117,6 +142,7 @@ const navigationGroups = [
       { name: "Brukere", href: "/admin/users", icon: UserCheck },
       { name: "Rapporter", href: "/reports", icon: BarChart3 },
       { name: "Dokumentasjon", href: "/admin/documentation", icon: BookOpen },
+      { name: "Systemstatus", href: "/admin/system", icon: Activity },
       { name: "Innstillinger", href: "/settings", icon: Settings },
     ]
   }

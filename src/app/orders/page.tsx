@@ -3,29 +3,22 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { DataTable, DataTableColumn } from "@/components/crud/data-table"
-import { useOrdersList, useCancelOrder } from "@/hooks/useOrders"
+import { useOrdersList, useBatchUpdateOrderStatus } from "@/hooks/useOrders"
 import { useKundegrupper } from "@/hooks/useKundegruppe"
 import { Order } from "@/types/models"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { Plus, Filter, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Plus, Filter, ArrowUp, ArrowDown, CheckCircle, PlayCircle, Package, Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 
 const getOrderStatus = (order: Order) => {
   if (order.kansellertdato) {
@@ -49,69 +42,23 @@ const getOrderStatus = (order: Order) => {
   return { label: "Ukjent", variant: "outline" as const }
 }
 
-const columns: DataTableColumn<Order>[] = [
-  {
-    key: "ordreid",
-    label: "Ordrenr",
-    sortable: true,
-  },
-  {
-    key: "kundenavn",
-    label: "Kunde",
-    sortable: true,
-  },
-  {
-    key: "kundegruppenavn",
-    label: "Kundegruppe",
-    sortable: false,
-  },
-  {
-    key: "ordredato",
-    label: "Ordredato",
-    sortable: true,
-    render: (value) => value ? format(new Date(value), 'dd.MM.yyyy') : "-"
-  },
-  {
-    key: "leveringsdato",
-    label: "Levering",
-    sortable: true,
-    render: (value) => value ? format(new Date(value), 'dd.MM.yyyy') : "-"
-  },
-  {
-    key: "ordrestatusid",
-    label: "Status",
-    render: (value, item) => {
-      const status = getOrderStatus(item)
-      return <Badge variant={status.variant}>{status.label}</Badge>
-    }
-  },
-  {
-    key: "betalingsmate",
-    label: "Betaling",
-    render: (value) => {
-      switch (value) {
-        case 1: return "Faktura"
-        case 2: return "Kontant"
-        case 3: return "Kort"
-        default: return "-"
-      }
-    }
-  },
-]
-
 export default function OrdersPage() {
   const router = useRouter()
+  const { toast } = useToast()
+  const [searchTerm, setSearchTerm] = useState("")
   const [params, setParams] = useState({
     skip: 0,
     limit: 20,
+    search: undefined as string | undefined,
     sort_by: 'leveringsdato' as 'leveringsdato' | 'ordredato',
     sort_order: 'asc' as 'asc' | 'desc',
     kundegruppe_ids: [] as number[],
   })
+  const [selectedOrders, setSelectedOrders] = useState<number[]>([])
 
   const { data, isLoading } = useOrdersList(params)
   const { data: kundegrupper } = useKundegrupper()
-  const cancelMutation = useCancelOrder()
+  const batchStatusMutation = useBatchUpdateOrderStatus()
 
   const handleParamsChange = (newParams: { page?: number; page_size?: number; search?: string }) => {
     setParams(prev => ({
@@ -121,9 +68,13 @@ export default function OrdersPage() {
     }))
   }
 
-  const handleDelete = (id: number) => {
-    // In the order context, "delete" means cancel
-    cancelMutation.mutate(id)
+  const handleSearch = (value: string) => {
+    setSearchTerm(value)
+    setParams(prev => ({
+      ...prev,
+      search: value || undefined,
+      skip: 0, // Reset to first page when searching
+    }))
   }
 
   const handleKundegruppeToggle = (gruppeid: number) => {
@@ -153,6 +104,48 @@ export default function OrdersPage() {
     }))
   }
 
+  const toggleOrderSelection = (orderId: number) => {
+    setSelectedOrders(prev =>
+      prev.includes(orderId)
+        ? prev.filter(id => id !== orderId)
+        : [...prev, orderId]
+    )
+  }
+
+  const toggleAllOrders = () => {
+    const nonCancelledOrders = data?.items.filter(o => !o.kansellertdato).map(o => o.ordreid) || []
+    if (selectedOrders.length === nonCancelledOrders.length) {
+      setSelectedOrders([])
+    } else {
+      setSelectedOrders(nonCancelledOrders)
+    }
+  }
+
+  const handleBatchStatusUpdate = async (statusId: number) => {
+    if (selectedOrders.length === 0) return
+
+    try {
+      const result = await batchStatusMutation.mutateAsync({
+        orderIds: selectedOrders,
+        statusId
+      })
+      toast({
+        title: "Ordrer oppdatert",
+        description: result.message,
+      })
+      setSelectedOrders([])
+    } catch (error) {
+      toast({
+        title: "Feil",
+        description: "Kunne ikke oppdatere ordrer",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const orders = data?.items || []
+  const nonCancelledOrders = orders.filter(o => !o.kansellertdato)
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -170,8 +163,19 @@ export default function OrdersPage() {
         </Button>
       </div>
 
-      {/* Filters and sorting */}
-      <div className="flex gap-4 items-center">
+      {/* Search and filters */}
+      <div className="flex gap-4 items-center flex-wrap">
+        {/* Search */}
+        <div className="relative w-[300px]">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Søk etter kunde eller ordrenummer..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
         {/* Customer group filter */}
         <Popover>
           <PopoverTrigger asChild>
@@ -196,7 +200,7 @@ export default function OrdersPage() {
                 )}
               </div>
               <div className="space-y-2">
-                {kundegrupper?.map(gruppe => (
+                {kundegrupper?.items?.map(gruppe => (
                   <div key={gruppe.gruppeid} className="flex items-center space-x-2">
                     <Checkbox
                       id={`gruppe-${gruppe.gruppeid}`}
@@ -242,21 +246,140 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <DataTable<Order>
-        tableName="orders"
-        columns={columns}
-        data={data?.items || []}
-        total={data?.total || 0}
-        page={data?.page || 1}
-        pageSize={data?.page_size || 20}
-        totalPages={data?.total_pages || 1}
-        onParamsChange={handleParamsChange}
-        onDelete={handleDelete}
-        loading={isLoading}
-        idField="ordreid"
-        searchPlaceholder="Søk etter ordrenr eller kunde..."
-        hideAddButton={true}
-      />
+      {/* Batch Actions Bar */}
+      {selectedOrders.length > 0 && (
+        <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+          <span className="text-sm font-medium">
+            {selectedOrders.length} ordre{selectedOrders.length > 1 ? 'r' : ''} valgt
+          </span>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleBatchStatusUpdate(2)}
+              disabled={batchStatusMutation.isPending}
+            >
+              <PlayCircle className="mr-1 h-4 w-4" />
+              Under behandling
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleBatchStatusUpdate(3)}
+              disabled={batchStatusMutation.isPending}
+            >
+              <CheckCircle className="mr-1 h-4 w-4" />
+              Godkjenn
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleBatchStatusUpdate(4)}
+              disabled={batchStatusMutation.isPending}
+            >
+              <Package className="mr-1 h-4 w-4" />
+              Marker levert
+            </Button>
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setSelectedOrders([])}
+          >
+            Fjern valg
+          </Button>
+        </div>
+      )}
+
+      {/* Order selection table */}
+      <div className="rounded-md border">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="p-3 w-12">
+                <Checkbox
+                  checked={selectedOrders.length === nonCancelledOrders.length && nonCancelledOrders.length > 0}
+                  onCheckedChange={toggleAllOrders}
+                />
+              </th>
+              <th className="p-3 text-left font-medium">Ordrenr</th>
+              <th className="p-3 text-left font-medium">Kunde</th>
+              <th className="p-3 text-left font-medium">Kundegruppe</th>
+              <th className="p-3 text-left font-medium">Ordredato</th>
+              <th className="p-3 text-left font-medium">Levering</th>
+              <th className="p-3 text-left font-medium">Status</th>
+              <th className="p-3 text-left font-medium">Betaling</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.map((order) => {
+              const status = getOrderStatus(order)
+              const isCancelled = !!order.kansellertdato
+              return (
+                <tr
+                  key={order.ordreid}
+                  className={`border-b hover:bg-muted/50 cursor-pointer ${selectedOrders.includes(order.ordreid) ? 'bg-muted' : ''}`}
+                  onClick={() => router.push(`/orders/${order.ordreid}`)}
+                >
+                  <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                    {!isCancelled && (
+                      <Checkbox
+                        checked={selectedOrders.includes(order.ordreid)}
+                        onCheckedChange={() => toggleOrderSelection(order.ordreid)}
+                      />
+                    )}
+                  </td>
+                  <td className="p-3 font-medium">{order.ordreid}</td>
+                  <td className="p-3">{order.kundenavn || '-'}</td>
+                  <td className="p-3">{order.kundegruppenavn || '-'}</td>
+                  <td className="p-3">{order.ordredato ? format(new Date(order.ordredato), 'dd.MM.yyyy') : '-'}</td>
+                  <td className="p-3">{order.leveringsdato ? format(new Date(order.leveringsdato), 'dd.MM.yyyy') : '-'}</td>
+                  <td className="p-3">
+                    <Badge variant={status.variant}>{status.label}</Badge>
+                  </td>
+                  <td className="p-3">
+                    {order.betalingsmate === 1 ? 'Faktura' : order.betalingsmate === 2 ? 'Kontant' : order.betalingsmate === 3 ? 'Kort' : '-'}
+                  </td>
+                </tr>
+              )
+            })}
+            {orders.length === 0 && (
+              <tr>
+                <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                  Ingen ordrer funnet
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {data && data.total_pages > 1 && (
+        <div className="flex items-center justify-between px-2">
+          <div className="text-sm text-muted-foreground">
+            Viser {((data.page - 1) * data.page_size) + 1} - {Math.min(data.page * data.page_size, data.total)} av {data.total} ordrer
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleParamsChange({ page: data.page - 1 })}
+              disabled={data.page <= 1}
+            >
+              Forrige
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleParamsChange({ page: data.page + 1 })}
+              disabled={data.page >= data.total_pages}
+            >
+              Neste
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

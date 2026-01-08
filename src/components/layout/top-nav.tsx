@@ -25,7 +25,14 @@ import {
   Clock,
   ChevronDown,
   MessageSquare,
-  User
+  User,
+  Database,
+  Activity,
+  TreePine,
+  Printer,
+  ClipboardList,
+  PenLine,
+  Link2
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -67,8 +74,9 @@ const navigationGroups: NavGroup[] = [
     items: [
       { name: "Menyer", href: "/menus", icon: CalendarDays },
       { name: "Perioder", href: "/perioder", icon: Clock },
+      { name: "Periodevisning", href: "/perioder/view", icon: TreePine },
       { name: "Oppskrifter", href: "/recipes", icon: ChefHat },
-      { name: "Retter", href: "/dishes/create", icon: UtensilsCrossed },
+      { name: "Retter", href: "/dishes", icon: UtensilsCrossed },
     ]
   },
   {
@@ -79,6 +87,7 @@ const navigationGroups: NavGroup[] = [
       { name: "Kategorier", href: "/kategorier", icon: FolderTree },
       { name: "Leverandører", href: "/leverandorer", icon: Factory },
       { name: "EAN-kodestyring", href: "/products/ean-management", icon: Barcode },
+      { name: "Matinfo", href: "/matinfo", icon: Database },
     ]
   },
   {
@@ -86,9 +95,19 @@ const navigationGroups: NavGroup[] = [
     icon: ShoppingCart,
     items: [
       { name: "Kunder", href: "/customers", icon: Users },
+      { name: "Kundegrupper", href: "/kundegrupper", icon: Users },
       { name: "Ordrer", href: "/orders", icon: ShoppingCart },
       { name: "Leveranser", href: "/deliveries", icon: Truck },
       { name: "Etiketter", href: "/labels", icon: Tag },
+    ]
+  },
+  {
+    name: "Utskrifter",
+    icon: Printer,
+    items: [
+      { name: "Bestillingsskjema", href: "/bestilling/skjema", icon: ClipboardList },
+      { name: "Registrer Bestilling", href: "/bestilling/registrer", icon: PenLine },
+      { name: "Send Kundelenke", href: "/bestilling/send-link", icon: Link2 },
     ]
   },
   {
@@ -99,6 +118,7 @@ const navigationGroups: NavGroup[] = [
       { name: "Brukere", href: "/admin/users", icon: UserCheck },
       { name: "Rapporter", href: "/reports", icon: BarChart3 },
       { name: "Dokumentasjon", href: "/admin/documentation", icon: BookOpen },
+      { name: "Systemstatus", href: "/admin/system", icon: Activity },
       { name: "Innstillinger", href: "/settings", icon: Settings },
     ]
   }
@@ -218,7 +238,7 @@ export function TopNav() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center justify-between px-4 max-w-7xl mx-auto">
+        <div className="flex h-14 items-center justify-between px-4 max-w-7xl mx-auto">
           {/* Left: Mobile menu + Logo */}
           <div className="flex items-center gap-2">
             <MobileNav />

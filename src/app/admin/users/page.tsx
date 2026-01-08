@@ -1,213 +1,257 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, XCircle, Shield, ShieldOff } from 'lucide-react'
-import { apiClient } from '@/lib/api-client'
-
-interface User {
-  id: number
-  email: string
-  full_name: string
-  is_active: boolean
-  is_superuser: boolean
-  created_at: string
-}
+import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { DataTable, DataTableColumn } from '@/components/crud/data-table'
+import { UserForm, BrukerFormValues } from '@/components/users/user-form'
+import {
+  useBrukereList,
+  useCreateBruker,
+  useUpdateBruker,
+  useDeleteBruker,
+  useActivateBruker,
+} from '@/hooks/useBrukere'
+import { Bruker } from '@/types/models'
+import { BrukerListParams } from '@/lib/api/brukere'
+import { Plus, UserCheck } from 'lucide-react'
 
 export default function AdminUsersPage() {
-  const { data: session } = useSession()
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [params, setParams] = useState<BrukerListParams>({
+    page: 1,
+    page_size: 20,
+    sort_by: 'id',
+    sort_order: 'desc',
+  })
 
-  const fetchUsers = async () => {
-    try {
-      const response = await apiClient.get('/admin/users')
-      setUsers(response.data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Feil ved henting av brukere')
-    } finally {
-      setLoading(false)
+  const { data, isLoading } = useBrukereList(params)
+  const createMutation = useCreateBruker()
+  const updateMutation = useUpdateBruker()
+  const deleteMutation = useDeleteBruker()
+  const activateMutation = useActivateBruker()
+
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingBruker, setEditingBruker] = useState<Bruker | undefined>()
+  const [deleteConfirm, setDeleteConfirm] = useState<Bruker | null>(null)
+
+  const columns: DataTableColumn<Bruker>[] = [
+    {
+      key: 'full_name',
+      label: 'Navn',
+      sortable: true,
+    },
+    {
+      key: 'email',
+      label: 'E-post',
+      sortable: true,
+      render: (value) => (
+        <a href={`mailto:${value}`} className="text-blue-600 hover:underline">
+          {value}
+        </a>
+      ),
+    },
+    {
+      key: 'ansatt',
+      label: 'Tilknyttet ansatt',
+      render: (value, row) => {
+        if (row.ansatt) {
+          return `${row.ansatt.fornavn || ''} ${row.ansatt.etternavn || ''}`.trim() || '-'
+        }
+        return '-'
+      },
+    },
+    {
+      key: 'rolle',
+      label: 'Rolle',
+      sortable: true,
+      render: (value) => (
+        <Badge variant={value === 'admin' ? 'default' : 'secondary'}>
+          {value === 'admin' ? 'Administrator' : 'Bruker'}
+        </Badge>
+      ),
+    },
+    {
+      key: 'is_active',
+      label: 'Status',
+      render: (value, row) => {
+        if (!value) {
+          return (
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                Inaktiv
+              </Badge>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  activateMutation.mutate(row.id)
+                }}
+                className="h-6 px-2"
+              >
+                <UserCheck className="h-3 w-3 mr-1" />
+                Aktiver
+              </Button>
+            </div>
+          )
+        }
+        return (
+          <Badge variant="default" className="bg-green-600">
+            Aktiv
+          </Badge>
+        )
+      },
+    },
+    {
+      key: 'created_at',
+      label: 'Opprettet',
+      sortable: true,
+      render: (value) =>
+        value ? new Date(value).toLocaleDateString('no-NO') : '-',
+    },
+  ]
+
+  const handleParamsChange = (newParams: Partial<BrukerListParams>) => {
+    setParams((prev) => ({ ...prev, ...newParams }))
+  }
+
+  const handleCreate = () => {
+    setEditingBruker(undefined)
+    setIsFormOpen(true)
+  }
+
+  const handleEdit = (bruker: Bruker) => {
+    setEditingBruker(bruker)
+    setIsFormOpen(true)
+  }
+
+  const handleDelete = (id: string | number) => {
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id
+    const bruker = data?.items.find((b) => b.id === numericId)
+    if (bruker) {
+      setDeleteConfirm(bruker)
     }
   }
 
-  useEffect(() => {
-    if (session?.accessToken) {
-      fetchUsers()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.accessToken])
-
-  const activateUser = async (userId: number) => {
-    try {
-      await apiClient.patch(`/admin/users/${userId}/activate`)
-      fetchUsers()
-    } catch (err) {
-      alert('Feil ved aktivering av bruker')
+  const confirmDelete = () => {
+    if (deleteConfirm) {
+      deleteMutation.mutate(deleteConfirm.id)
+      setDeleteConfirm(null)
     }
   }
 
-  const deactivateUser = async (userId: number) => {
-    if (!confirm('Er du sikker på at du vil deaktivere denne brukeren?')) {
-      return
+  const handleFormSubmit = (formData: BrukerFormValues) => {
+    // Convert null to undefined for ansattid to match API types
+    const data = {
+      ...formData,
+      ansattid: formData.ansattid ?? undefined,
     }
 
-    try {
-      await apiClient.patch(`/admin/users/${userId}/deactivate`)
-      fetchUsers()
-    } catch (err) {
-      alert('Feil ved deaktivering av bruker')
+    if (editingBruker) {
+      updateMutation.mutate(
+        { id: editingBruker.id, data },
+        {
+          onSuccess: () => setIsFormOpen(false),
+        }
+      )
+    } else {
+      createMutation.mutate(data as any, {
+        onSuccess: () => setIsFormOpen(false),
+      })
     }
-  }
-
-  const makeAdmin = async (userId: number) => {
-    if (!confirm('Er du sikker på at du vil gi denne brukeren administratorrettigheter?')) {
-      return
-    }
-
-    try {
-      await apiClient.patch(`/admin/users/${userId}/make-admin`)
-      fetchUsers()
-    } catch (err) {
-      alert('Feil ved tildeling av administratorrettigheter')
-    }
-  }
-
-  const removeAdmin = async (userId: number) => {
-    if (!confirm('Er du sikker på at du vil fjerne administratorrettigheter fra denne brukeren?')) {
-      return
-    }
-
-    try {
-      await apiClient.patch(`/admin/users/${userId}/remove-admin`)
-      fetchUsers()
-    } catch (err) {
-      alert('Feil ved fjerning av administratorrettigheter')
-    }
-  }
-
-  if (loading) {
-    return <div className="p-6">Laster...</div>
-  }
-
-  if (error) {
-    return <div className="p-6 text-red-600">{error}</div>
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Brukeradministrasjon</h1>
-
-      <div className="bg-card rounded-lg shadow overflow-hidden border">
-        <table className="min-w-full divide-y divide-border">
-          <thead className="bg-muted">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Navn
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                E-post
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Rolle
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Opprettet
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Handlinger
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-card divide-y divide-border">
-            {users.map((user) => (
-              <tr key={user.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium">{user.full_name}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-muted-foreground">{user.email}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {user.is_active ? (
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                      Aktiv
-                    </span>
-                  ) : (
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
-                      Venter godkjenning
-                    </span>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {user.is_superuser ? (
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                      Administrator
-                    </span>
-                  ) : (
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-muted text-muted-foreground">
-                      Bruker
-                    </span>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                  {new Date(user.created_at).toLocaleDateString('no-NO')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                  {!user.is_active && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => activateUser(user.id)}
-                      className="text-green-600 hover:text-green-700"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-1" />
-                      Aktiver
-                    </Button>
-                  )}
-                  {user.is_active && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => deactivateUser(user.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <XCircle className="h-4 w-4 mr-1" />
-                      Deaktiver
-                    </Button>
-                  )}
-                  {!user.is_superuser && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => makeAdmin(user.id)}
-                      className="text-blue-600 hover:text-blue-700"
-                    >
-                      <Shield className="h-4 w-4 mr-1" />
-                      Gjør admin
-                    </Button>
-                  )}
-                  {user.is_superuser && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => removeAdmin(user.id)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <ShieldOff className="h-4 w-4 mr-1" />
-                      Fjern admin
-                    </Button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Brukeradministrasjon</h1>
+          <p className="text-muted-foreground mt-1">
+            Administrer brukere og tilganger i systemet
+          </p>
+        </div>
+        <Button onClick={handleCreate}>
+          <Plus className="h-4 w-4 mr-2" />
+          Ny bruker
+        </Button>
       </div>
+
+      <DataTable<Bruker>
+        tableName="admin/brukere"
+        columns={columns}
+        data={data?.items || []}
+        total={data?.total || 0}
+        page={params.page || 1}
+        pageSize={params.page_size || 20}
+        totalPages={data?.total_pages || 1}
+        onParamsChange={handleParamsChange}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        loading={isLoading}
+        idField="id"
+        searchPlaceholder="Sok etter navn eller e-post..."
+        hideAddButton
+      />
+
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingBruker ? 'Rediger bruker' : 'Opprett ny bruker'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingBruker
+                ? 'Oppdater informasjon om brukeren'
+                : 'Fyll inn informasjon for den nye brukeren'}
+            </DialogDescription>
+          </DialogHeader>
+          <UserForm
+            bruker={editingBruker}
+            onSubmit={handleFormSubmit}
+            onCancel={() => setIsFormOpen(false)}
+            loading={createMutation.isPending || updateMutation.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deaktiver bruker?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Er du sikker pa at du vil deaktivere brukeren{' '}
+              <strong>{deleteConfirm?.full_name}</strong>? Brukeren vil ikke
+              kunne logge inn, men dataene beholdes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Deaktiver
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

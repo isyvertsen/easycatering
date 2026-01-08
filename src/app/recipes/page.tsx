@@ -79,9 +79,9 @@ function RecipesPageContent() {
     }))
   }
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: number | string) => {
     if (window.confirm('Er du sikker på at du vil slette denne oppskriften?')) {
-      deleteMutation.mutate(id)
+      deleteMutation.mutate(Number(id))
     }
   }
 

@@ -4,6 +4,7 @@ import { Order, OrderLine } from '@/types/models'
 export interface OrderListParams {
   skip?: number
   limit?: number
+  search?: string
   kunde_id?: number
   fra_dato?: string
   til_dato?: string
@@ -42,9 +43,10 @@ export const ordersApi = {
   // List orders with filters
   list: async (params?: OrderListParams): Promise<OrderListResponse> => {
     const queryParams = new URLSearchParams()
-    
+
     if (params?.skip !== undefined) queryParams.append('skip', params.skip.toString())
     if (params?.limit !== undefined) queryParams.append('limit', params.limit.toString())
+    if (params?.search) queryParams.append('search', params.search)
     if (params?.kunde_id) queryParams.append('kunde_id', params.kunde_id.toString())
     if (params?.fra_dato) queryParams.append('fra_dato', params.fra_dato)
     if (params?.til_dato) queryParams.append('til_dato', params.til_dato)
@@ -53,7 +55,7 @@ export const ordersApi = {
     }
     if (params?.sort_by) queryParams.append('sort_by', params.sort_by)
     if (params?.sort_order) queryParams.append('sort_order', params.sort_order)
-    
+
     const response = await apiClient.get(`/v1/ordrer/?${queryParams}`)
     return response.data
   },
@@ -102,5 +104,26 @@ export const ordersApi = {
   // Delete order line
   deleteOrderLine: async (orderId: number, lineId: number): Promise<void> => {
     await apiClient.delete(`/v1/ordrer/${orderId}/detaljer/${lineId}`)
+  },
+
+  // Duplicate order
+  duplicate: async (id: number): Promise<Order> => {
+    const response = await apiClient.post(`/v1/ordrer/${id}/duplicate`)
+    return response.data
+  },
+
+  // Update order status
+  updateStatus: async (id: number, statusId: number): Promise<{ message: string }> => {
+    const response = await apiClient.put(`/v1/ordrer/${id}/status?status_id=${statusId}`)
+    return response.data
+  },
+
+  // Batch update status for multiple orders
+  batchUpdateStatus: async (orderIds: number[], statusId: number): Promise<{ message: string; updated_count: number }> => {
+    const params = new URLSearchParams()
+    orderIds.forEach(id => params.append('ordre_ids', id.toString()))
+    params.append('status_id', statusId.toString())
+    const response = await apiClient.post(`/v1/ordrer/batch/status?${params}`)
+    return response.data
   }
 }

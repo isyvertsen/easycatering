@@ -9,7 +9,13 @@ export interface Kategori {
   ssma_timestamp: string | null
 }
 
-export interface KategoriListParams extends BaseListParams {}
+export interface KategoriListParams extends BaseListParams {
+  page?: number
+  page_size?: number
+  search?: string
+  sort_by?: string
+  sort_order?: 'asc' | 'desc'
+}
 
 export type KategoriListResponse = BaseListResponse<Kategori>
 
