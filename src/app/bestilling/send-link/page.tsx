@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/table'
 import { Check, ChevronsUpDown, Link2, Copy, CheckCircle2, Loader2, Mail, MailX } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useKunderList } from '@/hooks/useKunder'
+import { useCustomersList } from '@/hooks/useCustomers'
 import { useGenererKundelenke, useAktiveTokens } from '@/hooks/useBestillingRegistrer'
 import { toast } from 'sonner'
 
@@ -44,7 +44,7 @@ export default function SendLinkPage() {
   const [copied, setCopied] = useState(false)
 
   // Hent kunder
-  const { data: kunderData, isLoading: kunderLoading } = useKunderList({
+  const { data: kunderData, isLoading: kunderLoading } = useCustomersList({
     page_size: 500,
     sort_by: 'kundenavn',
     sort_order: 'asc',

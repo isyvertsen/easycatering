@@ -30,7 +30,9 @@ import {
   Activity,
   TreePine,
   Printer,
-  ClipboardList
+  ClipboardList,
+  PenLine,
+  Link2
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -104,6 +106,8 @@ const navigationGroups: NavGroup[] = [
     icon: Printer,
     items: [
       { name: "Bestillingsskjema", href: "/bestilling/skjema", icon: ClipboardList },
+      { name: "Registrer Bestilling", href: "/bestilling/registrer", icon: PenLine },
+      { name: "Send Kundelenke", href: "/bestilling/send-link", icon: Link2 },
     ]
   },
   {

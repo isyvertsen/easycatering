@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Command,
@@ -19,18 +18,20 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Check, ChevronsUpDown, Save, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useKunderList } from '@/hooks/useKunder'
+import { useCustomersList } from '@/hooks/useCustomers'
+import { useBestillingSkjema } from '@/hooks/useBestillingSkjema'
 import { usePerioderList } from '@/hooks/usePerioder'
-import { useBestillingPerioder } from '@/hooks/useBestillingSkjema'
 import { useOpprettOrdre } from '@/hooks/useBestillingRegistrer'
 import { toast } from 'sonner'
-
-interface BestillingLinje {
-  produktid: number
-  antall: number
-}
 
 interface PeriodeBestillingState {
   [periodeid: number]: {
@@ -41,14 +42,50 @@ interface PeriodeBestillingState {
 export default function BestillingRegistrerPage() {
   const [kundeOpen, setKundeOpen] = useState(false)
   const [selectedKundeId, setSelectedKundeId] = useState<number | null>(null)
-  const [selectedPerioder, setSelectedPerioder] = useState<number[]>([])
+  const [fraPeriodeId, setFraPeriodeId] = useState<number | undefined>(undefined)
+  const [tilPeriodeId, setTilPeriodeId] = useState<number | undefined>(undefined)
   const [bestillinger, setBestillinger] = useState<PeriodeBestillingState>({})
 
   // Hent kunder
-  const { data: kunderData, isLoading: kunderLoading } = useKunderList({
+  const { data: kunderData, isLoading: kunderLoading } = useCustomersList({
     page_size: 500,
     sort_by: 'kundenavn',
     sort_order: 'asc',
+  })
+
+  // Hent perioder for velgerne
+  const { data: perioderData, isLoading: perioderLoading } = usePerioderList({
+    page_size: 50,
+    sort_by: 'fradato',
+    sort_order: 'asc',
+  })
+
+  // Sett standardverdier når perioder er lastet
+  useEffect(() => {
+    if (perioderData?.items && perioderData.items.length > 0 && !fraPeriodeId && !tilPeriodeId) {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      const kommendePerioder = perioderData.items.filter((p) => {
+        if (!p.fradato) return false
+        const fradato = new Date(p.fradato)
+        return fradato >= today
+      })
+
+      if (kommendePerioder.length >= 2) {
+        setFraPeriodeId(kommendePerioder[0].menyperiodeid)
+        setTilPeriodeId(kommendePerioder[Math.min(3, kommendePerioder.length - 1)].menyperiodeid)
+      } else if (perioderData.items.length >= 2) {
+        setFraPeriodeId(perioderData.items[0].menyperiodeid)
+        setTilPeriodeId(perioderData.items[Math.min(3, perioderData.items.length - 1)].menyperiodeid)
+      }
+    }
+  }, [perioderData, fraPeriodeId, tilPeriodeId])
+
+  // Hent bestillingsskjema med produkter (samme som skjema-siden)
+  const { data: skjemaData, isLoading: skjemaLoading } = useBestillingSkjema({
+    fra_periode_id: fraPeriodeId,
+    til_periode_id: tilPeriodeId,
   })
 
   // Finn valgt kunde
@@ -57,20 +94,8 @@ export default function BestillingRegistrerPage() {
     return kunderData.items.find((k) => k.kundeid === selectedKundeId)
   }, [selectedKundeId, kunderData])
 
-  // Hent perioder med produkter basert på kundens menygruppe
-  const { data: perioderData, isLoading: perioderLoading } = useBestillingPerioder({
-    menygruppe_id: selectedKunde?.menygruppeid ? Math.floor(selectedKunde.menygruppeid) : undefined,
-  })
-
   // Mutation for å opprette ordre
   const opprettOrdreMutation = useOpprettOrdre()
-
-  // Toggle periode valg
-  const togglePeriode = (periodeid: number) => {
-    setSelectedPerioder((prev) =>
-      prev.includes(periodeid) ? prev.filter((p) => p !== periodeid) : [...prev, periodeid]
-    )
-  }
 
   // Oppdater antall for et produkt i en periode
   const updateAntall = (periodeid: number, produktid: number, antall: number) => {
@@ -83,38 +108,6 @@ export default function BestillingRegistrerPage() {
     }))
   }
 
-  // Hent alle unike produkter fra valgte perioder
-  const produkter = useMemo(() => {
-    if (!perioderData) return []
-
-    const produktMap = new Map<
-      number,
-      { produktid: number; produktnavn: string | null; visningsnavn: string | null }
-    >()
-
-    perioderData
-      .filter((p) => selectedPerioder.includes(p.menyperiodeid))
-      .forEach((periode) => {
-        periode.menyer.forEach((meny) => {
-          meny.produkter.forEach((produkt) => {
-            if (!produktMap.has(produkt.produktid)) {
-              produktMap.set(produkt.produktid, {
-                produktid: produkt.produktid,
-                produktnavn: produkt.produktnavn,
-                visningsnavn: produkt.visningsnavn,
-              })
-            }
-          })
-        })
-      })
-
-    return Array.from(produktMap.values()).sort((a, b) =>
-      (a.visningsnavn || a.produktnavn || '').localeCompare(
-        b.visningsnavn || b.produktnavn || ''
-      )
-    )
-  }, [perioderData, selectedPerioder])
-
   // Lagre bestilling
   const handleSave = async () => {
     if (!selectedKundeId) {
@@ -122,25 +115,20 @@ export default function BestillingRegistrerPage() {
       return
     }
 
-    if (selectedPerioder.length === 0) {
-      toast.error('Velg minst en periode')
-      return
-    }
+    // Bygg request - en ordre per periode som har produkter
+    const perioder = Object.entries(bestillinger)
+      .map(([periodeid, produkter]) => ({
+        periodeid: parseInt(periodeid),
+        linjer: Object.entries(produkter)
+          .filter(([_, antall]) => antall > 0)
+          .map(([produktid, antall]) => ({
+            produktid: parseInt(produktid),
+            antall,
+          })),
+      }))
+      .filter((p) => p.linjer.length > 0)
 
-    // Bygg request
-    const perioder = selectedPerioder.map((periodeid) => ({
-      periodeid,
-      linjer: Object.entries(bestillinger[periodeid] || {})
-        .filter(([_, antall]) => antall > 0)
-        .map(([produktid, antall]) => ({
-          produktid: parseInt(produktid),
-          antall,
-        })),
-    }))
-
-    // Sjekk at det er minst en linje med antall > 0
-    const harLinjer = perioder.some((p) => p.linjer.length > 0)
-    if (!harLinjer) {
+    if (perioder.length === 0) {
       toast.error('Legg inn antall for minst ett produkt')
       return
     }
@@ -154,7 +142,6 @@ export default function BestillingRegistrerPage() {
 
       // Reset form
       setBestillinger({})
-      setSelectedPerioder([])
     } catch (error) {
       toast.error('Kunne ikke opprette ordre')
     }
@@ -166,6 +153,16 @@ export default function BestillingRegistrerPage() {
       ? new Date(periode.fradato).toLocaleDateString('no-NO', { day: '2-digit', month: '2-digit' })
       : ''
     return uke && dato ? `${uke} (${dato})` : uke || dato || 'Ukjent'
+  }
+
+  const formatDateRange = (fradato: string | null, tildato: string | null) => {
+    const fra = fradato
+      ? new Date(fradato).toLocaleDateString('no-NO', { day: '2-digit', month: '2-digit' })
+      : ''
+    const til = tildato
+      ? new Date(tildato).toLocaleDateString('no-NO', { day: '2-digit', month: '2-digit' })
+      : ''
+    return fra && til ? `(${fra} - ${til})` : ''
   }
 
   return (
@@ -180,11 +177,7 @@ export default function BestillingRegistrerPage() {
         </div>
         <Button
           onClick={handleSave}
-          disabled={
-            !selectedKundeId ||
-            selectedPerioder.length === 0 ||
-            opprettOrdreMutation.isPending
-          }
+          disabled={!selectedKundeId || opprettOrdreMutation.isPending}
         >
           {opprettOrdreMutation.isPending ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -193,6 +186,49 @@ export default function BestillingRegistrerPage() {
           )}
           Lagre bestilling
         </Button>
+      </div>
+
+      {/* Periode-velgere */}
+      <div className="flex gap-4 items-end flex-wrap">
+        <div className="w-48">
+          <label className="text-sm font-medium mb-1 block">Fra periode</label>
+          <Select
+            value={fraPeriodeId?.toString() || ''}
+            onValueChange={(val) => setFraPeriodeId(parseInt(val))}
+            disabled={perioderLoading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Velg periode" />
+            </SelectTrigger>
+            <SelectContent>
+              {perioderData?.items?.map((periode) => (
+                <SelectItem key={periode.menyperiodeid} value={periode.menyperiodeid.toString()}>
+                  {formatPeriodeLabel(periode)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-48">
+          <label className="text-sm font-medium mb-1 block">Til periode</label>
+          <Select
+            value={tilPeriodeId?.toString() || ''}
+            onValueChange={(val) => setTilPeriodeId(parseInt(val))}
+            disabled={perioderLoading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Velg periode" />
+            </SelectTrigger>
+            <SelectContent>
+              {perioderData?.items?.map((periode) => (
+                <SelectItem key={periode.menyperiodeid} value={periode.menyperiodeid.toString()}>
+                  {formatPeriodeLabel(periode)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Kundevalg */}
@@ -228,8 +264,6 @@ export default function BestillingRegistrerPage() {
                         onSelect={() => {
                           setSelectedKundeId(kunde.kundeid)
                           setKundeOpen(false)
-                          // Reset perioder og bestillinger ved kundebytte
-                          setSelectedPerioder([])
                           setBestillinger({})
                         }}
                       >
@@ -271,86 +305,55 @@ export default function BestillingRegistrerPage() {
         </CardContent>
       </Card>
 
-      {/* Periodevalg */}
-      {selectedKunde && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Velg perioder</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {perioderLoading ? (
-              <div className="flex gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-8 w-24" />
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-3">
-                {perioderData?.map((periode) => (
-                  <label
-                    key={periode.menyperiodeid}
-                    className={cn(
-                      'flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer transition-colors',
-                      selectedPerioder.includes(periode.menyperiodeid)
-                        ? 'border-primary bg-primary/10'
-                        : 'hover:bg-muted'
-                    )}
-                  >
-                    <Checkbox
-                      checked={selectedPerioder.includes(periode.menyperiodeid)}
-                      onCheckedChange={() => togglePeriode(periode.menyperiodeid)}
-                    />
-                    <span>{formatPeriodeLabel(periode)}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* Produkter per periode - samme layout som bestillingsskjema */}
+      {selectedKunde && skjemaLoading && (
+        <div className="space-y-4">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
       )}
 
-      {/* Produkttabell */}
-      {selectedKunde && selectedPerioder.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Produkter</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-3 w-16">ID</th>
-                    <th className="text-left py-2 px-3">Produkt</th>
-                    {perioderData
-                      ?.filter((p) => selectedPerioder.includes(p.menyperiodeid))
-                      .map((periode) => (
-                        <th
-                          key={periode.menyperiodeid}
-                          className="text-center py-2 px-3 w-24"
-                        >
-                          Uke {periode.ukenr}
-                        </th>
-                      ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {produkter.map((produkt) => (
-                    <tr key={produkt.produktid} className="border-b last:border-0">
-                      <td className="py-2 px-3 text-muted-foreground">
-                        {produkt.produktid}
-                      </td>
-                      <td className="py-2 px-3">
-                        {produkt.visningsnavn || produkt.produktnavn}
-                      </td>
-                      {perioderData
-                        ?.filter((p) => selectedPerioder.includes(p.menyperiodeid))
-                        .map((periode) => (
-                          <td key={periode.menyperiodeid} className="py-2 px-3 text-center">
+      {selectedKunde && skjemaData?.perioder && skjemaData.perioder.length > 0 && (
+        <div className="space-y-6">
+          {skjemaData.perioder.map((periode) => {
+            // Samle alle produkter fra alle menyer i perioden
+            const produkter = periode.menyer.flatMap((meny) => meny.produkter)
+
+            if (produkter.length === 0) return null
+
+            return (
+              <Card key={periode.menyperiodeid}>
+                <CardHeader className="pb-3 bg-muted/50">
+                  <CardTitle className="text-lg">
+                    Uke {periode.ukenr}{' '}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      {formatDateRange(periode.fradato, periode.tildato)}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 px-3 w-16">ID</th>
+                        <th className="text-left py-2 px-3">Produkt</th>
+                        <th className="text-right py-2 px-3 w-24">Antall</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {produkter.map((produkt) => (
+                        <tr key={produkt.produktid} className="border-b last:border-0">
+                          <td className="py-2 px-3 text-muted-foreground">
+                            {produkt.produktid}
+                          </td>
+                          <td className="py-2 px-3">
+                            {produkt.visningsnavn || produkt.produktnavn}
+                          </td>
+                          <td className="py-2 px-3 text-right">
                             <Input
                               type="number"
                               min={0}
-                              className="w-20 mx-auto text-center"
+                              className="w-20 ml-auto text-center"
                               value={
                                 bestillinger[periode.menyperiodeid]?.[produkt.produktid] || ''
                               }
@@ -363,18 +366,23 @@ export default function BestillingRegistrerPage() {
                               }
                             />
                           </td>
-                        ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      )}
 
-            {produkter.length === 0 && (
-              <p className="text-center text-muted-foreground py-8">
-                Ingen produkter funnet for valgte perioder
-              </p>
-            )}
+      {selectedKunde && !skjemaLoading && (!skjemaData?.perioder || skjemaData.perioder.length === 0) && (
+        <Card>
+          <CardContent className="py-8">
+            <p className="text-center text-muted-foreground">
+              Ingen produkter funnet for valgte perioder
+            </p>
           </CardContent>
         </Card>
       )}
