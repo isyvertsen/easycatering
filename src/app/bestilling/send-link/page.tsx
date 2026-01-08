@@ -80,7 +80,7 @@ export default function SendLinkPage() {
 
       if (result.email_sent) {
         toast.success(`Lenke generert og sendt til ${result.email_address}`)
-      } else if (selectedKunde?.epost) {
+      } else if (selectedKunde?.e_post) {
         toast.warning('Lenke generert, men e-post kunne ikke sendes')
       } else {
         toast.success('Lenke generert (kunden har ingen e-postadresse)')
@@ -187,7 +187,7 @@ export default function SendLinkPage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">E-post:</span>{' '}
-                  {selectedKunde.epost || '-'}
+                  {selectedKunde.e_post || '-'}
                 </div>
                 {selectedKunde.adresse && (
                   <div className="col-span-2">
@@ -263,11 +263,11 @@ export default function SendLinkPage() {
                       E-post sendt til <strong>{emailAddress}</strong>
                     </AlertDescription>
                   </Alert>
-                ) : selectedKunde?.epost ? (
+                ) : selectedKunde?.e_post ? (
                   <Alert className="bg-yellow-50 border-yellow-200">
                     <MailX className="h-4 w-4 text-yellow-600" />
                     <AlertDescription className="text-yellow-800">
-                      E-post kunne ikke sendes. Kopier lenken og send manuelt til {selectedKunde.epost}
+                      E-post kunne ikke sendes. Kopier lenken og send manuelt til {selectedKunde.e_post}
                     </AlertDescription>
                   </Alert>
                 ) : (

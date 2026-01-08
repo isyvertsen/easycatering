@@ -119,7 +119,7 @@ export default function BestillingRegistrerPage() {
     const perioder = Object.entries(bestillinger)
       .map(([periodeid, produkter]) => ({
         periodeid: parseInt(periodeid),
-        linjer: Object.entries(produkter)
+        linjer: Object.entries(produkter as Record<string, number>)
           .filter(([_, antall]) => antall > 0)
           .map(([produktid, antall]) => ({
             produktid: parseInt(produktid),
