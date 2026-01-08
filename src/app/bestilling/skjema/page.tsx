@@ -312,7 +312,8 @@ export default function BestillingSkjemaPage() {
             box-shadow: none !important;
           }
 
-          .kunde-kort:last-child {
+          .kunde-kort:last-child,
+          .kunde-kort:only-child {
             page-break-after: auto;
           }
 
