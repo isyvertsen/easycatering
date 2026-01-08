@@ -440,6 +440,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(AddPrinterConfigToLabelTemplates())
         migration_runner.add_migration(AddAnsattIdAndRolleToUsers())
         migration_runner.add_migration(AddSequenceToTblperiode())
+        migration_runner.add_migration(AddSequenceToTblordrer())
         migration_runner.add_migration(CreateCustomerAccessTokensTable())
     return migration_runner
 
@@ -718,6 +719,39 @@ class AddSequenceToTblperiode(Migration):
             await conn.execute(text("""
                 ALTER TABLE tblperiode
                 ALTER COLUMN menyperiodeid SET DEFAULT nextval('tblperiode_menyperiodeid_seq')
+            """))
+
+
+class AddSequenceToTblordrer(Migration):
+    """Add sequence for ordreid in tblordrer."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260108_003_ordrer_sequence",
+            description="Add auto-increment sequence to tblordrer.ordreid"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Create sequence starting from max id + 1
+            await conn.execute(text("""
+                DO $$
+                DECLARE
+                    max_id INTEGER;
+                BEGIN
+                    SELECT COALESCE(MAX(ordreid), 0) + 1 INTO max_id FROM tblordrer;
+
+                    -- Create sequence if not exists
+                    IF NOT EXISTS (SELECT 1 FROM pg_sequences WHERE schemaname = 'public' AND sequencename = 'tblordrer_ordreid_seq') THEN
+                        EXECUTE format('CREATE SEQUENCE tblordrer_ordreid_seq START WITH %s', max_id);
+                    END IF;
+                END $$
+            """))
+
+            # Set column default to use sequence
+            await conn.execute(text("""
+                ALTER TABLE tblordrer
+                ALTER COLUMN ordreid SET DEFAULT nextval('tblordrer_ordreid_seq')
             """))
 
 
