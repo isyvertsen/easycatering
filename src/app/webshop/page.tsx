@@ -1,0 +1,182 @@
+"use client"
+
+import { useState } from "react"
+import { useWebshopProducts } from "@/hooks/useWebshop"
+import { useCart } from "@/contexts/CartContext"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Search, ShoppingCart, Filter } from "lucide-react"
+import { ProductCard } from "@/components/webshop/ProductCard"
+import { ShoppingCartSidebar } from "@/components/webshop/ShoppingCartSidebar"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+
+export default function WebshopPage() {
+  const [searchTerm, setSearchTerm] = useState("")
+  const [sortBy, setSortBy] = useState<"produktnavn" | "pris" | "visningsnavn">("produktnavn")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
+  const [page, setPage] = useState(1)
+  const [cartOpen, setCartOpen] = useState(false)
+
+  const { getTotalItems } = useCart()
+
+  const { data, isLoading, error } = useWebshopProducts({
+    search: searchTerm,
+    sort_by: sortBy,
+    sort_order: sortOrder,
+    page,
+    page_size: 20,
+  })
+
+  return (
+    <div className="container mx-auto py-6 px-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Webbutikk</h1>
+          <p className="text-muted-foreground">
+            Bestill varer for ditt sykehjem
+          </p>
+        </div>
+
+        {/* Cart Button */}
+        <Button
+          onClick={() => setCartOpen(true)}
+          variant="outline"
+          size="lg"
+          className="relative"
+        >
+          <ShoppingCart className="mr-2 h-5 w-5" />
+          Handlekurv
+          {getTotalItems() > 0 && (
+            <Badge
+              className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 flex items-center justify-center"
+              variant="destructive"
+            >
+              {getTotalItems()}
+            </Badge>
+          )}
+        </Button>
+      </div>
+
+      {/* Search and Filter Bar */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Søk etter produkter..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setPage(1) // Reset to first page on search
+            }}
+            className="pl-10"
+          />
+        </div>
+
+        <Select
+          value={sortBy}
+          onValueChange={(value: any) => {
+            setSortBy(value)
+            setPage(1)
+          }}
+        >
+          <SelectTrigger className="w-full md:w-[200px]">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Sorter etter" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="produktnavn">Produktnavn</SelectItem>
+            <SelectItem value="visningsnavn">Visningsnavn</SelectItem>
+            <SelectItem value="pris">Pris</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={sortOrder}
+          onValueChange={(value: any) => {
+            setSortOrder(value)
+            setPage(1)
+          }}
+        >
+          <SelectTrigger className="w-full md:w-[150px]">
+            <SelectValue placeholder="Rekkefølge" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="asc">Stigende</SelectItem>
+            <SelectItem value="desc">Synkende</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Laster produkter...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="text-center py-12">
+          <p className="text-destructive">
+            Kunne ikke laste produkter. Vennligst prøv igjen senere.
+          </p>
+        </div>
+      )}
+
+      {/* Product Grid */}
+      {data && data.items.length > 0 && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {data.items.map((product) => (
+              <ProductCard key={product.produktid} product={product} />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {data.total_pages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-8">
+              <Button
+                variant="outline"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                Forrige
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Side {page} av {data.total_pages}
+              </span>
+              <Button
+                variant="outline"
+                onClick={() => setPage((p) => Math.min(data.total_pages, p + 1))}
+                disabled={page === data.total_pages}
+              >
+                Neste
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* No Results */}
+      {data && data.items.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">
+            Ingen produkter funnet.
+            {searchTerm && " Prøv et annet søkeord."}
+          </p>
+        </div>
+      )}
+
+      {/* Shopping Cart Sidebar */}
+      <ShoppingCartSidebar open={cartOpen} onOpenChange={setCartOpen} />
+    </div>
+  )
+}

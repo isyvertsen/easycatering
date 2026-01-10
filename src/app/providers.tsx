@@ -5,6 +5,7 @@ import { SessionProvider } from 'next-auth/react'
 import { useState } from 'react'
 import { GraphQLProvider } from '@/lib/graphql/provider'
 import { ThemeProvider } from '@/components/theme/theme-provider'
+import { CartProvider } from '@/contexts/CartContext'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -29,7 +30,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <CartProvider>
+              {children}
+            </CartProvider>
           </ThemeProvider>
         </GraphQLProvider>
       </QueryClientProvider>

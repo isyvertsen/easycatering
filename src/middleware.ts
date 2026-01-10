@@ -18,6 +18,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Allow access to token-based order view (email links)
+  // Pattern: /webshop/ordre/[token]
+  if (request.nextUrl.pathname.match(/^\/webshop\/ordre\/[^/]+$/)) {
+    return NextResponse.next()
+  }
+
   // Check if user is authenticated
   const session = await auth()
 

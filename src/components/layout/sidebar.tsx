@@ -34,7 +34,10 @@ import {
   ClipboardList,
   Printer,
   PenLine,
-  Link2
+  Link2,
+  Store,
+  ListOrdered,
+  CheckCircle
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -78,6 +81,9 @@ const iconMap: Record<string, any> = {
   Beaker,
   Activity,
   TreePine,
+  Store,
+  ListOrdered,
+  CheckCircle,
   ClipboardList,
   Printer,
   PenLine,
@@ -136,10 +142,18 @@ const navigationGroups = [
     ]
   },
   {
+    name: "Webshop",
+    items: [
+      { name: "Webbutikk", href: "/webshop", icon: Store },
+      { name: "Mine bestillinger", href: "/webshop/mine-ordre", icon: ListOrdered },
+    ]
+  },
+  {
     name: "Admin",
     items: [
       { name: "Ansatte", href: "/employees", icon: UserCheck },
       { name: "Brukere", href: "/admin/users", icon: UserCheck },
+      { name: "Webshop-godkjenning", href: "/admin/webshop-godkjenning", icon: CheckCircle },
       { name: "Rapporter", href: "/reports", icon: BarChart3 },
       { name: "Dokumentasjon", href: "/admin/documentation", icon: BookOpen },
       { name: "Systemstatus", href: "/admin/system", icon: Activity },
