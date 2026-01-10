@@ -154,7 +154,7 @@ export default function OrderDetailsPage({
               <div className="space-y-4">
                 {orderLines.map((line) => (
                   <div
-                    key={line.ordredetaljeid}
+                    key={line.unik}
                     className="flex justify-between items-start pb-4 border-b last:border-b-0"
                   >
                     <div className="flex-1">
@@ -183,14 +183,12 @@ export default function OrderDetailsPage({
                   <div className="flex justify-between items-center text-lg font-bold">
                     <span>Totalt:</span>
                     <span>
-                      {order.totalpris
-                        ? order.totalpris.toFixed(2)
-                        : orderLines
-                            .reduce(
-                              (sum, line) => sum + (line.pris || 0) * (line.antall || 0),
-                              0
-                            )
-                            .toFixed(2)}{" "}
+                      {orderLines
+                        .reduce(
+                          (sum, line) => sum + (line.pris || 0) * (line.antall || 0),
+                          0
+                        )
+                        .toFixed(2)}{" "}
                       kr
                     </span>
                   </div>
