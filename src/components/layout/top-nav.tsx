@@ -69,7 +69,7 @@ interface NavGroup {
 
 const navigationGroups: NavGroup[] = [
   {
-    name: "Meny",
+    name: "Menyplanlegging",
     icon: CalendarDays,
     items: [
       { name: "Menyer", href: "/menus", icon: CalendarDays },
@@ -80,7 +80,7 @@ const navigationGroups: NavGroup[] = [
     ]
   },
   {
-    name: "Produkter",
+    name: "Produktstyring",
     icon: Package,
     items: [
       { name: "Produkter", href: "/produkter", icon: Package },
@@ -91,27 +91,27 @@ const navigationGroups: NavGroup[] = [
     ]
   },
   {
-    name: "Ordre",
+    name: "Salg & Ordre",
     icon: ShoppingCart,
     items: [
+      { name: "Ordrer", href: "/orders", icon: ShoppingCart },
       { name: "Kunder", href: "/customers", icon: Users },
       { name: "Kundegrupper", href: "/kundegrupper", icon: Users },
-      { name: "Ordrer", href: "/orders", icon: ShoppingCart },
       { name: "Leveranser", href: "/deliveries", icon: Truck },
       { name: "Etiketter", href: "/labels", icon: Tag },
     ]
   },
   {
-    name: "Utskrifter",
-    icon: Printer,
+    name: "Bestilling",
+    icon: ClipboardList,
     items: [
       { name: "Bestillingsskjema", href: "/bestilling/skjema", icon: ClipboardList },
-      { name: "Registrer Bestilling", href: "/bestilling/registrer", icon: PenLine },
-      { name: "Send Kundelenke", href: "/bestilling/send-link", icon: Link2 },
+      { name: "Registrer bestilling", href: "/bestilling/registrer", icon: PenLine },
+      { name: "Send kundelenke", href: "/bestilling/send-link", icon: Link2 },
     ]
   },
   {
-    name: "Admin",
+    name: "System",
     icon: Settings,
     items: [
       { name: "Ansatte", href: "/employees", icon: UserCheck },
