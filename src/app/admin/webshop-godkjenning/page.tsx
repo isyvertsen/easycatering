@@ -248,12 +248,6 @@ export default function WebshopApprovalPage() {
                     </div>
 
                     <div className="flex flex-col items-end gap-2">
-                      {order.totalpris && (
-                        <p className="text-lg font-bold">
-                          {order.totalpris.toFixed(2)} kr
-                        </p>
-                      )}
-
                       <div className="flex gap-2">
                         <Button
                           size="sm"
