@@ -46,13 +46,8 @@ export function ProductCard({ product }: ProductCardProps) {
       </CardHeader>
 
       <CardContent className="flex-1 pb-3">
-        {product.beskrivelse && (
-          <p className="text-sm text-muted-foreground line-clamp-3">
-            {product.beskrivelse}
-          </p>
-        )}
         {product.leverandor?.navn && (
-          <p className="text-xs text-muted-foreground mt-2">
+          <p className="text-xs text-muted-foreground">
             Leverandør: {product.leverandor.navn}
           </p>
         )}
@@ -63,11 +58,6 @@ export function ProductCard({ product }: ProductCardProps) {
           <span className="text-2xl font-bold">
             {price.toFixed(2)} kr
           </span>
-          {product.enhet && (
-            <span className="text-xs text-muted-foreground">
-              per {product.enhet}
-            </span>
-          )}
         </div>
         <Button onClick={handleAddToCart} size="sm">
           <ShoppingCart className="mr-2 h-4 w-4" />
