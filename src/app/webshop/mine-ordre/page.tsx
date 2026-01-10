@@ -160,14 +160,6 @@ export default function MyOrdersPage() {
                       </div>
 
                       <div className="flex items-center gap-3">
-                        {order.totalpris && (
-                          <div className="text-right">
-                            <p className="text-sm text-muted-foreground">Total</p>
-                            <p className="text-lg font-bold">
-                              {order.totalpris.toFixed(2)} kr
-                            </p>
-                          </div>
-                        )}
                         <Button asChild variant="outline">
                           <Link href={`/webshop/mine-ordre/${order.ordreid}`}>
                             <Eye className="mr-2 h-4 w-4" />
