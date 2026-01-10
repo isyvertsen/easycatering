@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMenusList, useDeleteMenu } from "@/hooks/useMenus"
+import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -37,6 +38,7 @@ export default function MenusPage() {
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [menuGroups, setMenuGroups] = useState<Record<number, string>>({})
   const [params, setParams] = useState({
     skip: 0,
     limit: 20,
@@ -45,6 +47,23 @@ export default function MenusPage() {
 
   const { data, isLoading } = useMenusList(params)
   const deleteMutation = useDeleteMenu()
+
+  // Fetch menu groups
+  useEffect(() => {
+    const fetchMenuGroups = async () => {
+      try {
+        const response = await api.get("/v1/menygruppe")
+        const groupsMap: Record<number, string> = {}
+        response.data.forEach((group: any) => {
+          groupsMap[group.gruppeid] = group.gruppe || group.beskrivelse || ""
+        })
+        setMenuGroups(groupsMap)
+      } catch (error) {
+        console.error("Failed to fetch menu groups:", error)
+      }
+    }
+    fetchMenuGroups()
+  }, [])
 
   const handleSearch = (value: string) => {
     setSearch(value)
@@ -192,7 +211,7 @@ export default function MenusPage() {
                     <TableCell className="font-mono">{menu.menyid}</TableCell>
                     <TableCell>{menu.beskrivelse || "-"}</TableCell>
                     <TableCell>
-                      {menu.gruppe?.beskrivelse || "-"}
+                      {menu.menygruppe ? (menuGroups[menu.menygruppe] || "-") : "-"}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
