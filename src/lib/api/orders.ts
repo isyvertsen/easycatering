@@ -68,13 +68,28 @@ export const ordersApi = {
 
   // Create new order
   create: async (data: OrderCreateData): Promise<Order> => {
-    const response = await apiClient.post('/v1/ordrer/', data)
+    // Clean up data - convert empty strings to undefined for optional date fields
+    const cleanedData = {
+      ...data,
+      leveringsdato: data.leveringsdato || undefined,
+      sendestil: data.sendestil || undefined,
+      informasjon: data.informasjon || undefined,
+    }
+    const response = await apiClient.post('/v1/ordrer/', cleanedData)
     return response.data
   },
 
   // Update order
   update: async (id: number, data: Partial<OrderCreateData>): Promise<Order> => {
-    const response = await apiClient.put(`/v1/ordrer/${id}`, data)
+    // Clean up data - convert empty strings to undefined for optional fields
+    const cleanedData = {
+      ...data,
+      ordredato: data.ordredato || undefined,
+      leveringsdato: data.leveringsdato || undefined,
+      sendestil: data.sendestil || undefined,
+      informasjon: data.informasjon || undefined,
+    }
+    const response = await apiClient.put(`/v1/ordrer/${id}`, cleanedData)
     return response.data
   },
 
