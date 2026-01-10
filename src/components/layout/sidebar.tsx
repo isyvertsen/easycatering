@@ -104,7 +104,7 @@ const navigationGroups = [
     ]
   },
   {
-    name: "Meny",
+    name: "Menyplanlegging",
     items: [
       { name: "Menyer", href: "/menus", icon: CalendarDays },
       { name: "Perioder", href: "/perioder", icon: Clock },
@@ -114,7 +114,7 @@ const navigationGroups = [
     ]
   },
   {
-    name: "Produkter",
+    name: "Produktstyring",
     items: [
       { name: "Produkter", href: "/produkter", icon: Package },
       { name: "Kategorier", href: "/kategorier", icon: FolderTree },
@@ -124,21 +124,13 @@ const navigationGroups = [
     ]
   },
   {
-    name: "Ordre & Levering",
+    name: "Salg & Ordre",
     items: [
+      { name: "Ordrer", href: "/orders", icon: ShoppingCart },
       { name: "Kunder", href: "/customers", icon: Users },
       { name: "Kundegrupper", href: "/kundegrupper", icon: Users },
-      { name: "Ordrer", href: "/orders", icon: ShoppingCart },
       { name: "Leveranser", href: "/deliveries", icon: Truck },
       { name: "Etiketter", href: "/labels", icon: Tag },
-    ]
-  },
-  {
-    name: "Bestilling",
-    items: [
-      { name: "Bestillingsskjema", href: "/bestilling/skjema", icon: ClipboardList },
-      { name: "Registrer Bestilling", href: "/bestilling/registrer", icon: PenLine },
-      { name: "Send Kundelenke", href: "/bestilling/send-link", icon: Link2 },
     ]
   },
   {
@@ -146,14 +138,22 @@ const navigationGroups = [
     items: [
       { name: "Webbutikk", href: "/webshop", icon: Store },
       { name: "Mine bestillinger", href: "/webshop/mine-ordre", icon: ListOrdered },
+      { name: "Godkjenning", href: "/admin/webshop-godkjenning", icon: CheckCircle },
     ]
   },
   {
-    name: "Admin",
+    name: "Bestilling",
+    items: [
+      { name: "Bestillingsskjema", href: "/bestilling/skjema", icon: ClipboardList },
+      { name: "Registrer bestilling", href: "/bestilling/registrer", icon: PenLine },
+      { name: "Send kundelenke", href: "/bestilling/send-link", icon: Link2 },
+    ]
+  },
+  {
+    name: "System",
     items: [
       { name: "Ansatte", href: "/employees", icon: UserCheck },
       { name: "Brukere", href: "/admin/users", icon: UserCheck },
-      { name: "Webshop-godkjenning", href: "/admin/webshop-godkjenning", icon: CheckCircle },
       { name: "Rapporter", href: "/reports", icon: BarChart3 },
       { name: "Dokumentasjon", href: "/admin/documentation", icon: BookOpen },
       { name: "Systemstatus", href: "/admin/system", icon: Activity },
