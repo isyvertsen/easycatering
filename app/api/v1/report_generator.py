@@ -131,6 +131,62 @@ async def generate_delivery_note_pdf(
     )
 
 
+@router.get("/plukkliste/{ordre_id}")
+async def generate_pick_list_pdf(
+    ordre_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Generate pick list PDF for warehouse.
+
+    Args:
+        ordre_id: Order ID
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        PDF file download
+    """
+    # Fetch order data
+    ordre = await get_ordre(ordre_id, db)
+
+    if not ordre:
+        raise HTTPException(status_code=404, detail="Ordre ikke funnet")
+
+    # Prepare data for pick list
+    data = {
+        "ordrenummer": ordre.ordreid,
+        "leveringsdato": ordre.leveringsdato.strftime("%d.%m.%Y") if ordre.leveringsdato else "",
+        "kunde": {
+            "navn": ordre.kunde.kundenavn,
+        },
+        "produkter": [
+            {
+                "produktid": p.produktid,
+                "navn": p.produktnavn,
+                "antall": p.antall,
+                "enhet": p.enhet or "stk",
+                "plukket": False  # For manual checking in warehouse
+            }
+            for p in ordre.produkter
+        ],
+        "generert_dato": datetime.now().strftime("%d.%m.%Y %H:%M")
+    }
+
+    # Generate PDF using ReportLab
+    report_service = ReportService()
+    pdf_bytes = await report_service.generate_pick_list_pdf(data)
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=plukkliste_{ordre_id}.pdf"
+        }
+    )
+
+
 @router.get("/kundeliste-excel")
 async def generate_customer_list_excel(
     db: AsyncSession = Depends(get_db),
