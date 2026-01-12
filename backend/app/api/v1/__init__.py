@@ -8,13 +8,15 @@ from app.api.v1 import (
     preparation_instructions, ean_management, label_templates, labels, feedback,
     graphql_endpoint,
     report_generator, documentation, documentation_chat, bruker, periode_view,
-    bestilling_skjema, bestilling_registrer
+    bestilling_skjema, bestilling_registrer, activity_logs, app_logs
 )
 from app.api.v1.endpoints import matinfo_sync, matinfo_tracker, ngdata_sync, vetduat_sync, hybrid_sync
 
 api_router = APIRouter()
 
 # Include all routers (sorted alphabetically by prefix)
+api_router.include_router(activity_logs.router, prefix="/activity-logs", tags=["activity-logs"])
+api_router.include_router(app_logs.router)
 api_router.include_router(ansatte.router, prefix="/ansatte", tags=["ansatte"])
 api_router.include_router(asko_ny.router, prefix="/asko-ny-produkter", tags=["asko-ny-produkter"])
 api_router.include_router(bestilling_skjema.router, prefix="/bestilling-skjema", tags=["bestilling-skjema"])

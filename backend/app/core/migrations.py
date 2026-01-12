@@ -442,7 +442,76 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(AddSequenceToTblperiode())
         migration_runner.add_migration(AddSequenceToTblordrer())
         migration_runner.add_migration(CreateCustomerAccessTokensTable())
+        migration_runner.add_migration(CreateActivityLogsTable())
+        migration_runner.add_migration(CreateAppLogsTable())
     return migration_runner
+
+
+class CreateAppLogsTable(Migration):
+    """Create app_logs table for application logging (errors, warnings, info)."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260112_002_app_logs",
+            description="Create app_logs table for application logging"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Create app_logs table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS app_logs (
+                    id BIGSERIAL PRIMARY KEY,
+
+                    -- Log level and message
+                    level VARCHAR(20) NOT NULL,
+                    logger_name VARCHAR(255),
+                    message TEXT NOT NULL,
+
+                    -- Exception info
+                    exception_type VARCHAR(255),
+                    exception_message TEXT,
+                    traceback TEXT,
+
+                    -- Context
+                    module VARCHAR(255),
+                    function_name VARCHAR(255),
+                    line_number INTEGER,
+                    path VARCHAR(500),
+
+                    -- Request context (if available)
+                    request_id VARCHAR(100),
+                    user_id INTEGER,
+                    user_email VARCHAR(255),
+                    ip_address VARCHAR(45),
+                    endpoint VARCHAR(500),
+                    http_method VARCHAR(10),
+
+                    -- Extra data
+                    extra JSONB,
+
+                    -- Timestamps
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+
+            # Create indexes
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_app_logs_level ON app_logs(level)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_app_logs_created_at ON app_logs(created_at)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_app_logs_logger_name ON app_logs(logger_name)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_app_logs_exception_type ON app_logs(exception_type)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_app_logs_filters
+                ON app_logs(created_at, level, logger_name)
+            """))
 
 
 class CreateMatinfoProductTables(Migration):
@@ -793,6 +862,73 @@ class CreateCustomerAccessTokensTable(Migration):
             await conn.execute(text("""
                 CREATE INDEX IF NOT EXISTS idx_customer_access_tokens_expires
                 ON customer_access_tokens(expires_at)
+            """))
+
+
+class CreateActivityLogsTable(Migration):
+    """Create activity_logs table for audit trail and API metrics."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260112_001_activity_logs",
+            description="Create activity_logs table for audit trail and API metrics"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Create activity_logs table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS activity_logs (
+                    id BIGSERIAL PRIMARY KEY,
+
+                    -- User information (denormalized for retention)
+                    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                    user_email VARCHAR(255),
+                    user_name VARCHAR(255),
+
+                    -- Action details
+                    action VARCHAR(100) NOT NULL,
+                    resource_type VARCHAR(100) NOT NULL,
+                    resource_id VARCHAR(100),
+
+                    -- Request context
+                    http_method VARCHAR(10),
+                    endpoint VARCHAR(500),
+                    ip_address VARCHAR(45),
+                    user_agent TEXT,
+
+                    -- API metrics
+                    response_status INTEGER,
+                    response_time_ms INTEGER,
+
+                    -- Additional data
+                    details JSONB,
+
+                    -- Timestamps
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+
+            # Create indexes for common queries
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_activity_logs_action ON activity_logs(action)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_activity_logs_resource_type ON activity_logs(resource_type)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_activity_logs_response_status ON activity_logs(response_status)
+            """))
+            # Composite index for common filter combinations
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_activity_logs_filters
+                ON activity_logs(created_at, user_id, action, resource_type)
             """))
 
 
