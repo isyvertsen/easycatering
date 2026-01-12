@@ -8,7 +8,7 @@ from app.api.v1 import (
     preparation_instructions, ean_management, label_templates, labels, feedback,
     graphql_endpoint,
     report_generator, documentation, documentation_chat, bruker, periode_view,
-    bestilling_skjema, bestilling_registrer, activity_logs, app_logs
+    bestilling_skjema, bestilling_registrer, activity_logs, app_logs, plukking
 )
 from app.api.v1.endpoints import matinfo_sync, matinfo_tracker, ngdata_sync, vetduat_sync, hybrid_sync
 
@@ -47,6 +47,7 @@ api_router.include_router(ordrer.router, prefix="/ordrer", tags=["ordrer"])
 api_router.include_router(periode.router, prefix="/periode", tags=["periode"])
 api_router.include_router(periode_meny.router, prefix="/periode-meny", tags=["periode-meny"])
 api_router.include_router(periode_view.router, prefix="/periode-view", tags=["periode-view"])
+api_router.include_router(plukking.router)
 api_router.include_router(preparation_instructions.router, prefix="/preparation-instructions", tags=["preparation-instructions"])
 api_router.include_router(produkter.router, prefix="/produkter", tags=["produkter"])
 api_router.include_router(report_generator.router, prefix="/report-generator", tags=["report-generator"])

@@ -34,6 +34,7 @@ import {
   PenLine,
   Link2,
   FileText,
+  PackageCheck,
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -96,6 +97,7 @@ const navigationGroups: NavGroup[] = [
     icon: ShoppingCart,
     items: [
       { name: "Ordrer", href: "/orders", icon: ShoppingCart },
+      { name: "Plukking", href: "/plukking", icon: PackageCheck },
       { name: "Kunder", href: "/customers", icon: Users },
       { name: "Kundegrupper", href: "/kundegrupper", icon: Users },
       { name: "Leveranser", href: "/deliveries", icon: Truck },

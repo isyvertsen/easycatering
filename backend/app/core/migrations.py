@@ -444,6 +444,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(CreateCustomerAccessTokensTable())
         migration_runner.add_migration(CreateActivityLogsTable())
         migration_runner.add_migration(CreateAppLogsTable())
+        migration_runner.add_migration(AddPickingStatusToOrders())
     return migration_runner
 
 
@@ -929,6 +930,53 @@ class CreateActivityLogsTable(Migration):
             await conn.execute(text("""
                 CREATE INDEX IF NOT EXISTS idx_activity_logs_filters
                 ON activity_logs(created_at, user_id, action, resource_type)
+            """))
+
+
+class AddPickingStatusToOrders(Migration):
+    """Add picking status fields to tblordrer for warehouse workflow."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260112_003_picking_status",
+            description="Add plukkstatus, plukket_dato, and plukket_av fields to tblordrer"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Add plukkstatus column
+            await conn.execute(text("""
+                ALTER TABLE tblordrer
+                ADD COLUMN IF NOT EXISTS plukkstatus VARCHAR(50) DEFAULT NULL
+            """))
+
+            # Add plukket_dato column
+            await conn.execute(text("""
+                ALTER TABLE tblordrer
+                ADD COLUMN IF NOT EXISTS plukket_dato TIMESTAMP DEFAULT NULL
+            """))
+
+            # Add plukket_av column (user who picked)
+            await conn.execute(text("""
+                ALTER TABLE tblordrer
+                ADD COLUMN IF NOT EXISTS plukket_av INTEGER REFERENCES users(id) ON DELETE SET NULL
+            """))
+
+            # Add pakkseddel_skrevet column
+            await conn.execute(text("""
+                ALTER TABLE tblordrer
+                ADD COLUMN IF NOT EXISTS pakkseddel_skrevet TIMESTAMP DEFAULT NULL
+            """))
+
+            # Create index on plukkstatus for faster filtering
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_tblordrer_plukkstatus ON tblordrer(plukkstatus)
+            """))
+
+            # Create composite index for common picking queries
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_tblordrer_picking_workflow
+                ON tblordrer(plukkstatus, leveringsdato, kansellertdato)
             """))
 
 
