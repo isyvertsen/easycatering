@@ -2,12 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import {
-  useWebshopOrdersForApproval,
-  useApproveWebshopOrder,
-  useBatchApproveWebshopOrders,
-} from "@/hooks/useWebshop"
-import { Order } from "@/types/models"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { apiClient } from "@/lib/api-client"
 import { format } from "date-fns"
 import { nb } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
@@ -15,11 +11,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/hooks/use-toast"
 import {
   Search,
-  CheckCircle,
   Eye,
-  CheckCheck,
+  Printer,
+  PackageCheck,
 } from "lucide-react"
 import {
   AlertDialog,
@@ -33,19 +30,85 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-export default function WebshopApprovalPage() {
+interface Order {
+  ordreid: number
+  kundeid: number
+  kundenavn: string
+  ordredato: string
+  leveringsdato?: string
+  informasjon?: string
+  ordrestatusid: number
+}
+
+interface OrderListResponse {
+  items: Order[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+// Fetch orders with status 30 (Plukket)
+function usePlukketOrdrer(params: { search?: string; page: number; page_size: number }) {
+  return useQuery({
+    queryKey: ["webshop", "plukket-ordre", params],
+    queryFn: async () => {
+      const queryParams = new URLSearchParams()
+      queryParams.append("status", "30")
+      queryParams.append("page", params.page.toString())
+      queryParams.append("page_size", params.page_size.toString())
+      if (params.search) queryParams.append("search", params.search)
+
+      const response = await apiClient.get(`/v1/webshop/ordre/status?${queryParams}`)
+      return response.data as OrderListResponse
+    },
+    staleTime: 30 * 1000,
+  })
+}
+
+// Update order status
+function useUpdateOrderStatus() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: async ({ orderIds, statusId }: { orderIds: number[]; statusId: number }) => {
+      const response = await apiClient.post("/v1/webshop/ordre/godkjenning/batch", {
+        ordre_ids: orderIds,
+        ordrestatusid: statusId,
+      })
+      return response.data
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["webshop", "plukket-ordre"] })
+      toast({
+        title: "Pakkliste generert",
+        description: `${variables.orderIds.length} ordre(r) er satt til status "Pakkliste skrevet"`,
+      })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Feil",
+        description: error.response?.data?.detail || "Kunne ikke oppdatere ordre",
+        variant: "destructive",
+      })
+    },
+  })
+}
+
+export default function WebshopPackingListPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedOrders, setSelectedOrders] = useState<number[]>([])
   const [page, setPage] = useState(1)
+  const { toast } = useToast()
 
-  const { data, isLoading, error } = useWebshopOrdersForApproval({
+  const { data, isLoading, error } = usePlukketOrdrer({
     search: searchTerm,
     page,
     page_size: 20,
   })
 
-  const approveOrder = useApproveWebshopOrder()
-  const batchApprove = useBatchApproveWebshopOrders()
+  const updateStatus = useUpdateOrderStatus()
 
   const handleSelectAll = () => {
     if (!data?.items) return
@@ -65,22 +128,27 @@ export default function WebshopApprovalPage() {
     )
   }
 
-  const handleApproveOrder = async (orderId: number, statusId: number) => {
-    await approveOrder.mutateAsync({ id: orderId, statusId })
-    setSelectedOrders((prev) => prev.filter((id) => id !== orderId))
-  }
-
-  const handleBatchApprove = async (statusId: number) => {
-    await batchApprove.mutateAsync({ orderIds: selectedOrders, statusId })
+  const handleGeneratePackingList = async () => {
+    // TODO: Generate PDF packing list
+    // For now, just update status to 35 (Pakkliste skrevet)
+    await updateStatus.mutateAsync({
+      orderIds: selectedOrders,
+      statusId: 35,
+    })
     setSelectedOrders([])
+
+    toast({
+      title: "Info",
+      description: "PDF-generering kommer i neste versjon. Status er oppdatert.",
+    })
   }
 
   return (
     <div className="container mx-auto py-6 px-4">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Webshop - Godkjenning</h1>
+        <h1 className="text-3xl font-bold mb-2">Webshop - Pakkliste</h1>
         <p className="text-muted-foreground">
-          Godkjenn bestillinger fra webbutikken
+          Generer pakklister for plukkede ordrer
         </p>
       </div>
 
@@ -105,34 +173,32 @@ export default function WebshopApprovalPage() {
             </div>
 
             {selectedOrders.length > 0 && (
-              <div className="flex gap-2">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button>
-                      <CheckCheck className="mr-2 h-4 w-4" />
-                      Godkjenn ({selectedOrders.length})
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Godkjenn ordre?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Dette vil godkjenne {selectedOrders.length} ordre(r) og sette dem til
-                        status "Godkjent" (20).
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleBatchApprove(20)}
-                        disabled={batchApprove.isPending}
-                      >
-                        Godkjenn
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Generer pakkliste ({selectedOrders.length})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Generer pakkliste?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Dette vil generere pakkliste for {selectedOrders.length} ordre(r)
+                      og sette dem til status "Pakkliste skrevet" (35).
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleGeneratePackingList}
+                      disabled={updateStatus.isPending}
+                    >
+                      Generer
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </CardContent>
@@ -188,21 +254,11 @@ export default function WebshopApprovalPage() {
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-3">
                         <h3 className="font-semibold">Ordre #{order.ordreid}</h3>
-                        <Badge variant="outline">Venter på godkjenning</Badge>
+                        <Badge variant="secondary">Plukket</Badge>
                       </div>
 
                       <div className="text-sm text-muted-foreground space-y-1">
-                        {order.kunde && (
-                          <p>Kunde: {order.kunde.kundenavn}</p>
-                        )}
-                        {order.ordredato && (
-                          <p>
-                            Bestilt:{" "}
-                            {format(new Date(order.ordredato), "dd. MMM yyyy 'kl.' HH:mm", {
-                              locale: nb,
-                            })}
-                          </p>
-                        )}
+                        <p>Kunde: {order.kundenavn}</p>
                         {order.leveringsdato && (
                           <p>
                             Levering:{" "}
@@ -211,53 +267,20 @@ export default function WebshopApprovalPage() {
                             })}
                           </p>
                         )}
-                        {order.informasjon && (
-                          <p className="line-clamp-1">
-                            Kommentar: {order.informasjon}
-                          </p>
-                        )}
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-end gap-2">
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          asChild
-                        >
-                          <Link href={`/webshop/mine-ordre/${order.ordreid}`}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Se
-                          </Link>
-                        </Button>
-
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="sm">
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Godkjenn
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Godkjenn ordre?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Dette vil godkjenne ordren og sette den til status
-                                "Godkjent" (20).
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleApproveOrder(order.ordreid, 20)}
-                              >
-                                Godkjenn
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        asChild
+                      >
+                        <Link href={`/webshop/mine-ordre/${order.ordreid}`}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Se
+                        </Link>
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -295,12 +318,12 @@ export default function WebshopApprovalPage() {
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
-              <CheckCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Ingen ordre å godkjenne</h2>
+              <PackageCheck className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Ingen plukkede ordrer</h2>
               <p className="text-muted-foreground">
                 {searchTerm
                   ? "Ingen ordre matcher søket"
-                  : "Alle ordre er behandlet"}
+                  : "Det er ingen plukkede ordrer som venter på pakkliste"}
               </p>
             </div>
           </CardContent>

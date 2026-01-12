@@ -144,3 +144,51 @@ class WebshopAccessResponse(BaseSchema):
     kunde_navn: Optional[str] = None
     kundegruppe_navn: Optional[str] = None
     message: Optional[str] = None
+
+
+# =============================================================================
+# Cancellation schemas
+# =============================================================================
+
+class WebshopCancelRequest(BaseModel):
+    """Schema for cancelling an order.
+
+    Status values:
+    - 98 = For sen kansellering (customer cancelled after deadline)
+    - 99 = Kansellert (normal cancellation)
+    """
+    arsak: Optional[str] = Field(None, description="Reason for cancellation")
+    for_sen: bool = Field(False, description="True if cancelled after deadline (status 98)")
+
+
+class WebshopCancelResponse(BaseSchema):
+    """Response after cancelling an order."""
+    message: str
+    ordrestatusid: int
+
+
+# =============================================================================
+# Draft order schemas (auto-save)
+# =============================================================================
+
+class WebshopDraftOrderLineUpdate(BaseModel):
+    """Single order line for draft order update."""
+    produktid: int
+    antall: float = Field(..., gt=0)
+    pris: Optional[float] = None
+
+
+class WebshopDraftOrderUpdate(BaseModel):
+    """Schema for updating a draft order's lines."""
+    ordrelinjer: List[WebshopDraftOrderLineUpdate]
+
+
+class WebshopDraftOrder(BaseSchema):
+    """Draft order response."""
+    ordreid: int
+    kundeid: Optional[int] = None
+    kundenavn: Optional[str] = None
+    ordredato: Optional[datetime] = None
+    ordrestatusid: int
+    ordrelinjer: List[WebshopOrderLine] = []
+    total_sum: float = 0

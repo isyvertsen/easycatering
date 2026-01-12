@@ -1,34 +1,57 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react'
 import { CartItem } from '@/lib/api/webshop'
+import { webshopApi, DraftOrder } from '@/lib/api/webshop'
+import { useSession } from 'next-auth/react'
 
 interface CartContextType {
   items: CartItem[]
+  draftOrderId: number | null
+  isSaving: boolean
+  isSynced: boolean
+  lastSaved: Date | null
   addItem: (item: Omit<CartItem, 'antall'> & { antall?: number }) => void
   removeItem: (produktid: number) => void
   updateQuantity: (produktid: number, antall: number) => void
   clearCart: () => void
   getTotalItems: () => number
   getTotalPrice: () => number
+  loadDraftOrder: () => Promise<void>
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 const CART_STORAGE_KEY = 'webshop-cart'
+const DRAFT_ORDER_ID_KEY = 'webshop-draft-order-id'
+const SAVE_DEBOUNCE_MS = 1000 // Wait 1 second before saving
 
 /**
- * Shopping Cart Provider
+ * Shopping Cart Provider with backend sync
  *
- * Håndterer handlekurv-state på klientsiden med localStorage-persistering
+ * Handles cart state with:
+ * - localStorage for offline/guest access
+ * - Backend sync for logged-in users (auto-save to database)
  */
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
+  const [draftOrderId, setDraftOrderId] = useState<number | null>(null)
   const [isHydrated, setIsHydrated] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isSynced, setIsSynced] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+
+  const { data: session, status: sessionStatus } = useSession()
+  const isLoggedIn = sessionStatus === 'authenticated'
+
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const pendingSaveRef = useRef(false)
 
   // Load cart from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem(CART_STORAGE_KEY)
+    const storedDraftId = localStorage.getItem(DRAFT_ORDER_ID_KEY)
+
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
@@ -37,6 +60,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         console.error('Failed to parse cart from localStorage', error)
       }
     }
+
+    if (storedDraftId) {
+      setDraftOrderId(parseInt(storedDraftId, 10))
+    }
+
     setIsHydrated(true)
   }, [])
 
@@ -47,25 +75,134 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, isHydrated])
 
+  // Save draft order ID to localStorage
+  useEffect(() => {
+    if (isHydrated) {
+      if (draftOrderId) {
+        localStorage.setItem(DRAFT_ORDER_ID_KEY, draftOrderId.toString())
+      } else {
+        localStorage.removeItem(DRAFT_ORDER_ID_KEY)
+      }
+    }
+  }, [draftOrderId, isHydrated])
+
+  // Sync with backend (debounced)
+  const syncToBackend = useCallback(async (cartItems: CartItem[]) => {
+    if (!isLoggedIn || cartItems.length === 0) {
+      setIsSynced(true)
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const ordrelinjer = cartItems.map(item => ({
+        produktid: item.produktid,
+        antall: item.antall,
+        pris: item.pris
+      }))
+
+      const draft = await webshopApi.updateDraftOrder(ordrelinjer)
+      setDraftOrderId(draft.ordreid)
+      setIsSynced(true)
+      setLastSaved(new Date())
+    } catch (error) {
+      console.error('Failed to sync cart to backend', error)
+      setIsSynced(false)
+    } finally {
+      setIsSaving(false)
+      pendingSaveRef.current = false
+    }
+  }, [isLoggedIn])
+
+  // Debounced save
+  const debouncedSave = useCallback((cartItems: CartItem[]) => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    pendingSaveRef.current = true
+    setIsSynced(false)
+
+    saveTimeoutRef.current = setTimeout(() => {
+      syncToBackend(cartItems)
+    }, SAVE_DEBOUNCE_MS)
+  }, [syncToBackend])
+
+  // Load draft order from backend
+  const loadDraftOrder = useCallback(async () => {
+    if (!isLoggedIn) return
+
+    try {
+      const draft = await webshopApi.getDraftOrder()
+      if (draft && draft.ordrelinjer.length > 0) {
+        // Convert backend order lines to cart items
+        const cartItems: CartItem[] = draft.ordrelinjer.map(line => ({
+          produktid: line.produktid,
+          produktnavn: line.produktnavn || '',
+          visningsnavn: line.visningsnavn,
+          pris: line.pris,
+          antall: line.antall
+        }))
+
+        setItems(cartItems)
+        setDraftOrderId(draft.ordreid)
+        setIsSynced(true)
+        setLastSaved(new Date())
+      }
+    } catch (error) {
+      console.error('Failed to load draft order', error)
+    }
+  }, [isLoggedIn])
+
+  // Load draft order when user logs in
+  useEffect(() => {
+    if (isLoggedIn && isHydrated && items.length === 0) {
+      loadDraftOrder()
+    }
+  }, [isLoggedIn, isHydrated, items.length, loadDraftOrder])
+
   const addItem = (item: Omit<CartItem, 'antall'> & { antall?: number }) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.produktid === item.produktid)
+      let newItems: CartItem[]
+
       if (existing) {
-        // Increment quantity
-        return prev.map((i) =>
+        newItems = prev.map((i) =>
           i.produktid === item.produktid
             ? { ...i, antall: i.antall + (item.antall || 1) }
             : i
         )
       } else {
-        // Add new item
-        return [...prev, { ...item, antall: item.antall || 1 }]
+        newItems = [...prev, { ...item, antall: item.antall || 1 }]
       }
+
+      // Trigger backend sync
+      if (isLoggedIn) {
+        debouncedSave(newItems)
+      }
+
+      return newItems
     })
   }
 
   const removeItem = (produktid: number) => {
-    setItems((prev) => prev.filter((i) => i.produktid !== produktid))
+    setItems((prev) => {
+      const newItems = prev.filter((i) => i.produktid !== produktid)
+
+      // Trigger backend sync
+      if (isLoggedIn) {
+        if (newItems.length === 0 && draftOrderId) {
+          // Delete draft order if cart is empty
+          webshopApi.deleteDraftOrder(draftOrderId).catch(console.error)
+          setDraftOrderId(null)
+          setIsSynced(true)
+        } else {
+          debouncedSave(newItems)
+        }
+      }
+
+      return newItems
+    })
   }
 
   const updateQuantity = (produktid: number, antall: number) => {
@@ -74,13 +211,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    setItems((prev) =>
-      prev.map((i) => (i.produktid === produktid ? { ...i, antall } : i))
-    )
+    setItems((prev) => {
+      const newItems = prev.map((i) =>
+        i.produktid === produktid ? { ...i, antall } : i
+      )
+
+      // Trigger backend sync
+      if (isLoggedIn) {
+        debouncedSave(newItems)
+      }
+
+      return newItems
+    })
   }
 
   const clearCart = () => {
+    // Cancel any pending save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // Delete draft order from backend
+    if (isLoggedIn && draftOrderId) {
+      webshopApi.deleteDraftOrder(draftOrderId).catch(console.error)
+    }
+
     setItems([])
+    setDraftOrderId(null)
+    setIsSynced(true)
+    setLastSaved(null)
   }
 
   const getTotalItems = () => {
@@ -95,12 +254,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     <CartContext.Provider
       value={{
         items,
+        draftOrderId,
+        isSaving,
+        isSynced,
+        lastSaved,
         addItem,
         removeItem,
         updateQuantity,
         clearCart,
         getTotalItems,
         getTotalPrice,
+        loadDraftOrder,
       }}
     >
       {children}

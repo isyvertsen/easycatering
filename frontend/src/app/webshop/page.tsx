@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useWebshopProducts } from "@/hooks/useWebshop"
 import { useCart } from "@/contexts/CartContext"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, ShoppingCart, Filter } from "lucide-react"
+import { Search, ShoppingCart, Filter, LayoutGrid, List } from "lucide-react"
 import { ProductCard } from "@/components/webshop/ProductCard"
+import { ProductListItem } from "@/components/webshop/ProductListItem"
 import { ShoppingCartSidebar } from "@/components/webshop/ShoppingCartSidebar"
 import {
   Select,
@@ -16,6 +17,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui/toggle-group"
+
+type ViewMode = "grid" | "list"
 
 export default function WebshopPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -23,6 +30,23 @@ export default function WebshopPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [page, setPage] = useState(1)
   const [cartOpen, setCartOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>("grid")
+
+  // Load view preference from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("webshop-view-mode")
+    if (saved === "grid" || saved === "list") {
+      setViewMode(saved)
+    }
+  }, [])
+
+  // Save view preference to localStorage
+  const handleViewModeChange = (value: string) => {
+    if (value === "grid" || value === "list") {
+      setViewMode(value)
+      localStorage.setItem("webshop-view-mode", value)
+    }
+  }
 
   const { getTotalItems } = useCart()
 
@@ -113,6 +137,21 @@ export default function WebshopPage() {
             <SelectItem value="desc">Synkende</SelectItem>
           </SelectContent>
         </Select>
+
+        {/* View Mode Toggle */}
+        <ToggleGroup
+          type="single"
+          value={viewMode}
+          onValueChange={handleViewModeChange}
+          className="border rounded-md"
+        >
+          <ToggleGroupItem value="grid" aria-label="Rutenett visning">
+            <LayoutGrid className="h-4 w-4" />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="list" aria-label="Liste visning">
+            <List className="h-4 w-4" />
+          </ToggleGroupItem>
+        </ToggleGroup>
       </div>
 
       {/* Loading State */}
@@ -131,14 +170,22 @@ export default function WebshopPage() {
         </div>
       )}
 
-      {/* Product Grid */}
+      {/* Product Grid/List */}
       {data && data.items.length > 0 && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {data.items.map((product) => (
-              <ProductCard key={product.produktid} product={product} />
-            ))}
-          </div>
+          {viewMode === "grid" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {data.items.map((product) => (
+                <ProductCard key={product.produktid} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {data.items.map((product) => (
+                <ProductListItem key={product.produktid} product={product} />
+              ))}
+            </div>
+          )}
 
           {/* Pagination */}
           {data.total_pages > 1 && (

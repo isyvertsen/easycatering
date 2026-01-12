@@ -24,6 +24,8 @@ from app.schemas.webshop import (
     WebshopOrderListResponse,
     WebshopOrderByTokenResponse,
     WebshopAccessResponse,
+    WebshopDraftOrder,
+    WebshopDraftOrderLineUpdate,
 )
 
 
@@ -403,6 +405,61 @@ class WebshopService:
             total_pages=total_pages
         )
 
+    async def get_orders_by_status(
+        self,
+        status_id: int,
+        page: int = 1,
+        page_size: int = 20,
+        search: Optional[str] = None
+    ) -> WebshopOrderListResponse:
+        """Get orders by status (admin only)."""
+        query = select(Ordrer).where(Ordrer.ordrestatusid == status_id)
+
+        if search:
+            search_filter = f"%{search}%"
+            query = query.where(
+                (Ordrer.kundenavn.ilike(search_filter)) |
+                (func.cast(Ordrer.ordreid, String).ilike(search_filter))
+            )
+
+        # Count total
+        count_query = select(func.count()).select_from(query.subquery())
+        total_result = await self.db.execute(count_query)
+        total = total_result.scalar()
+
+        # Order by date
+        query = query.order_by(Ordrer.ordredato.desc())
+
+        # Apply pagination
+        offset = (page - 1) * page_size
+        query = query.offset(offset).limit(page_size)
+
+        result = await self.db.execute(query)
+        orders = result.scalars().all()
+
+        items = [
+            WebshopOrder(
+                ordreid=o.ordreid,
+                kundeid=o.kundeid,
+                kundenavn=o.kundenavn,
+                ordredato=o.ordredato,
+                leveringsdato=o.leveringsdato,
+                informasjon=o.informasjon,
+                ordrestatusid=o.ordrestatusid
+            )
+            for o in orders
+        ]
+
+        total_pages = (total + page_size - 1) // page_size if total > 0 else 1
+
+        return WebshopOrderListResponse(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages
+        )
+
     async def update_order_status(self, order_id: int, status_id: int) -> bool:
         """Update order status (admin only)."""
         query = select(Ordrer).where(Ordrer.ordreid == order_id)
@@ -429,3 +486,363 @@ class WebshopService:
 
         await self.db.commit()
         return count
+
+    async def get_order_by_token(self, token: str) -> Optional[WebshopOrderByTokenResponse]:
+        """Get order by token (for public access via email link).
+
+        For simplicity, the token is the order ID.
+        In production, use a secure random token stored in the database.
+        Token is valid for 14 days after order creation.
+        """
+        try:
+            order_id = int(token)
+        except ValueError:
+            return None
+
+        query = (
+            select(Ordrer)
+            .options(selectinload(Ordrer.detaljer).selectinload(Ordredetaljer.produkt))
+            .where(Ordrer.ordreid == order_id)
+        )
+
+        result = await self.db.execute(query)
+        order = result.scalar_one_or_none()
+
+        if not order:
+            return None
+
+        # Check if token is expired (14 days)
+        if order.ordredato:
+            token_expires = order.ordredato + timedelta(days=14)
+            token_expired = datetime.utcnow() > token_expires
+        else:
+            token_expires = None
+            token_expired = False
+
+        # Build order lines
+        ordrelinjer = []
+        for detail in order.detaljer:
+            line_total = (detail.pris or 0) * (detail.antall or 0)
+            ordrelinjer.append(
+                WebshopOrderLine(
+                    produktid=detail.produktid,
+                    produktnavn=detail.produkt.produktnavn if detail.produkt else None,
+                    visningsnavn=detail.produkt.visningsnavn if detail.produkt else None,
+                    antall=detail.antall or 0,
+                    pris=detail.pris or 0,
+                    total=line_total
+                )
+            )
+
+        return WebshopOrderByTokenResponse(
+            ordre=WebshopOrder(
+                ordreid=order.ordreid,
+                kundeid=order.kundeid,
+                kundenavn=order.kundenavn,
+                ordredato=order.ordredato,
+                leveringsdato=order.leveringsdato,
+                informasjon=order.informasjon,
+                ordrestatusid=order.ordrestatusid
+            ),
+            ordrelinjer=ordrelinjer,
+            token_utlopt=token_expired,
+            token_utloper=token_expires
+        )
+
+    async def confirm_receipt_by_token(self, token: str) -> bool:
+        """Confirm receipt of order by token.
+
+        Only works for orders with status 35 (Pakkliste skrevet).
+        Updates status to 80 (Godkjent av mottaker).
+        """
+        try:
+            order_id = int(token)
+        except ValueError:
+            return False
+
+        query = select(Ordrer).where(Ordrer.ordreid == order_id)
+        result = await self.db.execute(query)
+        order = result.scalar_one_or_none()
+
+        if not order:
+            return False
+
+        # Check that order is ready for confirmation (status 35)
+        if order.ordrestatusid != 35:
+            return False
+
+        # Check that token is not expired
+        if order.ordredato:
+            token_expires = order.ordredato + timedelta(days=14)
+            if datetime.utcnow() > token_expires:
+                return False
+
+        # Update status to 80 (Godkjent av mottaker)
+        order.ordrestatusid = 80
+        await self.db.commit()
+        return True
+
+    async def cancel_order(
+        self,
+        order_id: int,
+        arsak: Optional[str] = None,
+        for_sen: bool = False
+    ) -> Tuple[bool, int]:
+        """Cancel an order.
+
+        Args:
+            order_id: The order ID to cancel
+            arsak: Reason for cancellation (optional)
+            for_sen: If True, use status 98 (late cancellation), else 99 (normal)
+
+        Returns:
+            Tuple of (success, new_status_id)
+        """
+        query = select(Ordrer).where(Ordrer.ordreid == order_id)
+        result = await self.db.execute(query)
+        order = result.scalar_one_or_none()
+
+        if not order:
+            return False, 0
+
+        # Determine status: 98 for late cancellation, 99 for normal
+        new_status = 98 if for_sen else 99
+
+        # Update order
+        order.ordrestatusid = new_status
+        order.kansellertdato = datetime.utcnow()
+        if arsak and order.informasjon:
+            order.informasjon = f"{order.informasjon}\n\nKansellert: {arsak}"
+        elif arsak:
+            order.informasjon = f"Kansellert: {arsak}"
+
+        await self.db.commit()
+        return True, new_status
+
+    # =========================================================================
+    # Draft order methods (auto-save)
+    # =========================================================================
+
+    async def get_draft_order(self, user: User) -> Optional[WebshopDraftOrder]:
+        """Get the current draft order (status 10) for user's customer.
+
+        Returns None if no draft order exists.
+        """
+        query = (
+            select(Ordrer)
+            .options(selectinload(Ordrer.detaljer).selectinload(Ordredetaljer.produkt))
+            .where(
+                and_(
+                    Ordrer.kundeid == user.kundeid,
+                    Ordrer.ordrestatusid == 10  # Startet
+                )
+            )
+            .order_by(Ordrer.ordredato.desc())
+        )
+
+        result = await self.db.execute(query)
+        order = result.scalar_one_or_none()
+
+        if not order:
+            return None
+
+        # Build order lines
+        ordrelinjer = []
+        total_sum = 0
+        for detail in order.detaljer:
+            line_total = (detail.pris or 0) * (detail.antall or 0)
+            total_sum += line_total
+            ordrelinjer.append(
+                WebshopOrderLine(
+                    produktid=detail.produktid,
+                    produktnavn=detail.produkt.produktnavn if detail.produkt else None,
+                    visningsnavn=detail.produkt.visningsnavn if detail.produkt else None,
+                    antall=detail.antall or 0,
+                    pris=detail.pris or 0,
+                    total=line_total
+                )
+            )
+
+        return WebshopDraftOrder(
+            ordreid=order.ordreid,
+            kundeid=order.kundeid,
+            kundenavn=order.kundenavn,
+            ordredato=order.ordredato,
+            ordrestatusid=order.ordrestatusid,
+            ordrelinjer=ordrelinjer,
+            total_sum=total_sum
+        )
+
+    async def create_or_update_draft_order(
+        self,
+        user: User,
+        ordrelinjer: List[WebshopDraftOrderLineUpdate]
+    ) -> WebshopDraftOrder:
+        """Create or update a draft order with the given order lines.
+
+        If a draft order exists, update its lines.
+        If no draft order exists, create one with status 10 (Startet).
+        """
+        # Get customer info
+        query = select(Kunder).where(Kunder.kundeid == user.kundeid)
+        result = await self.db.execute(query)
+        kunde = result.scalar_one_or_none()
+
+        if not kunde:
+            raise ValueError("Kunde ikke funnet")
+
+        # Check for existing draft order
+        draft_query = select(Ordrer).where(
+            and_(
+                Ordrer.kundeid == user.kundeid,
+                Ordrer.ordrestatusid == 10
+            )
+        )
+        draft_result = await self.db.execute(draft_query)
+        order = draft_result.scalar_one_or_none()
+
+        if not order:
+            # Create new draft order
+            order = Ordrer(
+                kundeid=user.kundeid,
+                kundenavn=kunde.kundenavn,
+                ordredato=datetime.utcnow(),
+                ordrestatusid=10,  # Startet
+                lagerok=False,
+                sentbekreftelse=False
+            )
+            self.db.add(order)
+            await self.db.flush()
+
+        # Delete existing order lines
+        delete_query = select(Ordredetaljer).where(Ordredetaljer.ordreid == order.ordreid)
+        delete_result = await self.db.execute(delete_query)
+        existing_lines = delete_result.scalars().all()
+        for line in existing_lines:
+            await self.db.delete(line)
+
+        # Add new order lines
+        total_sum = 0
+        new_lines = []
+        for idx, line in enumerate(ordrelinjer):
+            # Get product price if not provided
+            pris = line.pris
+            produktnavn = None
+            visningsnavn = None
+
+            product_query = select(Produkter).where(Produkter.produktid == line.produktid)
+            product_result = await self.db.execute(product_query)
+            product = product_result.scalar_one_or_none()
+
+            if product:
+                if pris is None:
+                    pris = product.pris or 0
+                produktnavn = product.produktnavn
+                visningsnavn = product.visningsnavn
+
+            order_line = Ordredetaljer(
+                ordreid=order.ordreid,
+                produktid=line.produktid,
+                unik=idx + 1,
+                antall=line.antall,
+                pris=pris or 0,
+            )
+            self.db.add(order_line)
+
+            line_total = (pris or 0) * line.antall
+            total_sum += line_total
+            new_lines.append(
+                WebshopOrderLine(
+                    produktid=line.produktid,
+                    produktnavn=produktnavn,
+                    visningsnavn=visningsnavn,
+                    antall=line.antall,
+                    pris=pris or 0,
+                    total=line_total
+                )
+            )
+
+        await self.db.commit()
+        await self.db.refresh(order)
+
+        return WebshopDraftOrder(
+            ordreid=order.ordreid,
+            kundeid=order.kundeid,
+            kundenavn=order.kundenavn,
+            ordredato=order.ordredato,
+            ordrestatusid=order.ordrestatusid,
+            ordrelinjer=new_lines,
+            total_sum=total_sum
+        )
+
+    async def delete_draft_order(self, user: User, order_id: int) -> bool:
+        """Delete a draft order.
+
+        Only works for orders with status 10 belonging to the user's customer.
+        """
+        query = select(Ordrer).where(
+            and_(
+                Ordrer.ordreid == order_id,
+                Ordrer.kundeid == user.kundeid,
+                Ordrer.ordrestatusid == 10
+            )
+        )
+        result = await self.db.execute(query)
+        order = result.scalar_one_or_none()
+
+        if not order:
+            return False
+
+        # Delete order lines first
+        delete_lines_query = select(Ordredetaljer).where(Ordredetaljer.ordreid == order_id)
+        delete_result = await self.db.execute(delete_lines_query)
+        lines = delete_result.scalars().all()
+        for line in lines:
+            await self.db.delete(line)
+
+        # Delete order
+        await self.db.delete(order)
+        await self.db.commit()
+        return True
+
+    async def submit_draft_order(
+        self,
+        user: User,
+        order_id: int,
+        leveringsdato: Optional[datetime] = None,
+        informasjon: Optional[str] = None
+    ) -> Optional[WebshopOrder]:
+        """Submit a draft order (change status from 10 to 15).
+
+        Returns the updated order or None if not found.
+        """
+        query = select(Ordrer).where(
+            and_(
+                Ordrer.ordreid == order_id,
+                Ordrer.kundeid == user.kundeid,
+                Ordrer.ordrestatusid == 10
+            )
+        )
+        result = await self.db.execute(query)
+        order = result.scalar_one_or_none()
+
+        if not order:
+            return None
+
+        # Update order
+        order.ordrestatusid = 15  # Bestilt
+        order.leveringsdato = leveringsdato
+        order.informasjon = informasjon
+
+        await self.db.commit()
+        await self.db.refresh(order)
+
+        return WebshopOrder(
+            ordreid=order.ordreid,
+            kundeid=order.kundeid,
+            kundenavn=order.kundenavn,
+            ordredato=order.ordredato,
+            leveringsdato=order.leveringsdato,
+            informasjon=order.informasjon,
+            ordrestatusid=order.ordrestatusid
+        )
