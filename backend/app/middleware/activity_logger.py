@@ -23,6 +23,9 @@ EXCLUDED_PATHS = {
     "/favicon.ico",
     "/_next",
     "/static",
+    # Exclude logging endpoints to avoid recursive logging
+    "/api/v1/activity-logs",
+    "/api/v1/app-logs",
 }
 
 # Paths to exclude from detailed logging (sensitive)
