@@ -300,7 +300,7 @@ export default function ActivityLogPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle handlinger</SelectItem>
-                {actions?.map((action) => (
+                {actions?.filter(a => a && a.trim() !== '').map((action) => (
                   <SelectItem key={action} value={action}>
                     {action}
                   </SelectItem>
@@ -319,7 +319,7 @@ export default function ActivityLogPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle ressurser</SelectItem>
-                {resourceTypes?.map((type) => (
+                {resourceTypes?.filter(t => t && t.trim() !== '').map((type) => (
                   <SelectItem key={type} value={type}>
                     {type}
                   </SelectItem>

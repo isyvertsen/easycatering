@@ -445,7 +445,7 @@ export default function AppLogPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle nivåer</SelectItem>
-                {levels?.map((level) => (
+                {levels?.filter(l => l && l.trim() !== '').map((level) => (
                   <SelectItem key={level} value={level}>
                     {level}
                   </SelectItem>
@@ -464,7 +464,7 @@ export default function AppLogPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle unntak</SelectItem>
-                {exceptionTypes?.map((type) => (
+                {exceptionTypes?.filter(t => t && t.trim() !== '').map((type) => (
                   <SelectItem key={type} value={type}>
                     {type}
                   </SelectItem>
