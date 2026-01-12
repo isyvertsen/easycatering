@@ -8,7 +8,7 @@ Larvik Kommune Catering (LKC) System - a full-stack catering management applicat
 
 ## Build & Run Commands
 
-### Backend (LKCserver-backend/)
+### Backend (backend/)
 ```bash
 # Install dependencies (uses uv, NOT pip directly)
 uv pip install -r pyproject.toml
@@ -27,7 +27,7 @@ uv run pytest --cov
 uv run python tests/seed_data.py
 ```
 
-### Frontend (LKCserver-frontend/)
+### Frontend (frontend/)
 ```bash
 npm install
 npm run dev          # Development server (port 3000)
