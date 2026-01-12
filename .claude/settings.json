@@ -1,0 +1,6 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "echo '🟡 Frontend and Backend'"
+  }
+}
