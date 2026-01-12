@@ -208,6 +208,7 @@ class WebshopService:
             ordredato=datetime.utcnow(),
             leveringsdato=order_data.leveringsdato,
             informasjon=order_data.informasjon,
+            sendestil=order_data.leveringsadresse,
             ordrestatusid=15,  # Bestilt
             lagerok=False,
             sentbekreftelse=False

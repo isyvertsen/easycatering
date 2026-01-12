@@ -1,8 +1,8 @@
 """Webshop schemas for customer ordering."""
-from datetime import datetime
-from typing import Optional, List
+from datetime import datetime, date
+from typing import Optional, List, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from .base import BaseSchema
 
@@ -48,6 +48,30 @@ class WebshopOrderCreate(BaseModel):
     ordrelinjer: List[WebshopOrderLineCreate]
     leveringsdato: Optional[datetime] = None
     informasjon: Optional[str] = None
+    leveringsadresse: Optional[str] = None
+
+    @field_validator('leveringsdato', mode='before')
+    @classmethod
+    def parse_leveringsdato(cls, v):
+        """Parse leveringsdato from various formats (YYYY-MM-DD or datetime)."""
+        if v is None or v == '':
+            return None
+        if isinstance(v, datetime):
+            return v
+        if isinstance(v, date):
+            return datetime.combine(v, datetime.min.time())
+        if isinstance(v, str):
+            # Try date-only format first (YYYY-MM-DD)
+            try:
+                return datetime.strptime(v, '%Y-%m-%d')
+            except ValueError:
+                pass
+            # Try ISO datetime format
+            try:
+                return datetime.fromisoformat(v.replace('Z', '+00:00'))
+            except ValueError:
+                pass
+        raise ValueError(f'Invalid date format: {v}')
 
 
 class WebshopOrderLine(BaseSchema):
