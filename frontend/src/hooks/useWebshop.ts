@@ -13,6 +13,22 @@ import { useToast } from '@/hooks/use-toast'
  */
 
 // ============================================================================
+// TILGANGSKONTROLL
+// ============================================================================
+
+/**
+ * Sjekk webshop-tilgang for innlogget bruker
+ */
+export function useWebshopAccess() {
+  return useQuery({
+    queryKey: ['webshop', 'access'],
+    queryFn: () => webshopApi.checkAccess(),
+    staleTime: 5 * 60 * 1000, // 5 minutter
+    retry: false,
+  })
+}
+
+// ============================================================================
 // PRODUKTER
 // ============================================================================
 

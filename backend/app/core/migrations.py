@@ -445,6 +445,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(CreateActivityLogsTable())
         migration_runner.add_migration(CreateAppLogsTable())
         migration_runner.add_migration(AddPickingStatusToOrders())
+        migration_runner.add_migration(AddKundeIdToUsers())
     return migration_runner
 
 
@@ -930,6 +931,29 @@ class CreateActivityLogsTable(Migration):
             await conn.execute(text("""
                 CREATE INDEX IF NOT EXISTS idx_activity_logs_filters
                 ON activity_logs(created_at, user_id, action, resource_type)
+            """))
+
+
+class AddKundeIdToUsers(Migration):
+    """Add kundeid foreign key to users table for webshop access."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260112_004_users_kundeid",
+            description="Add kundeid (FK to tblkunder) to users table for webshop customer access"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Add kundeid column with foreign key to tblkunder
+            await conn.execute(text("""
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS kundeid BIGINT REFERENCES tblkunder(kundeid)
+            """))
+
+            # Create index on kundeid for faster lookups
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_users_kundeid ON users(kundeid)
             """))
 
 

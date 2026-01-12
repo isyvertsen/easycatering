@@ -20,6 +20,7 @@ class BrukerBase(BaseSchema):
     email: EmailStr
     full_name: str = Field(..., min_length=1)
     ansattid: Optional[int] = None
+    kundeid: Optional[int] = None
     rolle: str = Field(default="bruker")
     is_active: bool = True
 
@@ -34,6 +35,7 @@ class BrukerUpdate(BaseModel):
     email: Optional[EmailStr] = None
     full_name: Optional[str] = None
     ansattid: Optional[int] = None
+    kundeid: Optional[int] = None
     rolle: Optional[str] = None
     is_active: Optional[bool] = None
     password: Optional[str] = Field(None, min_length=8)
