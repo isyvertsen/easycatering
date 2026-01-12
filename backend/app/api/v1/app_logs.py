@@ -8,7 +8,8 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infrastructure.database.session import get_db
+from app.api.deps import get_current_active_user, get_db
+from app.domain.entities.user import User
 from app.services.app_log_service import AppLogService
 from app.schemas.app_log import (
     AppLog,
@@ -16,10 +17,18 @@ from app.schemas.app_log import (
     AppLogStats,
     AppLogFilters,
 )
-from app.core.security import get_current_superuser
-from app.models.user import User
 
 router = APIRouter(prefix="/app-logs", tags=["App Logs"])
+
+
+def require_admin(current_user: User) -> User:
+    """Check if current user is admin."""
+    if current_user.rolle != "admin" and not getattr(current_user, 'is_superuser', False):
+        raise HTTPException(
+            status_code=403,
+            detail="Kun administratorer kan se applikasjonsloggen"
+        )
+    return current_user
 
 
 @router.get("/", response_model=AppLogListResponse)
@@ -35,9 +44,10 @@ async def get_app_logs(
     date_to: Optional[datetime] = Query(None),
     search: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_superuser),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Get paginated application logs. Requires superuser access."""
+    """Get paginated application logs. Requires admin access."""
+    require_admin(current_user)
     filters = AppLogFilters(
         level=level,
         logger_name=logger_name,
@@ -69,9 +79,10 @@ async def get_app_logs(
 async def get_app_log_stats(
     days: int = Query(7, ge=1, le=90),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_superuser),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Get application log statistics for the last N days. Requires superuser access."""
+    """Get application log statistics for the last N days. Requires admin access."""
+    require_admin(current_user)
     service = AppLogService(db)
     return await service.get_stats(days=days)
 
@@ -79,9 +90,10 @@ async def get_app_log_stats(
 @router.get("/levels")
 async def get_log_levels(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_superuser),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Get all distinct log levels. Requires superuser access."""
+    """Get all distinct log levels. Requires admin access."""
+    require_admin(current_user)
     service = AppLogService(db)
     return await service.get_levels()
 
@@ -89,9 +101,10 @@ async def get_log_levels(
 @router.get("/loggers")
 async def get_logger_names(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_superuser),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Get all distinct logger names. Requires superuser access."""
+    """Get all distinct logger names. Requires admin access."""
+    require_admin(current_user)
     service = AppLogService(db)
     return await service.get_logger_names()
 
@@ -99,9 +112,10 @@ async def get_logger_names(
 @router.get("/exception-types")
 async def get_exception_types(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_superuser),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Get all distinct exception types. Requires superuser access."""
+    """Get all distinct exception types. Requires admin access."""
+    require_admin(current_user)
     service = AppLogService(db)
     return await service.get_exception_types()
 
@@ -115,9 +129,10 @@ async def export_app_logs(
     date_to: Optional[datetime] = Query(None),
     search: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_superuser),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Export application logs as CSV. Requires superuser access."""
+    """Export application logs as CSV. Requires admin access."""
+    require_admin(current_user)
     filters = AppLogFilters(
         level=level,
         logger_name=logger_name,
@@ -151,9 +166,10 @@ async def export_app_logs(
 async def get_app_log(
     log_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_superuser),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Get a single application log by ID. Requires superuser access."""
+    """Get a single application log by ID. Requires admin access."""
+    require_admin(current_user)
     service = AppLogService(db)
     log = await service.get_log_by_id(log_id)
     if not log:
@@ -165,9 +181,10 @@ async def get_app_log(
 async def cleanup_old_logs(
     days: int = Query(90, ge=30, le=365),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_superuser),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Delete logs older than specified days. Requires superuser access."""
+    """Delete logs older than specified days. Requires admin access."""
+    require_admin(current_user)
     service = AppLogService(db)
     deleted_count = await service.cleanup_old_logs(days=days)
     return {"message": f"Deleted {deleted_count} logs older than {days} days"}
