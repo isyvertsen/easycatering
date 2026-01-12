@@ -48,6 +48,7 @@ class WebshopOrderCreate(BaseModel):
     ordrelinjer: List[WebshopOrderLineCreate]
     leveringsdato: Optional[datetime] = None
     informasjon: Optional[str] = None
+    leveringsadresse: Optional[str] = None
 
 
 class WebshopOrderLine(BaseSchema):
