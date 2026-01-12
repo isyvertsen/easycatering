@@ -21,11 +21,14 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
+APP_VERSION = "2.3.0"
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Handle application lifecycle events."""
-    logger.info("Starting up Catering System API...")
-    
+    logger.info(f"Starting up Catering System API v{APP_VERSION}")
+
     # Run database migrations
     try:
         logger.info("Running database migrations...")
@@ -35,16 +38,16 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to run migrations: {str(e)}")
         # You might want to fail startup if migrations fail
         # raise
-    
+
     yield
-    logger.info("Shutting down Catering System API...")
+    logger.info(f"Shutting down Catering System API v{APP_VERSION}")
     shutdown_logging()
 
 
 app = FastAPI(
     title="Catering System API",
     description="API for Larvik Kommune Catering Management System",
-    version="0.1.0",
+    version=APP_VERSION,
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
@@ -79,7 +82,7 @@ async def root():
     """Root endpoint."""
     return {
         "message": "Catering System API",
-        "version": "0.1.0",
+        "version": APP_VERSION,
         "docs": "/api/docs",
         "endpoints": {
             "health": "/api/health",
