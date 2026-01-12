@@ -1,0 +1,201 @@
+### Test Scenarios for Common Use Cases
+### Variables
+@baseUrl = http://localhost:8000/api
+@contentType = application/json
+
+### Scenario 1: School Lunch Order
+# A school orders lunch for 200 students for next week
+
+### 1.1 Check if school exists as customer
+GET {{baseUrl}}/v1/tables/tblKunder?search=Skole
+
+### 1.2 Create the order
+# @name schoolOrder
+POST {{baseUrl}}/v1/tables/tblBestillinger
+Content-Type: {{contentType}}
+
+{
+  "KundeID": 5,
+  "BestillingsDato": "2024-01-15T14:00:00",
+  "LeveringsDato": "2024-01-22T11:30:00",
+  "AntallPersoner": 200,
+  "Status": "Bekreftet",
+  "Leveringsadresse": "Larvik Skole, Skolegata 1",
+  "Kommentarer": "Leveres til kantina. 10 vegetar, 5 glutenfri"
+}
+
+### 1.3 Add menu items for the week
+POST {{baseUrl}}/v1/tables/tblBestillingDetaljer
+Content-Type: {{contentType}}
+
+{
+  "BestillingID": {{schoolOrder.response.body.BestillingID}},
+  "ProduktID": 15,
+  "Mengde": 1000,
+  "Enhet": "porsjoner",
+  "Pris": 45000.00,
+  "Kommentarer": "Ukemeny - 5 dager x 200 porsjoner"
+}
+
+### Scenario 2: Elderly Care Facility Special Diet Order
+
+### 2.1 Create order with special dietary requirements
+# @name elderlyOrder
+POST {{baseUrl}}/v1/tables/tblBestillinger
+Content-Type: {{contentType}}
+
+{
+  "KundeID": 8,
+  "BestillingsDato": "2024-01-15T10:00:00",
+  "LeveringsDato": "2024-01-16T16:30:00",
+  "AntallPersoner": 45,
+  "Status": "Ny",
+  "Kommentarer": "Spesialkost: 5 diabetiker, 3 dysfagi, 2 vegetar"
+}
+
+### 2.2 Add special diet items
+POST {{baseUrl}}/v1/tables/tblSpesialkostBestilling
+Content-Type: {{contentType}}
+
+{
+  "BestillingID": {{elderlyOrder.response.body.BestillingID}},
+  "SpesialkostType": "Diabeteskost",
+  "AntallPersoner": 5,
+  "Kommentarer": "Redusert sukker og karbohydrater"
+}
+
+### Scenario 3: Event Catering
+
+### 3.1 Create event order
+# @name eventOrder
+POST {{baseUrl}}/v1/tables/tblBestillinger
+Content-Type: {{contentType}}
+
+{
+  "KundeID": 12,
+  "BestillingsDato": "2024-01-15T16:00:00",
+  "LeveringsDato": "2024-02-10T17:00:00",
+  "AntallPersoner": 150,
+  "Status": "Tilbud",
+  "Leveringsadresse": "Larvik Kulturhus",
+  "Kommentarer": "Jubileumsmiddag - 3 retters"
+}
+
+### 3.2 Add appetizer
+POST {{baseUrl}}/v1/tables/tblBestillingDetaljer
+Content-Type: {{contentType}}
+
+{
+  "BestillingID": {{eventOrder.response.body.BestillingID}},
+  "ProduktID": 45,
+  "Mengde": 150,
+  "Enhet": "porsjoner",
+  "Pris": 125.00,
+  "Kommentarer": "Røkelaks med tilbehør"
+}
+
+### 3.3 Add main course
+POST {{baseUrl}}/v1/tables/tblBestillingDetaljer
+Content-Type: {{contentType}}
+
+{
+  "BestillingID": {{eventOrder.response.body.BestillingID}},
+  "ProduktID": 52,
+  "Mengde": 150,
+  "Enhet": "porsjoner",
+  "Pris": 295.00,
+  "Kommentarer": "Oksefilet med rotgrønnsaker"
+}
+
+### 3.4 Add dessert
+POST {{baseUrl}}/v1/tables/tblBestillingDetaljer
+Content-Type: {{contentType}}
+
+{
+  "BestillingID": {{eventOrder.response.body.BestillingID}},
+  "ProduktID": 78,
+  "Mengde": 150,
+  "Enhet": "porsjoner",
+  "Pris": 85.00,
+  "Kommentarer": "Sjokoladefondant med bærsorbet"
+}
+
+### Scenario 4: Emergency Stock Replenishment
+
+### 4.1 Check critical stock levels
+GET {{baseUrl}}/v1/tables/tblLager?sort_by=Beholdning&sort_desc=false&page_size=10
+
+### 4.2 Create urgent purchase order
+# @name urgentPO
+POST {{baseUrl}}/v1/tables/tblInnkjopsordre
+Content-Type: {{contentType}}
+
+{
+  "LeverandorID": 3,
+  "OrdreDato": "2024-01-15T16:30:00",
+  "ForventetLevering": "2024-01-16T07:00:00",
+  "Status": "Haster",
+  "TotalBelop": 8500.00,
+  "Kommentarer": "HASTER - Lav beholdning"
+}
+
+### 4.3 Add critical items
+POST {{baseUrl}}/v1/tables/tblInnkjopsordreDetaljer
+Content-Type: {{contentType}}
+
+{
+  "InnkjopsordreID": {{urgentPO.response.body.InnkjopsordreID}},
+  "ProduktID": 1,
+  "Mengde": 100,
+  "Enhet": "liter",
+  "Pris": 12.50,
+  "Kommentarer": "Melk - kritisk lavt"
+}
+
+### Scenario 5: Weekly Menu Approval Process
+
+### 5.1 Create draft menu
+# @name draftMenu
+POST {{baseUrl}}/v1/tables/tblMeny
+Content-Type: {{contentType}}
+
+{
+  "Navn": "Ukemeny 5 - 2024 (UTKAST)",
+  "StartDato": "2024-01-29",
+  "SluttDato": "2024-02-04",
+  "Status": "Utkast",
+  "OpprettetAv": 3
+}
+
+### 5.2 Add menu items for review
+POST {{baseUrl}}/v1/tables/tblMenyDetaljer
+Content-Type: {{contentType}}
+
+{
+  "MenyID": {{draftMenu.response.body.MenyID}},
+  "Ukedag": "Mandag",
+  "OppskriftID": 12,
+  "Maltid": "Lunsj",
+  "AntallPortjoner": 250,
+  "Kostnad": 45.00,
+  "Salgspris": 85.00
+}
+
+### 5.3 Submit for approval
+PUT {{baseUrl}}/v1/tables/tblMeny/{{draftMenu.response.body.MenyID}}
+Content-Type: {{contentType}}
+
+{
+  "Status": "Til godkjenning",
+  "SendtTilGodkjenning": "2024-01-15T17:00:00"
+}
+
+### 5.4 Approve menu
+PUT {{baseUrl}}/v1/tables/tblMeny/{{draftMenu.response.body.MenyID}}
+Content-Type: {{contentType}}
+
+{
+  "Status": "Godkjent",
+  "GodkjentAv": "Kjøkkensjef",
+  "GodkjentDato": "2024-01-16T09:00:00"
+}

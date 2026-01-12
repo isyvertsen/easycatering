@@ -1,0 +1,306 @@
+### Create a new product
+POST http://localhost:8000/api/v1/products
+Content-Type: application/json
+
+{
+  "gtin": "7038010027599",
+  "name": "TINE Baconost 400 g",
+  "itemNumber": "2780",
+  "epdNumber": "2400233",
+  "producerName": "TINE SA",
+  "providerName": "TINE SA",
+  "brandName": "TINE",
+  "ingredientStatement": "<b>hvitost</b>, vann, 7% bacon...",
+  "productUrl": "https://produkter.matinfo.no/...",
+  "packageSize": "400 GRM",
+  "markings": [
+    {
+      "code": "NYCKELHAL_MARK",
+      "name": "Nøkkelhullsmerking"
+    }
+  ],
+  "images": [
+    "http://images.pdb.no/images/large/07035620026256.jpg"
+  ],
+  "nutrients": [
+    {
+      "code": "FAT",
+      "measurement": 17,
+      "measurementPrecision": "APPROXIMATELY",
+      "measurementType": "g",
+      "name": "Fett"
+    },
+    {
+      "code": "ENERC_KJ",
+      "measurement": 887,
+      "measurementPrecision": "APPROXIMATELY",
+      "measurementType": "kJ",
+      "name": "Energi (kJ)"
+    }
+  ],
+  "allergens": [
+    {
+      "code": "AM",
+      "level": "CONTAINS",
+      "name": "Melk"
+    },
+    {
+      "code": "AY",
+      "level": "MAY_CONTAIN",
+      "name": "Soya"
+    }
+  ]
+}
+
+###
+
+### List all products with pagination
+GET http://localhost:8000/api/v1/products?page=1&size=20
+Accept: application/json
+
+###
+
+### Search products by name or GTIN
+GET http://localhost:8000/api/v1/products?search=TINE&page=1&size=10
+Accept: application/json
+
+###
+
+### Get product detail by GTIN
+GET http://localhost:8000/api/v1/products/gtin/7038010027598
+Accept: application/json
+
+###
+
+### Get product detail by ID
+# Replace {product_id} with actual product ID
+GET http://localhost:8000/api/v1/products/{product_id}
+Accept: application/json
+
+###
+
+### Update a product
+# Replace {product_id} with actual product ID
+PUT http://localhost:8000/api/v1/products/{product_id}
+Content-Type: application/json
+
+{
+  "name": "TINE Baconost 400 g - Updated",
+  "packageSize": "450 GRM",
+  "nutrients": [
+    {
+      "code": "FAT",
+      "measurement": 18,
+      "measurementPrecision": "APPROXIMATELY",
+      "measurementType": "g",
+      "name": "Fett"
+    }
+  ]
+}
+
+###
+
+### Delete a product
+# Replace {product_id} with actual product ID
+DELETE http://localhost:8000/api/v1/products/{product_id}
+
+###
+
+### Update or create a specific allergen for a product
+# Replace {product_id} with actual product ID
+PUT http://localhost:8000/api/v1/products/{product_id}/allergens/AN
+Content-Type: application/json
+
+{
+  "code": "AN",
+  "level": "MAY_CONTAIN",
+  "name": "Nøtter"
+}
+
+###
+
+### Delete a specific allergen from a product
+# Replace {product_id} with actual product ID
+DELETE http://localhost:8000/api/v1/products/{product_id}/allergens/AN
+
+###
+
+### Update or create a specific nutrient for a product
+# Replace {product_id} with actual product ID
+PUT http://localhost:8000/api/v1/products/{product_id}/nutrients/SUGAR
+Content-Type: application/json
+
+{
+  "code": "SUGAR",
+  "measurement": 0.2,
+  "measurementPrecision": "APPROXIMATELY",
+  "measurementType": "g",
+  "name": "Sukkerarter"
+}
+
+###
+
+### Delete a specific nutrient from a product
+# Replace {product_id} with actual product ID
+DELETE http://localhost:8000/api/v1/products/{product_id}/nutrients/SUGAR
+
+###
+
+### Import product from vendor JSON format
+# This will create a new product or update existing one based on GTIN
+POST http://localhost:8000/api/v1/products/vendor-import
+Content-Type: application/json
+
+{
+  "gtin": "07039019571693",
+  "name": "Vegetar Stekt Burger",
+  "itemNumber": "157169",
+  "epdNumber": "5624846",
+  "producerName": "Orkla Foods AS",
+  "providerName": "Orkla Foods AS",
+  "brandName": "STABBURET",
+  "ingredientStatement": "vann, SOYAPROTEIN, vegetabilsk olje (kokos, raps), løk, stivelse,naturlig aroma, tomat, stabilisator (metylcellulose), fargestoff(rødbete, karamell), krydder, hvitløk.",
+  "productUrl": "https://produkter.matinfo.no/STABBURET/Vegetar Stekt Burger/07039019571693/",
+  "productDescription": "Kanskje verdens beste plantebaserte burger – ferdig stekt. En plantebasert burger som er saftig og smaker skikkelig digg. Tilberedning i convection-ovn som gjør det enkelt å servere mange på en gang. ",
+  "countryOfOrigin": "Norge",
+  "countryOfPreparation": "Norge",
+  "fpakk": "07039019571693",
+  "dpakk": "",
+  "pall": "07039018571694",
+  "created": "2021-02-03T02:10:27.55",
+  "updated": "2025-06-18T05:00:55.317",
+  "nutrients": [
+    {
+      "code": "FAT",
+      "measurement": 14,
+      "measurementPrecision": "APPROXIMATELY",
+      "measurementType": "g",
+      "name": "Fett"
+    },
+    {
+      "code": "ENERC_KJ",
+      "measurement": 817,
+      "measurementPrecision": "APPROXIMATELY",
+      "measurementType": "kJ",
+      "name": "Energi (kJ)"
+    }
+  ],
+  "allergens": [
+    {
+      "code": "AY",
+      "level": "CONTAINS",
+      "name": "Soya"
+    },
+    {
+      "code": "AE",
+      "level": "FREE_FROM",
+      "name": "Egg"
+    }
+  ]
+}
+
+###
+
+### Batch import multiple products from vendor
+POST http://localhost:8000/api/v1/products/vendor-import/batch
+Content-Type: application/json
+
+[
+  {
+    "gtin": "07039019571693",
+    "name": "Vegetar Stekt Burger",
+    "itemNumber": "157169",
+    "nutrients": [],
+    "allergens": []
+  },
+  {
+    "gtin": "07038010027598",
+    "name": "TINE Baconost 200 g",
+    "itemNumber": "2779",
+    "nutrients": [],
+    "allergens": []
+  }
+]
+
+###
+
+### Export products for RAG system - JSONL format (default)
+POST http://localhost:8000/api/v1/products/export
+Content-Type: application/json
+
+{
+  "format": "jsonl"
+}
+
+### Export products for RAG system - JSON format (single file)
+POST http://localhost:8000/api/v1/products/export
+Content-Type: application/json
+
+{
+  "format": "json"
+}
+
+### Export products for RAG system - Markdown format (one file per product)
+POST http://localhost:8000/api/v1/products/export
+Content-Type: application/json
+
+{
+  "format": "markdown"
+}
+
+###
+
+### List all exports
+GET http://localhost:8000/api/v1/products/export/list
+Accept: application/json
+
+### Download export as zip (replace timestamp with actual export timestamp)
+GET http://localhost:8000/api/v1/products/export/download/20250703_061336
+Accept: application/zip
+
+### Check export status
+GET http://localhost:8000/api/v1/products/export/status
+Accept: application/json
+
+###
+
+### Example of expected response structure:
+# {
+#   "id": "uuid-string",
+#   "gtin": 7038010027598,
+#   "name": "TINE Baconost 200 g",
+#   "itemNumber": 2779,
+#   "epdNumber": 2400232,
+#   "producerName": "TINE SA",
+#   "providerName": "TINE SA",
+#   "brandName": "TINE",
+#   "ingredientStatement": "...",
+#   "productUrl": "https://...",
+#   "markings": [
+#     {
+#       "code": "NYCKELHAL_MARK",
+#       "name": "Nøkkelhullsmerking"
+#     }
+#   ],
+#   "images": ["http://..."],
+#   "packageSize": "400 GRM",
+#   "nutrients": [
+#     {
+#       "code": "FAT",
+#       "measurement": 17,
+#       "measurementPrecision": "APPROXIMATELY",
+#       "measurementType": "g",
+#       "name": "Fett"
+#     }
+#   ],
+#   "allergens": [
+#     {
+#       "code": "AM",
+#       "level": "CONTAINS",
+#       "name": "Melk"
+#     }
+#   ],
+#   "gpc": null,
+#   "preparations": null,
+#   "storageInfo": null
+# }

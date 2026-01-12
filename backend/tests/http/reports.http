@@ -1,0 +1,114 @@
+### Reporting and Analytics Queries
+### Variables
+@baseUrl = http://localhost:8000/api
+@contentType = application/json
+
+### Daily Reports
+
+### Today's Orders
+GET {{baseUrl}}/v1/tables/tblBestillinger?search=2024-01-15&sort_by=LeveringsDato
+
+### Today's Production
+GET {{baseUrl}}/v1/tables/tblProduksjonsplan?search=2024-01-15
+
+### Today's Deliveries
+GET {{baseUrl}}/v1/tables/tblLeveringer?search=2024-01-15
+
+### Weekly Reports
+
+### This Week's Menu
+GET {{baseUrl}}/v1/tables/tblMeny?search=2024-01&page_size=10
+
+### Weekly Order Summary
+GET {{baseUrl}}/v1/tables/tblBestillinger?search=2024-01&page_size=100
+
+### Weekly Production Statistics
+GET {{baseUrl}}/v1/tables/tblProduksjonsstatistikk?search=2024
+
+### Monthly Reports
+
+### Customer Activity
+GET {{baseUrl}}/v1/tables/tblKunder?page_size=100
+
+### Product Usage
+GET {{baseUrl}}/v1/tables/tblProduktforbruk?search=2024-01
+
+### Cost Analysis
+GET {{baseUrl}}/v1/tables/tblKostnader?search=2024-01
+
+### Inventory Reports
+
+### Current Stock Levels
+GET {{baseUrl}}/v1/tables/tblLager?sort_by=Beholdning&page_size=100
+
+### Low Stock Alert (items below minimum)
+GET {{baseUrl}}/v1/tables/tblLager?sort_by=Beholdning&sort_desc=false&page_size=20
+
+### Expiring Products
+GET {{baseUrl}}/v1/tables/tblLager?sort_by=Utlopsdato&sort_desc=false&page_size=50
+
+### Financial Reports
+
+### Revenue by Customer
+GET {{baseUrl}}/v1/tables/tblFaktura?search=2024-01&sort_by=TotalBelop&sort_desc=true
+
+### Outstanding Invoices
+GET {{baseUrl}}/v1/tables/tblFaktura?search=Ubetalt
+
+### Purchase Orders
+GET {{baseUrl}}/v1/tables/tblInnkjopsordre?search=2024-01
+
+### Quality & Compliance
+
+### Quality Control Records
+GET {{baseUrl}}/v1/tables/tblKvalitetskontroll?search=2024-01
+
+### Temperature Logs
+GET {{baseUrl}}/v1/tables/tblTemperaturlogg?search=2024-01-15
+
+### Allergen Report
+GET {{baseUrl}}/v1/tables/tblAllergener
+
+### HACCP Compliance
+GET {{baseUrl}}/v1/tables/tblHACCP?search=2024-01
+
+### Staff Reports
+
+### Employee List
+GET {{baseUrl}}/v1/tables/tblAnsatte?sort_by=Etternavn
+
+### Work Schedule
+GET {{baseUrl}}/v1/tables/tblArbeidstider?search=2024-01
+
+### Staff Certifications
+GET {{baseUrl}}/v1/tables/tblSertifiseringer
+
+### Nutritional Reports
+
+### Recipe Nutrition
+GET {{baseUrl}}/v1/tables/tblNaringsverdier
+
+### Menu Nutrition Analysis
+GET {{baseUrl}}/v1/tables/tblMenyNaering?search=2024-01
+
+### Special Dietary Requirements
+GET {{baseUrl}}/v1/tables/tblSpesialkost
+
+### Waste & Sustainability
+
+### Food Waste Report
+GET {{baseUrl}}/v1/tables/tblSvinn?search=2024-01
+
+### Sustainability Metrics
+GET {{baseUrl}}/v1/tables/tblBaerekraft?search=2024
+
+### Customer Feedback
+
+### Feedback Summary
+GET {{baseUrl}}/v1/tables/tblTilbakemelding?search=2024-01&sort_by=Dato&sort_desc=true
+
+### Complaints
+GET {{baseUrl}}/v1/tables/tblKlager?search=2024-01
+
+### Satisfaction Scores
+GET {{baseUrl}}/v1/tables/tblKundetilfredse?search=2024

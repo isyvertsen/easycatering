@@ -1,0 +1,130 @@
+### Generic CRUD API Tests
+### Variables
+@baseUrl = http://localhost:8000/api
+@contentType = application/json
+# Note: In development with AUTH_BYPASS=true, the Authorization header is optional
+# @accessToken = your-access-token-here
+
+### List All Tables
+GET {{baseUrl}}/v1/tables
+# Authorization: Bearer {{accessToken}}
+
+### Get Table Schema - tblAnsatte (Employees)
+GET {{baseUrl}}/v1/tables/tblAnsatte/schema
+
+### Get Table Schema - tblBestillinger (Orders)
+GET {{baseUrl}}/v1/tables/tblBestillinger/schema
+
+### Get Table Schema - tblOppskrifter (Recipes)
+GET {{baseUrl}}/v1/tables/tblOppskrifter/schema
+
+### List Records - Employees
+GET {{baseUrl}}/v1/tables/tblAnsatte
+
+### List Records - Employees with Pagination
+GET {{baseUrl}}/v1/tables/tblAnsatte?page=1&page_size=10
+
+### List Records - Employees with Search
+GET {{baseUrl}}/v1/tables/tblAnsatte?search=Hansen
+
+### List Records - Employees with Sorting
+GET {{baseUrl}}/v1/tables/tblAnsatte?sort_by=Etternavn&sort_desc=false
+
+### Get Single Employee
+GET {{baseUrl}}/v1/tables/tblAnsatte/1
+
+### Create New Employee
+POST {{baseUrl}}/v1/tables/tblAnsatte
+Content-Type: {{contentType}}
+
+{
+  "Fornavn": "Kari",
+  "Etternavn": "Nordmann",
+  "Stilling": "Kokk",
+  "Telefon": "98765432",
+  "Epost": "kari.nordmann@larvik.kommune.no",
+  "Aktiv": true
+}
+
+### Update Employee
+PUT {{baseUrl}}/v1/tables/tblAnsatte/1
+Content-Type: {{contentType}}
+
+{
+  "Telefon": "91234567",
+  "Stilling": "Kjøkkensjef"
+}
+
+### Delete Employee
+DELETE {{baseUrl}}/v1/tables/tblAnsatte/1
+
+### List Orders
+GET {{baseUrl}}/v1/tables/tblBestillinger?page=1&page_size=20
+
+### Get Single Order
+GET {{baseUrl}}/v1/tables/tblBestillinger/1
+
+### Create New Order
+POST {{baseUrl}}/v1/tables/tblBestillinger
+Content-Type: {{contentType}}
+
+{
+  "KundeID": 1,
+  "BestillingsDato": "2024-01-15",
+  "LeveringsDato": "2024-01-20",
+  "AntallPersoner": 50,
+  "Status": "Ny",
+  "Kommentarer": "Vegetarisk alternativ ønskes"
+}
+
+### List Recipes
+GET {{baseUrl}}/v1/tables/tblOppskrifter
+
+### Search Recipes
+GET {{baseUrl}}/v1/tables/tblOppskrifter?search=fisk
+
+### Get Recipe Details
+GET {{baseUrl}}/v1/tables/tblOppskrifter/1
+
+### Create New Recipe
+POST {{baseUrl}}/v1/tables/tblOppskrifter
+Content-Type: {{contentType}}
+
+{
+  "Navn": "Laksemiddag",
+  "Beskrivelse": "Ovnsbakt laks med grønnsaker",
+  "Kategori": "Hovedrett",
+  "AntallPortjoner": 4,
+  "Tilberedningstid": 45,
+  "Allergener": "Fisk",
+  "Naringsinformasjon": "Protein: 25g, Fett: 15g, Karbohydrater: 20g"
+}
+
+### List Products/Ingredients
+GET {{baseUrl}}/v1/tables/tblProdukter
+
+### Get Product Stock Levels
+GET {{baseUrl}}/v1/tables/tblLager
+
+### List Customers
+GET {{baseUrl}}/v1/tables/tblKunder
+
+### Get Customer Details
+GET {{baseUrl}}/v1/tables/tblKunder/1
+
+### List Suppliers
+GET {{baseUrl}}/v1/tables/tblLeverandoerer
+
+### List Menu Items
+GET {{baseUrl}}/v1/tables/tblMeny
+
+### Create Menu Item
+POST {{baseUrl}}/v1/tables/tblMeny
+Content-Type: {{contentType}}
+
+{
+  "Navn": "Ukemeny 3",
+  "StartDato": "2024-01-15",
+  "SluttDato": "2024-01-21",
+  "Beskrivelse": "Meny for uke 3"
+}

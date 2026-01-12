@@ -1,0 +1,201 @@
+### Typed API Endpoints Tests
+### Variables
+@baseUrl = http://localhost:8000/api/v1
+@contentType = application/json
+
+### ===== EMPLOYEES =====
+
+### List all employees
+GET {{baseUrl}}/employees
+
+### List active employees with search
+GET {{baseUrl}}/employees?active_only=true&search=Hansen
+
+### Get specific employee
+GET {{baseUrl}}/employees/1
+
+### Create new employee
+POST {{baseUrl}}/employees
+Content-Type: {{contentType}}
+
+{
+  "fornavn": "Kari",
+  "etternavn": "Nordmann",
+  "stilling": "Kokk",
+  "telefon": "98765432",
+  "epost": "kari.nordmann@larvik.kommune.no",
+  "adresse": "Storgata 10",
+  "postnummer": "3260",
+  "poststed": "Larvik",
+  "fodselsdato": "1985-06-15",
+  "ansattDato": "2024-01-15",
+  "aktiv": true
+}
+
+### Update employee
+PUT {{baseUrl}}/employees/1
+Content-Type: {{contentType}}
+
+{
+  "stilling": "Kjøkkensjef",
+  "telefon": "91234567"
+}
+
+### Deactivate employee (soft delete)
+DELETE {{baseUrl}}/employees/1
+
+### Get employee's orders
+GET {{baseUrl}}/employees/1/orders
+
+### ===== RECIPES =====
+
+### List all recipes
+GET {{baseUrl}}/recipes
+
+### Search recipes
+GET {{baseUrl}}/recipes?search=fisk&category=Hovedrett
+
+### Get specific recipe
+GET {{baseUrl}}/recipes/1
+
+### Create new recipe
+POST {{baseUrl}}/recipes
+Content-Type: {{contentType}}
+
+{
+  "oppskriftnavn": "Kremet fiskesuppe",
+  "oppskrifttype": "Varmrett",
+  "kategori": "Suppe",
+  "porsjon": 10,
+  "beskrivelse": "Deilig fiskesuppe med grønnsaker",
+  "fremgangsmaate": "1. Kok fisk\n2. Lag kraft\n3. Tilsett grønnsaker",
+  "tips": "Server med godt brød",
+  "vanskelighetsgrad": 2,
+  "tilberedningstid": 45,
+  "tilberedningstidEtterkokk": 0,
+  "holdbarhet": 3,
+  "aktiv": true
+}
+
+### Update recipe
+PUT {{baseUrl}}/recipes/1
+Content-Type: {{contentType}}
+
+{
+  "porsjon": 12,
+  "tips": "Server med aioli og krutonger"
+}
+
+### Get recipe ingredients
+GET {{baseUrl}}/recipes/1/ingredients
+
+### Add ingredient to recipe
+POST {{baseUrl}}/recipes/1/ingredients
+Content-Type: {{contentType}}
+
+{
+  "ingrediensID": 10,
+  "mengde": 2.5,
+  "enhet": "kg",
+  "rekkefolge": 1
+}
+
+### Calculate recipe cost
+GET {{baseUrl}}/recipes/1/calculate?portions=50
+
+### ===== ORDERS =====
+
+### List all orders
+GET {{baseUrl}}/orders
+
+### List orders with filters
+GET {{baseUrl}}/orders?status=Ny&from_date=2024-01-01&to_date=2024-12-31
+
+### Get specific order
+GET {{baseUrl}}/orders/1
+
+### Create new order
+# @name createOrder
+POST {{baseUrl}}/orders
+Content-Type: {{contentType}}
+
+{
+  "kundeID": 1,
+  "leveringsDato": "2024-01-25T12:00:00",
+  "leveringsadresse": "Larvik Sykehjem, Avd 3",
+  "status": "NY",
+  "kommentar": "Ring ved levering",
+  "kontaktperson": "Anne Hansen",
+  "telefon": "98765432",
+  "antallPersoner": 45
+}
+
+### Update order
+PUT {{baseUrl}}/orders/{{createOrder.response.body.ordreID}}
+Content-Type: {{contentType}}
+
+{
+  "status": "BEKREFTET",
+  "leveringsDato": "2024-01-26T12:00:00"
+}
+
+### Get order items
+GET {{baseUrl}}/orders/{{createOrder.response.body.ordreID}}/items
+
+### Add product to order
+POST {{baseUrl}}/orders/{{createOrder.response.body.ordreID}}/items
+Content-Type: {{contentType}}
+
+{
+  "produktID": 1,
+  "mengde": 50,
+  "enhet": "porsjoner",
+  "pris": 85.00,
+  "kommentar": "Fiskegrateng"
+}
+
+### Add recipe to order
+POST {{baseUrl}}/orders/{{createOrder.response.body.ordreID}}/items
+Content-Type: {{contentType}}
+
+{
+  "oppskriftID": 1,
+  "mengde": 50,
+  "enhet": "porsjoner",
+  "pris": 95.00,
+  "kommentar": "Kremet fiskesuppe"
+}
+
+### Update order status
+PUT {{baseUrl}}/orders/{{createOrder.response.body.ordreID}}/status
+Content-Type: {{contentType}}
+
+"LEVERT"
+
+### Cancel order
+DELETE {{baseUrl}}/orders/{{createOrder.response.body.ordreID}}
+
+### ===== CUSTOMERS =====
+
+### List all customers
+GET {{baseUrl}}/customers
+
+### ===== PRODUCTS =====
+
+### List all products
+GET {{baseUrl}}/products
+
+### ===== MENUS =====
+
+### List all menus
+GET {{baseUrl}}/menus
+
+### ===== SUPPLIERS =====
+
+### List all suppliers
+GET {{baseUrl}}/suppliers
+
+### ===== INVENTORY =====
+
+### List inventory status
+GET {{baseUrl}}/inventory

@@ -1,0 +1,64 @@
+### Authentication API Tests
+### Variables
+@baseUrl = http://localhost:8000/api
+@contentType = application/json
+
+### Health Check
+GET {{baseUrl}}/health/
+
+### Health Check - Ready (includes DB check)
+GET {{baseUrl}}/health/ready
+
+### Register New User
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "full_name": "Test User",
+  "password": "testpassword123"
+}
+
+### Login with Credentials
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "password": "testpassword123"
+}
+
+### Extract tokens from login response
+@accessToken = {{login.response.body.access_token}}
+@refreshToken = {{login.response.body.refresh_token}}
+
+### Login with Development User (when AUTH_BYPASS is enabled)
+# @name devLogin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "dev@localhost",
+  "password": "devpassword"
+}
+
+### Refresh Token
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### Google OAuth (requires valid Google ID token)
+POST {{baseUrl}}/auth/google
+Content-Type: {{contentType}}
+
+{
+  "token": "your-google-id-token-here"
+}
+
+### Test Protected Endpoint (requires auth)
+GET {{baseUrl}}/v1/tables
+Authorization: Bearer {{accessToken}}

@@ -1,0 +1,201 @@
+### Batch Operations and Complex Workflows
+### Variables
+@baseUrl = http://localhost:8000/api
+@contentType = application/json
+
+### Workflow: Create Complete Order with Details
+
+### 1. First, create a new customer
+# @name createCustomer
+POST {{baseUrl}}/v1/tables/tblKunder
+Content-Type: {{contentType}}
+
+{
+  "Navn": "Larvik Barnehage",
+  "Kontaktperson": "Anne Hansen",
+  "Telefon": "33123456",
+  "Epost": "anne@larvikbarnehage.no",
+  "Adresse": "Storgata 10",
+  "Postnummer": "3260",
+  "Poststed": "Larvik"
+}
+
+### 2. Create an order for the customer
+# @name createOrder
+POST {{baseUrl}}/v1/tables/tblBestillinger
+Content-Type: {{contentType}}
+
+{
+  "KundeID": {{createCustomer.response.body.KundeID}},
+  "BestillingsDato": "2024-01-15T10:00:00",
+  "LeveringsDato": "2024-01-20T12:00:00",
+  "AntallPersoner": 30,
+  "Status": "Bekreftet",
+  "Leveringsadresse": "Storgata 10, 3260 Larvik",
+  "Kommentarer": "Allergi: 2 glutenfri, 1 laktosefri"
+}
+
+### 3. Add order items
+POST {{baseUrl}}/v1/tables/tblBestillingDetaljer
+Content-Type: {{contentType}}
+
+{
+  "BestillingID": {{createOrder.response.body.BestillingID}},
+  "ProduktID": 1,
+  "Mengde": 30,
+  "Enhet": "porsjoner",
+  "Pris": 85.00,
+  "Kommentarer": "Fiskegrateng"
+}
+
+### 4. Add another order item
+POST {{baseUrl}}/v1/tables/tblBestillingDetaljer
+Content-Type: {{contentType}}
+
+{
+  "BestillingID": {{createOrder.response.body.BestillingID}},
+  "ProduktID": 2,
+  "Mengde": 30,
+  "Enhet": "porsjoner",
+  "Pris": 25.00,
+  "Kommentarer": "Fruktsal"
+}
+
+### Workflow: Create Recipe with Ingredients
+
+### 1. Create a new recipe
+# @name createRecipe
+POST {{baseUrl}}/v1/tables/tblOppskrifter
+Content-Type: {{contentType}}
+
+{
+  "Navn": "Kylling Tikka Masala",
+  "Beskrivelse": "Indisk inspirert kyllingrett med ris",
+  "Kategori": "Hovedrett",
+  "AntallPortjoner": 10,
+  "Tilberedningstid": 90,
+  "Allergener": "Melk, Nøtter",
+  "Instruksjoner": "1. Mariner kyllingen...",
+  "Naringsinformasjon": "Per porsjon: 450 kcal, Protein: 35g, Fett: 15g, Karbohydrater: 45g"
+}
+
+### 2. Add ingredients to recipe
+POST {{baseUrl}}/v1/tables/tblOppskriftIngredienser
+Content-Type: {{contentType}}
+
+{
+  "OppskriftID": {{createRecipe.response.body.OppskriftID}},
+  "IngredientID": 10,
+  "Mengde": 2.0,
+  "Enhet": "kg",
+  "Kommentarer": "Kyllingfilet"
+}
+
+### 3. Add more ingredients
+POST {{baseUrl}}/v1/tables/tblOppskriftIngredienser
+Content-Type: {{contentType}}
+
+{
+  "OppskriftID": {{createRecipe.response.body.OppskriftID}},
+  "IngredientID": 15,
+  "Mengde": 500,
+  "Enhet": "ml",
+  "Kommentarer": "Kokosmelk"
+}
+
+### Workflow: Weekly Menu Planning
+
+### 1. Create a weekly menu
+# @name createMenu
+POST {{baseUrl}}/v1/tables/tblMeny
+Content-Type: {{contentType}}
+
+{
+  "Navn": "Ukemeny 4 - 2024",
+  "StartDato": "2024-01-22",
+  "SluttDato": "2024-01-28",
+  "Beskrivelse": "Meny for uke 4",
+  "GodkjentAv": "Kjøkkensjef"
+}
+
+### 2. Add Monday's dishes
+POST {{baseUrl}}/v1/tables/tblMenyDetaljer
+Content-Type: {{contentType}}
+
+{
+  "MenyID": {{createMenu.response.body.MenyID}},
+  "Ukedag": "Mandag",
+  "OppskriftID": 1,
+  "Maltid": "Lunsj",
+  "AntallPortjoner": 150
+}
+
+### 3. Add Tuesday's dishes
+POST {{baseUrl}}/v1/tables/tblMenyDetaljer
+Content-Type: {{contentType}}
+
+{
+  "MenyID": {{createMenu.response.body.MenyID}},
+  "Ukedag": "Tirsdag",
+  "OppskriftID": 2,
+  "Maltid": "Lunsj",
+  "AntallPortjoner": 150
+}
+
+### Workflow: Inventory Management
+
+### 1. Check current stock
+GET {{baseUrl}}/v1/tables/tblLager?sort_by=Beholdning&sort_desc=false
+
+### 2. Create purchase order
+# @name createPurchaseOrder
+POST {{baseUrl}}/v1/tables/tblInnkjopsordre
+Content-Type: {{contentType}}
+
+{
+  "LeverandorID": 1,
+  "OrdreDato": "2024-01-15",
+  "ForventetLevering": "2024-01-17",
+  "Status": "Bestilt",
+  "TotalBelop": 5000.00
+}
+
+### 3. Add items to purchase order
+POST {{baseUrl}}/v1/tables/tblInnkjopsordreDetaljer
+Content-Type: {{contentType}}
+
+{
+  "InnkjopsordreID": {{createPurchaseOrder.response.body.InnkjopsordreID}},
+  "ProduktID": 5,
+  "Mengde": 50,
+  "Enhet": "kg",
+  "Pris": 45.00
+}
+
+### Workflow: Production Planning
+
+### 1. Create production plan for next week
+# @name createProductionPlan
+POST {{baseUrl}}/v1/tables/tblProduksjonsplan
+Content-Type: {{contentType}}
+
+{
+  "Dato": "2024-01-22",
+  "MenyID": {{createMenu.response.body.MenyID}},
+  "AnsvarligID": 1,
+  "Status": "Planlagt",
+  "Kommentarer": "Produksjon for uke 4"
+}
+
+### 2. Add production tasks
+POST {{baseUrl}}/v1/tables/tblProduksjonsoppgaver
+Content-Type: {{contentType}}
+
+{
+  "ProduksjonsplanID": {{createProductionPlan.response.body.ProduksjonsplanID}},
+  "OppskriftID": 1,
+  "AntallPortjoner": 150,
+  "StartTid": "2024-01-22T06:00:00",
+  "SluttTid": "2024-01-22T11:00:00",
+  "AnsvarligID": 2
+}

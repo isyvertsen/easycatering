@@ -1,0 +1,848 @@
+openapi: 3.0.0
+info:
+  description: API for accessing data from Matinfo.no
+  version: 5.0.0
+  title: Matinfo API
+  contact:
+    email: rub@millum.no
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+servers:
+  - url: https://api.matinfo.no/v2
+security:
+  - ApiKeyAuth: []
+tags:
+  - name: users
+    description: Operations available to regular users
+  - name: authentication
+    description: Contains endpoint for authentication. This is for accessing your own products that are labeled as private group
+paths:
+  '/updatedsince/{timestamp}':
+    get:
+      tags:
+        - users
+      summary: Returns the GTINs for all products updated since the given date
+      operationId: updatedsince
+      description: Returns the GTINs for all products updated since the given date
+      parameters:
+        - in: path
+          name: timestamp
+          description: 'YYYY MM DD separated with a comma, example 2015,03,11'
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: api_key
+          description: Api key provided by Millum
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of updated GTINs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    $ref: '#/components/schemas/GTINs'
+            application/xml:
+              schema:
+                type: object
+                properties:
+                  gtin:
+                    type: array
+                    items:
+                      type: string
+                    example: 
+                      - 01234567891234
+                      - 01234567891235
+                      - 01234567891236
+                      - 01234567891237
+                xml:
+                  name: products
+  '/product/gtin/{gtin}':
+    get:
+      tags:
+        - users
+      summary: Returns live productdata for the given GTIN
+      operationId: product
+      description: Returns live productdata for the given GTIN
+      parameters:
+        - in: path
+          name: gtin
+          description: GTIN for the given product
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: api_key
+          description: Api key provided by Millum
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: token
+          description: Accessing private group products
+          required: false
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            description: A header value to include API version and get GPC in response
+            example: application/json; version=5;gpc=1
+            default: application/json; version=5;gpc=1
+      responses:
+        '200':
+          description: Returns live productdata for a given GTIN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+  '/productfull/gtin/{gtin}':
+    get:
+      tags:
+        - users
+      summary: Returns full GS1 data for the given GTIN
+      operationId: productfull
+      description: Returns the last exported data of the product with the given GTIN. This data might be up to 24h old, but contains all information registered in ProduktData.
+      parameters:
+        - in: path
+          name: gtin
+          description: GTIN for the given product
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: api_key
+          description: Api key provided by Millum
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns full GS1 data for a given GTIN
+        '404':
+          description: Product not found
+  '/auth/signin/{username}/{password}':
+    get:
+      tags:
+        - authentication
+      summary: Signs in to the API
+      operationId: signin
+      description: Use this endpoint to sign in to the endpoint. A token will be returned in the response header. Use this token to fetch products labeled as private group
+      parameters:
+        - in: path
+          name: username
+          description: 'Matinfo username'
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: password
+          description: 'Matinfo password'
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Receives a token in the response header
+  '/auth/signout':
+    get:
+      tags:
+        - authentication
+      summary: Signs out of the endpoint
+      operationId: signout
+      description: Use this endpoint to sign out of the endpoint. The token provided will then be expired
+      parameters:
+        - in: header
+          name: token
+          #description: Accessing private group products
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Receives a token in the response header
+components:
+  securitySchemes:
+    ApiKeyAuth:        # arbitrary name for the security scheme
+      type: apiKey
+      in: query       # can be "header", "query" or "cookie"
+      name: api_key  # name of the header, query parameter or cookie
+  schemas:
+    GTINs:
+      type: array
+      items:
+        type: object
+        properties: 
+          gtin:
+            type: string
+      example:
+        - gtin: 01234567891234
+        - gtin: 01234567891235
+        - gtin: 01234567891236
+        - gtin: 01234567891237
+    Product:
+      type: object
+      properties:
+        gtin:
+          type: string
+        name:
+          type: string
+        itemNumber:
+          type: string
+        epdNumber:
+          type: string
+        producerName:
+          type: string
+        providerName:
+          type: string
+        brandName:
+          type: string
+        ingredientStatement:
+          type: string
+        productUrl:
+          type: string
+        markings:
+          type: array
+          items:
+            $ref: '#/components/schemas/marking'
+        images:
+          type: array
+          items:
+            type: string
+        packageSize:
+          type: string
+        nutrients:
+          $ref: '#/components/schemas/Nutrient'
+        allergens:
+          $ref: '#/components/schemas/Allergen'
+        gpc:
+          $ref: '#/components/schemas/GPC'
+        preparations:
+          $ref: '#/components/schemas/PreparationStep'
+        storageInfo:
+          $ref: '#/components/schemas/StoragerInfo'
+      example:
+        gtin: 07038010027598
+        name: TINE Baconost 200 g
+        itemNumber: 2779
+        epdNumber: 2400232
+        producerName: TINE SA
+        providerName: TINE SA
+        brandName: TINE
+        ingredientStatement: <b>hvitost</b>, vann, 7% bacon (svinekjøtt, vann, stabilisator (dinatriumdifosfat og natriumtrifosfat), glukose, aroma og antioksidant (natriumerytorbat)), melkefett, smeltesalt (mononatriumfosfat og natriumpolyfosfat), stabilisator (mono- og diglyserider av fettsyrer, acetylert distivelsesadipat, xantangummi og guarkjernemel), salt, surhetsregulerende middel (sitronsyre) og røykaroma"
+        productUrl: https://produkter.matinfo.no/TINE/TINE Baconost 200 g/07038010027598/
+        markings:
+          - code: NYCKELHAL_MARK
+            name: Nøkkelhullsmerking
+        images:
+          - http://images.pdb.no/images/large/07035620026256.jpg
+        packageSize: 400 GRM
+        nutrients:
+          - code: FAT
+            measurement: 17
+            measurementPrecision: APPROXIMATELY
+            measurementType: g
+            name: Fett
+          - code: ENERC_KJ
+            measurement: 887
+            measurementPrecision: APPROXIMATELY
+            measurementType: kJ
+            name: Energi (kJ)
+          - code: ENERC_KCAL
+            measurement: 213
+            measurementPrecision: APPROXIMATELY
+            measurementType: kcal
+            name: Energi (kcal)
+          - code: CHO-
+            measurement: 0.2
+            measurementPrecision: APPROXIMATELY
+            measurementType: g
+            name: Karbohydrat
+          - code: PROCNT
+            measurement: 15
+            measurementPrecision: APPROXIMATELY
+            measurementType: g
+            name: Protein
+          - code: SUGAR
+            measurement: 0.1
+            measurementPrecision: APPROXIMATELY
+            measurementType: g
+            name: "- Sukkerarter"
+          - code: FASAT
+            measurement: 11
+            measurementPrecision: APPROXIMATELY
+            measurementType: g
+            name: "- Mettede fettsyrer"
+          - code: NACL
+            measurement: 2.4
+            measurementPrecision: APPROXIMATELY
+            measurementType: g
+            name: Salt
+        allergens:
+          - code: AE
+            level: FREE_FROM
+            name: Egg
+          - code: AF
+            level: FREE_FROM
+            name: Fisk
+          - code: AW
+            level: FREE_FROM
+            name: Gluten
+          - code: AM
+            level: CONTAINS
+            name: Melk
+          - code: AN
+            level: FREE_FROM
+            name: Nøtter
+          - code: AP
+            level: FREE_FROM
+            name: Peanøtter
+          - code: BC
+            level: FREE_FROM
+            name: Selleri
+          - code: BM
+            level: FREE_FROM
+            name: Sennep
+          - code: AS
+            level: FREE_FROM
+            name: Sesamfrø
+          - code: AC
+            level: FREE_FROM
+            name: Skalldyr
+          - code: AY
+            level: MAY_CONTAIN
+            name: Soya
+          - code: AU
+            level: FREE_FROM
+            name: Svoveldioksid eller sulfitter
+          - code: UM
+            level: FREE_FROM
+            name: Bløtdyr
+          - code: UM
+            level: FREE_FROM
+            name: Bløtdyr
+          - code: NL
+            level: FREE_FROM
+            name: Lupin
+          - code: GO
+            level: FREE_FROM
+            name: Havre
+          - code: UW
+            level: FREE_FROM
+            name: Hvete
+          - code: GK
+            level: FREE_FROM
+            name: Kamut
+          - code: NR
+            level: FREE_FROM
+            name: Rug
+          - code: GS
+            level: FREE_FROM
+            name: Spelt
+          - code: GB
+            level: FREE_FROM
+            name: Bygg
+          - code: SC
+            level: FREE_FROM
+            name: Cashewnøtter
+          - code: SH
+            level: FREE_FROM
+            name: Hasselnøtter
+          - code: SM
+            level: FREE_FROM
+            name: Makadamianøtter
+          - code: SA
+            level: FREE_FROM
+            name: Mandel
+          - code: SR
+            level: FREE_FROM
+            name: Paranøtter
+          - code: SP
+            level: FREE_FROM
+            name: Pekannøtter
+          - code: ST
+            level: FREE_FROM
+            name: Pistasjnøtter
+          - code: SW
+            level: FREE_FROM
+            name: Valnøtter
+        gpc:
+          segment: 
+          - code: 5000000
+            value: "Mat/drikke/tobakk"
+          family: 
+            - code: 5013000
+              value: "Melk/smør/fløte/yoghurt/ost/egg/erstatninger"
+          class: 
+            - code: 5013800
+              value: "Ost/osteerstatninger"
+          brick: 
+            - code: 10000030
+              value: "Ost (frysevare)"
+          gpcAttributes:
+            - attributeType:
+                - code: 20000002
+                  value: "Ingredienser, tilsatt"
+            - attributeValue:
+                - code: 30000720
+                  value: "KOMBINASJON"
+        preparations:
+          method: Friteres
+          description: Nuggets frteres ved 175c ca. 3 - 3,5 min
+        storageInfo:
+          tempMin: -30
+          tempMax: -18
+          totalStorageTimeDays: 453
+          distributorStorageTimeMinDays: 50
+    Nutrient:
+      type: array
+      xml:
+        wrapped: true
+        name: nutrients
+      items:
+        type: object
+        xml:
+          name: nutrient
+        properties:
+          code:
+            $ref: '#/components/schemas/nutrientCode'
+          measurement:
+            type: string
+          measurementPrecision:
+            type: string
+          measurementType:
+            $ref: '#/components/schemas/measurementType'
+          name:
+            type: string
+    Allergen:
+      type: array
+      xml:
+        wrapped: true
+        name: allergens
+      items:
+        type: object
+        xml:
+          name: allergen
+        properties:
+          code: 
+            $ref: '#/components/schemas/allergenCode'
+          level:
+            type: string
+            enum:
+              - FREE_FROM
+              - MAY_CONTAIN
+              - CONTAINS
+          name:
+            type: string
+    GPC:
+      type: object
+      properties:
+        segment:
+          $ref: '#/components/schemas/GPCCodeValue'
+        family:
+          $ref: '#/components/schemas/GPCCodeValue'
+        class:
+          $ref: '#/components/schemas/GPCCodeValue'
+        brick:
+          $ref: '#/components/schemas/GPCCodeValue'
+        gpcAttributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GPCAttribute'
+    GPCCodeValue:
+      type: object
+      properties:
+        code: 
+          type: integer
+          format: https://gpc-browser.gs1.org/
+        value: 
+          type: string
+          format: https://gpc-browser.gs1.org/
+    GPCAttribute:
+      type: object
+      properties:
+        attributeType:
+          $ref: '#/components/schemas/GPCCodeValue'
+        attributeValue:
+          $ref: '#/components/schemas/GPCCodeValue'
+    PreparationStep:
+      type: object
+      properties:
+        method:
+          $ref: '#/components/schemas/preparationMethod'
+        description:
+          type: string
+    StoragerInfo:
+      type: object
+      properties:
+        tempMin:
+          type: integer
+          format: int64
+        tempMax:
+          type: integer
+          format: int64
+        totalStorageTimeDays:
+          type: integer
+          format: int64
+        distributorStorageTimeMinDays:
+          type: integer
+          format: int64
+    marking:
+      type: string
+      enum:
+        - HALAL
+        - NYCKELHAL_MARK
+        - BRA_MILJOVAL
+        - SVANEN
+        - EU_BLOMMA
+        - KRAV_MARK
+        - EU_ECO_LABEL
+        - MARINE_STEWARDSHIP_COUNCIL_LABEL
+        - RAINFOREST_ALLIANCE
+        - FOREST_STEWARDSHIP_COUNCIL_LABEL
+        - FAIR_TRADE_MARK
+        - EKO
+        - NYTNORGE
+        - BLUE_ANGLE
+        - STATS_ECO
+        - ECOCERT
+        - DEMETER
+        - SOIL_ASSOCIATION_ORGANIC
+        - DIO
+        - AGR_BIOLOGIQUE
+        - SHALL_ECO
+        - ETHICAL_TEA
+        - UTZ_CERTIFIED
+        - SPECIAL
+        - PROTECTED_NAME
+        - NAAF
+        - GENMOD
+        - VEGAN
+        - BRADSKAL_FINT
+        - BRADSKAL_HALVGROVT
+        - BRADSKAL_GROVT
+        - BRADSKAL_EKSTRAGROVT
+        - ASC
+        - Laktosefri
+      description: >
+            description:
+             * `HALAL` - Halal – næringsmiddel tilpasset islamske diettregler
+             * `NYCKELHAL_MARK` - Nøkkelhullsmerking
+             * `BRA_MILJOVAL` - Bra miljöval (svensk)
+             * `SVANEN` - Svanen
+             * `EU_BLOMMA` - EU-blomsten
+             * `KRAV_MARK` - KRAV
+             * `EU_ECO_LABEL` - EU-økologisk
+             * `MARINE_STEWARDSHIP_COUNCIL_LABEL` - MSC-merket fisk
+             * `RAINFOREST_ALLIANCE` - Rainforest Alliance sertifisert
+             * `FOREST_STEWARDSHIP_COUNCIL_LABEL` - FSC, Forest Stewardship Council
+             * `FAIR_TRADE_MARK` - Fairtrade
+             * `EKO` - Ø-merket
+             * `NYTNORGE` - Nyt Norge
+             * `BLUE_ANGLE` - Blå Engel
+             * `STATS_ECO` - Statskontrollert øko
+             * `ECOCERT` - Ecocert
+             * `DEMETER` - Demeter
+             * `SOIL_ASSOCIATION_ORGANIC` - Soil Association
+             * `DIO` - DIO
+             * `AGR_BIOLOGIQUE` - Agriculture Biologique
+             * `SHALL_ECO` - Skal Eko
+             * `ETHICAL_TEA` - Ethical Tea Partner Ship
+             * `UTZ_CERTIFIED` - UTZCert
+             * `SPECIAL` - Spesialitet
+             * `PROTECTED_NAME` - Beskyttede Bet
+             * `NAAF` - NAAF
+             * `GENMOD` - Genmod
+             * `VEGAN` - Vegan
+             * `BRADSKAL_FINT` - Brødskala Fint
+             * `BRADSKAL_HALVGROVT` - Brødskala Halvgrovt
+             * `BRADSKAL_GROVT` - Brødskala Grovt
+             * `BRADSKAL_EKSTRAGROVT` - Brødskala Ekstra Grovt
+             * `ASC` - ASC
+             * `Laktosefri` - Laktosefri
+    preparationMethod:
+      type: string
+      enum:
+        - BAKING
+        - BARBECUING
+        - BLANCHING
+        - BLIND_BAKING
+        - BOILING
+        - BRAISING
+        - BROILING
+        - DEEP_FRYING
+        - DOUBLE_STEAMING
+        - FRYING
+        - GRIDDLE_FRYING
+        - GRILLING
+        - MICROWAVING
+        - PAN_FRYING
+        - POACHING
+        - PRESSURE_COOKING
+        - PRESSURE_FRYING
+        - READY_TO_EAT
+        - RECONSTITUTING
+        - ROASTING
+        - ROTISSERIE
+        - SAUTÉING
+        - SEARING
+        - SIMMERING
+        - SMOKING
+        - STEAMING
+        - STEWING
+        - STIR_FRYING
+        - HEATING
+      description: >
+        description:
+         * `BAKING` - Ovnsbakes
+         * `BARBECUING` - Grilles over kull eller åpen ild
+         * `BLANCHING` - Blancheres
+         * `BLIND_BAKING` - Forstekes
+         * `BOILING` - Kokes
+         * `BRAISING` - Braseres
+         * `BROILING` - Ovnsgrilles
+         * `DEEP_FRYING` - Friteres
+         * `DOUBLE_STEAMING` - Dampes i eget kar
+         * `FRYING` - Stekes
+         * `GRIDDLE_FRYING` - Stekes i eget fett
+         * `GRILLING` - Grilles
+         * `MICROWAVING` - Tilberedes i mikrobølgeovn
+         * `PAN_FRYING` - Pannestekes
+         * `POACHING` - Posjeres
+         * `PRESSURE_COOKING` - Trykkokes
+         * `PRESSURE_FRYING` - Trykkstekes
+         * `READY_TO_EAT` - Spiseklar
+         * `RECONSTITUTING` - Spes
+         * `ROASTING` - Helstekes
+         * `ROTISSERIE` - Stekes på spyd
+         * `SAUTÉING` - Sauteres
+         * `SEARING` - Brunes
+         * `SIMMERING` - Trekkes
+         * `SMOKING` - Røkes
+         * `STEAMING` - Dampes
+         * `STEWING` - Stues
+         * `STIR_FRYING` - Wokes
+         * `HEATING` - Varmebehandles
+    productGroup:
+      type: string
+      example: STRHS
+      enum:
+        - STRHS
+        - DAGLI
+        - ALKHL
+        - FSMP
+        - KOST
+        - FREEN
+      description: >
+        description:
+         * `STRHS` - Storhusholdning
+         * `DAGLI` - Dagligvare
+         * `ALKHL` - Alkoholholdige drikkevarer
+         * `FSMP` - Næringsmidler til spesielle medisinske formål
+         * `KOST` - Kosttilskudd
+         * `FREEN` - Fritatt Næringsdeklarasjon
+    allergenCode:
+      type: string
+      enum:
+        - AW
+        - GO
+        - UW
+        - GK
+        - NR
+        - GS
+        - GB
+        - AC
+        - AE
+        - AF
+        - AP
+        - AY
+        - AM
+        - AN
+        - SC
+        - SH
+        - SM
+        - SA
+        - SR
+        - SP
+        - ST
+        - SW
+        - BC
+        - BM
+        - AS
+        - AU
+        - NL
+        - UM
+      description: >
+        description:
+         * `AW` - Gluten
+         * `GO` - Havre
+         * `UW` - Hvete
+         * `GK` - Kamut
+         * `NR` - RUG
+         * `GS` - Spelt
+         * `GB` - Bygg
+         * `AC` - Skalldyr
+         * `AE` - Egg
+         * `AF` - Fisk
+         * `AP` - Peanøtter
+         * `AY` - Soya
+         * `AM` - Melk
+         * `AN` - Nøtter
+         * `SC` - Cashewnøtter
+         * `SH` - Hasselnøtter
+         * `SM` - Makademianøtter
+         * `SA` - Mandel
+         * `SR` - Paranøtter
+         * `SP` - Pekannøtter
+         * `ST` - Pistasjnøtter
+         * `SW` - Valnøtter
+         * `BC` - Selleri
+         * `BM` - Sennep
+         * `AS` - Sesamfrø
+         * `AU` - Svoveldioksid eller sulfitter
+         * `NL` - Lupin
+         * `UM` - Bløtdyr
+    nutrientCode:
+      type: string
+      example: FAT
+      enum:
+        - ENERC_KJ
+        - ENERC_KCAL
+        - PROCNT
+        - CHO-
+        - SUGAR
+        - POLYL
+        - STARCH
+        - FAT
+        - FASAT
+        - FAMS
+        - FAPU
+        - CHOL-
+        - FIBTG
+        - VITA
+        - VITD
+        - VITE
+        - VITK
+        - VITC
+        - THIA
+        - RIBF
+        - NIAEQ
+        - VITB6A
+        - FOLAC
+        - VITB12
+        - BIOT
+        - PANTAC
+        - CHOLIN
+        - INOTL
+        - TAU
+        - CARNIT
+        - NA
+        - K
+        - CLD
+        - CA
+        - P
+        - FE
+        - MG
+        - ZN
+        - ID
+        - CU
+        - MN
+        - FD
+        - SE
+        - MO
+        - CR
+        - WATER
+        - NACL
+      description: >
+        description:
+        'It is required to include all the mandatory nutritions for a product (except for productGroup "FREEN" )'
+         * `ENERC_KJ` - kJ (Mandatory)
+         * `ENERC_KCAL` - kcal (Mandatory)
+         * `PROCNT` - Protein (Mandatory)
+         * `CHO-` - Karbohydrat (Mandatory)
+         * `SUGAR` - Sukker (Mandatory)
+         * `POLYL` - Sukkeralkoholer
+         * `STARCH` - Stivelse
+         * `FAT` - Fett (Mandatory)
+         * `FASAT` - Mettet fett (Mandatory)
+         * `FAMS` - Umettet fett
+         * `FAPU` - Flerumettet fett
+         * `CHOL-` - Kolesterol
+         * `FIBTG` - Kostfiber
+         * `VITA` - Vitamin A
+         * `VITD` - Vitamin D
+         * `VITE` - Vitamin E
+         * `VITK` - Vitamin K
+         * `VITC` - Vitamin C
+         * `THIA` - Tiamin
+         * `RIBF` - Riboflavin
+         * `NIAEQ` - Niacin
+         * `VITB6A` - Vitamin B-6
+         * `FOLAC` - Folsyre
+         * `VITB12` - Vitamin B-12
+         * `BIOT` - Biotin
+         * `PANTAC` - pantotensyre
+         * `CHOLIN` - Kolin
+         * `INOTL` - Inositol    
+         * `TAU` - Taurin
+         * `CARNIT` - Karnitin
+         * `NA` - Natrium
+         * `K` - Kalium
+         * `CLD` - Klor
+         * `CA` - Kalsium
+         * `P` - Fosfor
+         * `FE` - Jern
+         * `MG` - Magnesium
+         * `ZN` - Sink
+         * `ID` - Jod
+         * `CU` - Kobber
+         * `MN` - Mangan
+         * `FD` - Fluorid
+         * `SE` - Selen
+         * `MO` - Molybden
+         * `CR` - Krom
+         * `WATER` - Vann
+         * `NACL` - koksalt (Mandatory)
+    measurementType:
+      type: string
+      example: GRM
+      enum:
+        - GRM
+        - KJO
+        - MGM
+        - KCL
+        - MC
+        - ATE
+        - MGE
+        - MCE
+      description: >
+        description: 
+        If the nutrient is "Vitamin A", then you can only choose "MC" and "MCE".
+        If the nutrient is "Niacin", then you can only choose "MGM" and "MGE".
+         * `GRM` - Gram
+         * `KJO` - Kilojoule
+         * `MGM` - Milligram
+         * `KCL` - Kilokalorier
+         * `MC` - Mikrogram
+         * `ATE` - Tokoferolekvivalenter
+         * `MGE` - Niacinekvivalenter
+         * `MCE` - Vitamin A ekvivalenter
+    Schema:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64

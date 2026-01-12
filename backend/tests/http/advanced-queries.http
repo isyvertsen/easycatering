@@ -1,0 +1,78 @@
+### Advanced Query Examples
+### Variables
+@baseUrl = http://localhost:8000/api
+@contentType = application/json
+
+### Complex Search - Find all orders for a specific date range
+GET {{baseUrl}}/v1/tables/tblBestillinger?search=2024-01
+
+### Paginated Results - Large Tables
+GET {{baseUrl}}/v1/tables/tblBestillingDetaljer?page=2&page_size=50
+
+### Recipe Ingredients Relationship
+# First get recipe
+GET {{baseUrl}}/v1/tables/tblOppskrifter/1
+
+### Then get ingredients for that recipe
+GET {{baseUrl}}/v1/tables/tblOppskriftIngredienser?search=1
+
+### Order with Details
+# Get order
+GET {{baseUrl}}/v1/tables/tblBestillinger/1
+
+### Get order details
+GET {{baseUrl}}/v1/tables/tblBestillingDetaljer?search=1
+
+### Employee Schedule
+GET {{baseUrl}}/v1/tables/tblArbeidstider
+
+### Inventory Status
+# Get low stock items
+GET {{baseUrl}}/v1/tables/tblLager?sort_by=Beholdning&sort_desc=false&page_size=20
+
+### Menu Planning
+# Get current week's menu
+GET {{baseUrl}}/v1/tables/tblMeny?search=2024
+
+### Get menu items for a specific menu
+GET {{baseUrl}}/v1/tables/tblMenyDetaljer?search=1
+
+### Allergen Search
+# Find all recipes with fish allergen
+GET {{baseUrl}}/v1/tables/tblOppskrifter?search=fisk
+
+### Customer Orders History
+# Get all orders for customer ID 1
+GET {{baseUrl}}/v1/tables/tblBestillinger?search=1
+
+### Production Planning
+# Get production schedule
+GET {{baseUrl}}/v1/tables/tblProduksjonsplan
+
+### Nutritional Information
+# Get nutritional data
+GET {{baseUrl}}/v1/tables/tblNaringsverdier
+
+### Cost Analysis
+# Get product costs
+GET {{baseUrl}}/v1/tables/tblProduktKostnader
+
+### Delivery Routes
+# Get delivery information
+GET {{baseUrl}}/v1/tables/tblLeveringer
+
+### Quality Control
+# Get quality check records
+GET {{baseUrl}}/v1/tables/tblKvalitetskontroll
+
+### Waste Management
+# Get waste records
+GET {{baseUrl}}/v1/tables/tblSvinn
+
+### Special Diets
+# Get special diet requirements
+GET {{baseUrl}}/v1/tables/tblSpesialkost
+
+### Budget Tracking
+# Get budget information
+GET {{baseUrl}}/v1/tables/tblBudsjett
