@@ -24,7 +24,7 @@ from app.schemas.webshop import (
     WebshopOrderListResponse,
     WebshopOrderByTokenResponse,
     WebshopAccessResponse,
-)
+)  # WebshopOrderLine and WebshopOrderByTokenResponse used in token methods
 
 
 class WebshopService:
@@ -484,3 +484,98 @@ class WebshopService:
 
         await self.db.commit()
         return count
+
+    async def get_order_by_token(self, token: str) -> Optional[WebshopOrderByTokenResponse]:
+        """Get order by token (for public access via email link).
+
+        For simplicity, the token is the order ID.
+        In production, use a secure random token stored in the database.
+        Token is valid for 14 days after order creation.
+        """
+        try:
+            order_id = int(token)
+        except ValueError:
+            return None
+
+        query = (
+            select(Ordrer)
+            .options(selectinload(Ordrer.detaljer).selectinload(Ordredetaljer.produkt))
+            .where(Ordrer.ordreid == order_id)
+        )
+
+        result = await self.db.execute(query)
+        order = result.scalar_one_or_none()
+
+        if not order:
+            return None
+
+        # Check if token is expired (14 days)
+        if order.ordredato:
+            token_expires = order.ordredato + timedelta(days=14)
+            token_expired = datetime.utcnow() > token_expires
+        else:
+            token_expires = None
+            token_expired = False
+
+        # Build order lines
+        ordrelinjer = []
+        for detail in order.detaljer:
+            line_total = (detail.pris or 0) * (detail.antall or 0)
+            ordrelinjer.append(
+                WebshopOrderLine(
+                    produktid=detail.produktid,
+                    produktnavn=detail.produkt.produktnavn if detail.produkt else None,
+                    visningsnavn=detail.produkt.visningsnavn if detail.produkt else None,
+                    antall=detail.antall or 0,
+                    pris=detail.pris or 0,
+                    total=line_total
+                )
+            )
+
+        return WebshopOrderByTokenResponse(
+            ordre=WebshopOrder(
+                ordreid=order.ordreid,
+                kundeid=order.kundeid,
+                kundenavn=order.kundenavn,
+                ordredato=order.ordredato,
+                leveringsdato=order.leveringsdato,
+                informasjon=order.informasjon,
+                ordrestatusid=order.ordrestatusid
+            ),
+            ordrelinjer=ordrelinjer,
+            token_utlopt=token_expired,
+            token_utloper=token_expires
+        )
+
+    async def confirm_receipt_by_token(self, token: str) -> bool:
+        """Confirm receipt of order by token.
+
+        Only works for orders with status 35 (Pakkliste skrevet).
+        Updates status to 80 (Godkjent av mottaker).
+        """
+        try:
+            order_id = int(token)
+        except ValueError:
+            return False
+
+        query = select(Ordrer).where(Ordrer.ordreid == order_id)
+        result = await self.db.execute(query)
+        order = result.scalar_one_or_none()
+
+        if not order:
+            return False
+
+        # Check that order is ready for confirmation (status 35)
+        if order.ordrestatusid != 35:
+            return False
+
+        # Check that token is not expired
+        if order.ordredato:
+            token_expires = order.ordredato + timedelta(days=14)
+            if datetime.utcnow() > token_expires:
+                return False
+
+        # Update status to 80 (Godkjent av mottaker)
+        order.ordrestatusid = 80
+        await self.db.commit()
+        return True

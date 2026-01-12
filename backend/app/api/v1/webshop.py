@@ -19,6 +19,7 @@ from app.schemas.webshop import (
     WebshopBatchApproveRequest,
     WebshopBatchApproveResponse,
     WebshopAccessResponse,
+    WebshopOrderByTokenResponse,
 )
 
 router = APIRouter()
@@ -311,3 +312,58 @@ async def batch_approve_orders(
         message=f"{count} ordrer oppdatert",
         updated_count=count
     )
+
+
+# =============================================================================
+# Token-based order access (no authentication required)
+# =============================================================================
+
+@router.get("/ordre/token/{token}", response_model=WebshopOrderByTokenResponse)
+async def get_order_by_token(
+    token: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get order by email token.
+
+    No authentication required - this allows customers to view their order
+    via a link sent in email confirmation.
+
+    Token is valid for 14 days after order creation.
+    """
+    service = WebshopService(db)
+    result = await service.get_order_by_token(token)
+
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ugyldig eller utløpt token"
+        )
+
+    return result
+
+
+@router.post("/ordre/token/{token}/bekreft")
+async def confirm_receipt_by_token(
+    token: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Confirm receipt of order by email token.
+
+    No authentication required - this allows customers to confirm receipt
+    via a link sent in email.
+
+    Only works for orders with status 35 (Pakkliste skrevet).
+    Updates status to 80 (Godkjent av mottaker).
+    """
+    service = WebshopService(db)
+    success = await service.confirm_receipt_by_token(token)
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Kunne ikke bekrefte mottak. Sjekk at ordren er klar for levering."
+        )
+
+    return {"message": "Mottak bekreftet"}
