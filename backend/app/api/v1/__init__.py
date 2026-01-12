@@ -8,7 +8,8 @@ from app.api.v1 import (
     preparation_instructions, ean_management, label_templates, labels, feedback,
     graphql_endpoint,
     report_generator, documentation, documentation_chat, bruker, periode_view,
-    bestilling_skjema, bestilling_registrer, activity_logs, app_logs, plukking, cron
+    bestilling_skjema, bestilling_registrer, activity_logs, app_logs, plukking, cron,
+    webshop
 )
 from app.api.v1.endpoints import matinfo_sync, matinfo_tracker, ngdata_sync, vetduat_sync, hybrid_sync
 
@@ -55,5 +56,6 @@ api_router.include_router(report_generator.router, prefix="/report-generator", t
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 api_router.include_router(stats.router, prefix="/stats", tags=["stats"])
 api_router.include_router(vetduat_sync.router, prefix="/vetduat", tags=["vetduat-sync"])
+api_router.include_router(webshop.router, prefix="/webshop", tags=["webshop"])
 api_router.include_router(matinfo.router, tags=["matinfo-products"])
 api_router.include_router(product_search.router, tags=["product-search"])

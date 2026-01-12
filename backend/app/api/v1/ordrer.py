@@ -263,7 +263,7 @@ async def cancel_ordre(
         raise HTTPException(status_code=404, detail="Ordre ikke funnet")
 
     ordre.kansellertdato = datetime.now()
-    ordre.ordrestatusid = 5  # Cancelled status
+    ordre.ordrestatusid = 99  # Kansellert (fra tblordrestatus)
     await db.commit()
 
     return {"message": "Ordre kansellert"}
@@ -293,7 +293,7 @@ async def duplicate_ordre(
         leveringsdato=original.leveringsdato,
         informasjon=f"Kopi av ordre #{original.ordreid}. {original.informasjon or ''}".strip(),
         betalingsmate=original.betalingsmate,
-        ordrestatusid=1,  # Reset to "Ny" status
+        ordrestatusid=10,  # Startet (fra tblordrestatus)
     )
     db.add(new_ordre)
     await db.flush()  # Get the new order ID

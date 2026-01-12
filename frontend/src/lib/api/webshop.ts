@@ -182,7 +182,31 @@ export interface WebshopOrderByTokenResponse {
  * - rolle="bruker" for webshop-tilgang
  * - rolle="admin" for godkjenningsendepunkter
  */
+/**
+ * Response for webshop access check
+ */
+export interface WebshopAccessResponse {
+  has_access: boolean
+  kunde_navn?: string
+  kundegruppe_navn?: string
+  message?: string
+}
+
 export const webshopApi = {
+  // ==========================================================================
+  // TILGANGSKONTROLL
+  // ==========================================================================
+
+  /**
+   * Sjekk om bruker har webshop-tilgang
+   *
+   * Backend endpoint: GET /api/v1/webshop/tilgang
+   */
+  checkAccess: async (): Promise<WebshopAccessResponse> => {
+    const response = await apiClient.get('/v1/webshop/tilgang')
+    return response.data
+  },
+
   // ==========================================================================
   // PRODUKTER (Tilgjengelig for rolle="bruker")
   // ==========================================================================

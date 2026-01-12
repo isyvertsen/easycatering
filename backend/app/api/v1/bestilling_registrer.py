@@ -154,7 +154,7 @@ async def opprett_ordre(
             kundenavn=kunde.kundenavn,
             ordredato=datetime.now(),
             leveringsdato=leveringsdato,
-            ordrestatusid=1,  # Ny
+            ordrestatusid=15,  # Bestilt (fra tblordrestatus)
             lagerok=False,
             sentbekreftelse=False,
         )
@@ -437,7 +437,7 @@ async def submit_kunde_bestilling(
             kundenavn=kunde.kundenavn,
             ordredato=datetime.now(),
             leveringsdato=leveringsdato,
-            ordrestatusid=1,  # Ny
+            ordrestatusid=15,  # Bestilt (fra tblordrestatus)
             lagerok=False,
             sentbekreftelse=False,
             informasjon="Bestilt via kundeportal",
