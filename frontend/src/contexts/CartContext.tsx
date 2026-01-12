@@ -138,10 +138,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         // Convert backend order lines to cart items
         const cartItems: CartItem[] = draft.ordrelinjer.map(line => ({
           produktid: line.produktid,
-          produktnavn: line.produktnavn || '',
-          visningsnavn: line.visningsnavn,
-          pris: line.pris,
-          antall: line.antall
+          produktnavn: line.produkt?.produktnavn || '',
+          visningsnavn: line.produkt?.visningsnavn,
+          pris: line.pris ?? 0,
+          antall: line.antall ?? 1
         }))
 
         setItems(cartItems)
