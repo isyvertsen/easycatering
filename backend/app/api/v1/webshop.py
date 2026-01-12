@@ -20,6 +20,8 @@ from app.schemas.webshop import (
     WebshopBatchApproveResponse,
     WebshopAccessResponse,
     WebshopOrderByTokenResponse,
+    WebshopCancelRequest,
+    WebshopCancelResponse,
 )
 
 router = APIRouter()
@@ -367,3 +369,45 @@ async def confirm_receipt_by_token(
         )
 
     return {"message": "Mottak bekreftet"}
+
+
+# =============================================================================
+# Order cancellation
+# =============================================================================
+
+@router.post("/ordre/{order_id}/kanseller", response_model=WebshopCancelResponse)
+async def cancel_order(
+    order_id: int,
+    cancel_data: WebshopCancelRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Cancel an order.
+
+    Admin only - sets order status to 98 (for sen kansellering) or 99 (kansellert).
+    """
+    if current_user.rolle != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Kun admin kan kansellere ordrer"
+        )
+
+    service = WebshopService(db)
+    success, new_status = await service.cancel_order(
+        order_id=order_id,
+        arsak=cancel_data.arsak,
+        for_sen=cancel_data.for_sen
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ordre ikke funnet"
+        )
+
+    status_text = "For sen kansellering" if new_status == 98 else "Kansellert"
+    return WebshopCancelResponse(
+        message=f"Ordre {status_text}",
+        ordrestatusid=new_status
+    )

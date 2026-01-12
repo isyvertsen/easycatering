@@ -144,3 +144,24 @@ class WebshopAccessResponse(BaseSchema):
     kunde_navn: Optional[str] = None
     kundegruppe_navn: Optional[str] = None
     message: Optional[str] = None
+
+
+# =============================================================================
+# Cancellation schemas
+# =============================================================================
+
+class WebshopCancelRequest(BaseModel):
+    """Schema for cancelling an order.
+
+    Status values:
+    - 98 = For sen kansellering (customer cancelled after deadline)
+    - 99 = Kansellert (normal cancellation)
+    """
+    arsak: Optional[str] = Field(None, description="Reason for cancellation")
+    for_sen: bool = Field(False, description="True if cancelled after deadline (status 98)")
+
+
+class WebshopCancelResponse(BaseSchema):
+    """Response after cancelling an order."""
+    message: str
+    ordrestatusid: int

@@ -579,3 +579,40 @@ class WebshopService:
         order.ordrestatusid = 80
         await self.db.commit()
         return True
+
+    async def cancel_order(
+        self,
+        order_id: int,
+        arsak: Optional[str] = None,
+        for_sen: bool = False
+    ) -> Tuple[bool, int]:
+        """Cancel an order.
+
+        Args:
+            order_id: The order ID to cancel
+            arsak: Reason for cancellation (optional)
+            for_sen: If True, use status 98 (late cancellation), else 99 (normal)
+
+        Returns:
+            Tuple of (success, new_status_id)
+        """
+        query = select(Ordrer).where(Ordrer.ordreid == order_id)
+        result = await self.db.execute(query)
+        order = result.scalar_one_or_none()
+
+        if not order:
+            return False, 0
+
+        # Determine status: 98 for late cancellation, 99 for normal
+        new_status = 98 if for_sen else 99
+
+        # Update order
+        order.ordrestatusid = new_status
+        order.kansellertdato = datetime.utcnow()
+        if arsak and order.informasjon:
+            order.informasjon = f"{order.informasjon}\n\nKansellert: {arsak}"
+        elif arsak:
+            order.informasjon = f"Kansellert: {arsak}"
+
+        await self.db.commit()
+        return True, new_status
