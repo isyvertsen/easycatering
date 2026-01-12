@@ -32,7 +32,8 @@ import {
   Printer,
   ClipboardList,
   PenLine,
-  Link2
+  Link2,
+  FileText,
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -119,6 +120,8 @@ const navigationGroups: NavGroup[] = [
       { name: "Rapporter", href: "/reports", icon: BarChart3 },
       { name: "Dokumentasjon", href: "/admin/documentation", icon: BookOpen },
       { name: "Systemstatus", href: "/admin/system", icon: Activity },
+      { name: "Aktivitetslogg", href: "/admin/activity-log", icon: Activity },
+      { name: "Applikasjonslogg", href: "/admin/app-log", icon: FileText },
       { name: "Innstillinger", href: "/settings", icon: Settings },
     ]
   }
