@@ -1,7 +1,7 @@
 /**
  * Application logs API client
  */
-import apiClient from './client'
+import { apiClient } from '@/lib/api-client'
 
 export interface AppLog {
   id: number
