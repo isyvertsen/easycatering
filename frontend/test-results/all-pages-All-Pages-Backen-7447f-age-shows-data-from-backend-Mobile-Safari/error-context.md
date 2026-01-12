@@ -1,0 +1,193 @@
+# Page snapshot
+
+```yaml
+- button:
+  - img
+- heading "Larvik Catering" [level=1]
+- navigation:
+  - link "Dashboard":
+    - /url: /
+    - img
+    - text: Dashboard
+  - link "Menyer":
+    - /url: /menus
+    - img
+    - text: Menyer
+  - link "Oppskrifter":
+    - /url: /recipes
+    - img
+    - text: Oppskrifter
+  - link "Kunder":
+    - /url: /customers
+    - img
+    - text: Kunder
+  - link "Ordrer":
+    - /url: /orders
+    - img
+    - text: Ordrer
+  - link "Produkter":
+    - /url: /produkter
+    - img
+    - text: Produkter
+  - link "Leveranser":
+    - /url: /deliveries
+    - img
+    - text: Leveranser
+  - link "Ansatte":
+    - /url: /employees
+    - img
+    - text: Ansatte
+  - link "Rapporter":
+    - /url: /reports
+    - img
+    - text: Rapporter
+  - link "Innstillinger":
+    - /url: /settings
+    - img
+    - text: Innstillinger
+- main:
+  - heading "Ansatte" [level=1]
+  - paragraph: Administrer ansatte og deres informasjon
+  - img
+  - textbox "Search..."
+  - link "Add New":
+    - /url: /employees/new
+    - img
+    - text: Add New
+  - table:
+    - rowgroup:
+      - row "Fornavn Etternavn Tittel Avdeling E-post Telefon Status Actions":
+        - cell "Fornavn":
+          - button "Fornavn":
+            - text: Fornavn
+            - img
+        - cell "Etternavn":
+          - button "Etternavn":
+            - text: Etternavn
+            - img
+        - cell "Tittel":
+          - button "Tittel":
+            - text: Tittel
+            - img
+        - cell "Avdeling":
+          - button "Avdeling":
+            - text: Avdeling
+            - img
+        - cell "E-post"
+        - cell "Telefon"
+        - cell "Status"
+        - cell "Actions"
+    - rowgroup:
+      - row "Thor Atle Bjerke Sjåfør - thor.atle.bjerke@larvik.kommune.no 40044299 Aktiv":
+        - cell "Thor Atle"
+        - cell "Bjerke"
+        - cell "Sjåfør"
+        - cell "-"
+        - cell "thor.atle.bjerke@larvik.kommune.no":
+          - link "thor.atle.bjerke@larvik.kommune.no":
+            - /url: mailto:thor.atle.bjerke@larvik.kommune.no
+        - cell "40044299"
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Atle Christiansen - - - - Aktiv":
+        - cell "Atle"
+        - cell "Christiansen"
+        - cell "-"
+        - cell "-"
+        - cell "-"
+        - cell "-"
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Terje Eftedal Avdelingsleder - terje.eftedal@larvik.kommune.no 98231246 Aktiv":
+        - cell "Terje"
+        - cell "Eftedal"
+        - cell "Avdelingsleder"
+        - cell "-"
+        - cell "terje.eftedal@larvik.kommune.no":
+          - link "terje.eftedal@larvik.kommune.no":
+            - /url: mailto:terje.eftedal@larvik.kommune.no
+        - cell "98231246"
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Helene Numme - - helene.numme@larvik.kommune.no - Aktiv":
+        - cell "Helene"
+        - cell "Numme"
+        - cell "-"
+        - cell "-"
+        - cell "helene.numme@larvik.kommune.no":
+          - link "helene.numme@larvik.kommune.no":
+            - /url: mailto:helene.numme@larvik.kommune.no
+        - cell "-"
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Line Sannes - - - - Aktiv":
+        - cell "Line"
+        - cell "Sannes"
+        - cell "-"
+        - cell "-"
+        - cell "-"
+        - cell "-"
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Nina Skogen Lyngås - - - - Aktiv":
+        - cell "Nina"
+        - cell "Skogen Lyngås"
+        - cell "-"
+        - cell "-"
+        - cell "-"
+        - cell "-"
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Vivian Svenning - - vivian.svenning@larvik.kommune.no - Aktiv":
+        - cell "Vivian"
+        - cell "Svenning"
+        - cell "-"
+        - cell "-"
+        - cell "vivian.svenning@larvik.kommune.no":
+          - link "vivian.svenning@larvik.kommune.no":
+            - /url: mailto:vivian.svenning@larvik.kommune.no
+        - cell "-"
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Ivar - - - - Aktiv":
+        - cell "Ivar"
+        - cell
+        - cell "-"
+        - cell "-"
+        - cell "-"
+        - cell "-"
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+  - paragraph: Showing 1 to 8 of 8 results
+  - combobox: "20"
+  - button [disabled]:
+    - img
+  - button [disabled]:
+    - img
+  - text: Page 1 of 1
+  - button [disabled]:
+    - img
+  - button [disabled]:
+    - img
+- region "Notifications (F8)":
+  - list
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```

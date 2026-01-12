@@ -1,0 +1,97 @@
+# Page snapshot
+
+```yaml
+- heading "Larvik Catering" [level=1]
+- navigation:
+  - link "Dashboard":
+    - /url: /
+    - img
+    - text: Dashboard
+  - link "Menyer":
+    - /url: /menus
+    - img
+    - text: Menyer
+  - link "Oppskrifter":
+    - /url: /recipes
+    - img
+    - text: Oppskrifter
+  - link "Kunder":
+    - /url: /customers
+    - img
+    - text: Kunder
+  - link "Ordrer":
+    - /url: /orders
+    - img
+    - text: Ordrer
+  - link "Produkter":
+    - /url: /produkter
+    - img
+    - text: Produkter
+  - link "Leveranser":
+    - /url: /deliveries
+    - img
+    - text: Leveranser
+  - link "Ansatte":
+    - /url: /employees
+    - img
+    - text: Ansatte
+  - link "Rapporter":
+    - /url: /reports
+    - img
+    - text: Rapporter
+  - link "Innstillinger":
+    - /url: /settings
+    - img
+    - text: Innstillinger
+- main:
+  - heading "Ansatte" [level=1]
+  - paragraph: Administrer ansatte og deres informasjon
+  - img
+  - textbox "Search..."
+  - link "Add New":
+    - /url: /employees/new
+    - img
+    - text: Add New
+  - table:
+    - rowgroup:
+      - row "Fornavn Etternavn Tittel Avdeling E-post Telefon Status Actions":
+        - cell "Fornavn":
+          - button "Fornavn":
+            - text: Fornavn
+            - img
+        - cell "Etternavn":
+          - button "Etternavn":
+            - text: Etternavn
+            - img
+        - cell "Tittel":
+          - button "Tittel":
+            - text: Tittel
+            - img
+        - cell "Avdeling":
+          - button "Avdeling":
+            - text: Avdeling
+            - img
+        - cell "E-post"
+        - cell "Telefon"
+        - cell "Status"
+        - cell "Actions"
+    - rowgroup:
+      - row "Loading...":
+        - cell "Loading..."
+  - paragraph: Showing 1 to 0 of 0 results
+  - combobox: "20"
+  - button [disabled]:
+    - img
+  - button [disabled]:
+    - img
+  - text: Page 1 of 1
+  - button [disabled]:
+    - img
+  - button [disabled]:
+    - img
+- region "Notifications (F8)":
+  - list
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```

@@ -1,0 +1,88 @@
+import { NextAuthOptions } from 'next-auth'
+import GoogleProvider from 'next-auth/providers/google'
+import CredentialsProvider from 'next-auth/providers/credentials'
+import { api } from '@/lib/api'
+
+export const authOptions: NextAuthOptions = {
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+    CredentialsProvider({
+      name: 'credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
+
+        try {
+          const response = await api.post('/auth/login', {
+            email: credentials.email,
+            password: credentials.password,
+          })
+
+          if (response.data) {
+            return {
+              id: response.data.user.id,
+              email: response.data.user.email,
+              name: response.data.user.full_name,
+              accessToken: response.data.access_token,
+              refreshToken: response.data.refresh_token,
+            }
+          }
+        } catch (error) {
+          return null
+        }
+
+        return null
+      },
+    }),
+  ],
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === 'google') {
+        try {
+          const response = await api.post('/auth/google', {
+            token: account.id_token,
+          })
+
+          if (response.data) {
+            user.accessToken = response.data.access_token
+            user.refreshToken = response.data.refresh_token
+          }
+        } catch (error) {
+          return false
+        }
+      }
+      return true
+    },
+    async jwt({ token, user, account }) {
+      if (user) {
+        token.accessToken = user.accessToken
+        token.refreshToken = user.refreshToken
+        token.id = user.id
+      }
+      return token
+    },
+    async session({ session, token }) {
+      session.accessToken = token.accessToken as string
+      session.refreshToken = token.refreshToken as string
+      session.user.id = token.id as string
+      return session
+    },
+  },
+  pages: {
+    signIn: '/auth/signin',
+    signOut: '/auth/signout',
+    error: '/auth/error',
+  },
+  session: {
+    strategy: 'jwt',
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+}

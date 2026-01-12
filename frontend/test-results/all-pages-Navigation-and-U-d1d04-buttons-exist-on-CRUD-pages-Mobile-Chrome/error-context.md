@@ -1,0 +1,382 @@
+# Page snapshot
+
+```yaml
+- button:
+  - img
+- heading "Larvik Catering" [level=1]
+- navigation:
+  - link "Dashboard":
+    - /url: /
+    - img
+    - text: Dashboard
+  - link "Menyer":
+    - /url: /menus
+    - img
+    - text: Menyer
+  - link "Oppskrifter":
+    - /url: /recipes
+    - img
+    - text: Oppskrifter
+  - link "Kunder":
+    - /url: /customers
+    - img
+    - text: Kunder
+  - link "Ordrer":
+    - /url: /orders
+    - img
+    - text: Ordrer
+  - link "Produkter":
+    - /url: /produkter
+    - img
+    - text: Produkter
+  - link "Leveranser":
+    - /url: /deliveries
+    - img
+    - text: Leveranser
+  - link "Ansatte":
+    - /url: /employees
+    - img
+    - text: Ansatte
+  - link "Rapporter":
+    - /url: /reports
+    - img
+    - text: Rapporter
+  - link "Innstillinger":
+    - /url: /settings
+    - img
+    - text: Innstillinger
+- main:
+  - heading "Kunder" [level=1]
+  - paragraph: Administrer kunder og deres informasjon
+  - img
+  - textbox "Søk etter kunder..."
+  - link "Ny kunde":
+    - /url: /customers/new
+    - img
+    - text: Ny kunde
+  - table:
+    - rowgroup:
+      - row "Kundenavn Avdeling Adresse Kontakt Status":
+        - cell "Kundenavn"
+        - cell "Avdeling"
+        - cell "Adresse"
+        - cell "Kontakt"
+        - cell "Status"
+        - cell
+    - rowgroup:
+      - row "Adrian Danielsen - Pedersenmyra 077 8589 Kristoffersen 93 96 38 26 keide@example.net Nettside Aktiv":
+        - cell "Adrian Danielsen"
+        - cell "-"
+        - cell "Pedersenmyra 077 8589 Kristoffersen"
+        - cell "93 96 38 26 keide@example.net Nettside":
+          - img
+          - text: 93 96 38 26
+          - img
+          - link "keide@example.net":
+            - /url: mailto:keide@example.net
+          - img
+          - link "Nettside":
+            - /url: https://www.eliassen.no
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Adrian Pedersen - Tveitroa 83H 4913 Henrikborg 47871921 haavard76@example.net Nettside Aktiv":
+        - cell "Adrian Pedersen"
+        - cell "-"
+        - cell "Tveitroa 83H 4913 Henrikborg"
+        - cell "47871921 haavard76@example.net Nettside":
+          - img
+          - text: "47871921"
+          - img
+          - link "haavard76@example.net":
+            - /url: mailto:haavard76@example.net
+          - img
+          - link "Nettside":
+            - /url: https://www.evensen.com
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Adrian Strøm - Johannessenspranget 64 0659 Karolinevik 932 21 158 anderslarsen@example.net Aktiv":
+        - cell "Adrian Strøm"
+        - cell "-"
+        - cell "Johannessenspranget 64 0659 Karolinevik"
+        - cell "932 21 158 anderslarsen@example.net":
+          - img
+          - text: 932 21 158
+          - img
+          - link "anderslarsen@example.net":
+            - /url: mailto:anderslarsen@example.net
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Adrian Vik - Berntsenvollen 52 6465 Sandvik 911 91 691 hannehauge@example.com Aktiv":
+        - cell "Adrian Vik"
+        - cell "-"
+        - cell "Berntsenvollen 52 6465 Sandvik"
+        - cell "911 91 691 hannehauge@example.com":
+          - img
+          - text: 911 91 691
+          - img
+          - link "hannehauge@example.com":
+            - /url: mailto:hannehauge@example.com
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Alexander Bakken - Ahmedringen 3 8171 Oddbø 00555409 lmadsen@example.com Aktiv":
+        - cell "Alexander Bakken"
+        - cell "-"
+        - cell "Ahmedringen 3 8171 Oddbø"
+        - cell "00555409 lmadsen@example.com":
+          - img
+          - text: "00555409"
+          - img
+          - link "lmadsen@example.com":
+            - /url: mailto:lmadsen@example.com
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Alexander Jakobsen - Jørgensenlia 1 8873 Monicabø 53 36 10 63 mbirkeland@example.com Nettside Aktiv":
+        - cell "Alexander Jakobsen"
+        - cell "-"
+        - cell "Jørgensenlia 1 8873 Monicabø"
+        - cell "53 36 10 63 mbirkeland@example.com Nettside":
+          - img
+          - text: 53 36 10 63
+          - img
+          - link "mbirkeland@example.com":
+            - /url: mailto:mbirkeland@example.com
+          - img
+          - link "Nettside":
+            - /url: https://www.thomassen-christensen.no
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Alf Aas - Moenplassen 65 2852 Larsen 464 50 653 jengen@example.net Nettside Aktiv":
+        - cell "Alf Aas"
+        - cell "-"
+        - cell "Moenplassen 65 2852 Larsen"
+        - cell "464 50 653 jengen@example.net Nettside":
+          - img
+          - text: 464 50 653
+          - img
+          - link "jengen@example.net":
+            - /url: mailto:jengen@example.net
+          - img
+          - link "Nettside":
+            - /url: https://www.sivertsen.no
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Alf Jensen - Aasåsen 14 3284 Iversen 46167874 jorunnmyklebust@example.org Aktiv":
+        - cell "Alf Jensen"
+        - cell "-"
+        - cell "Aasåsen 14 3284 Iversen"
+        - cell "46167874 jorunnmyklebust@example.org":
+          - img
+          - text: "46167874"
+          - img
+          - link "jorunnmyklebust@example.org":
+            - /url: mailto:jorunnmyklebust@example.org
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Anders Bøe - Lundebakken 4 8635 Trondmark +4722487800 oeyvindoedegaard@example.com Nettside Aktiv":
+        - cell "Anders Bøe"
+        - cell "-"
+        - cell "Lundebakken 4 8635 Trondmark"
+        - cell "+4722487800 oeyvindoedegaard@example.com Nettside":
+          - img
+          - text: "+4722487800"
+          - img
+          - link "oeyvindoedegaard@example.com":
+            - /url: mailto:oeyvindoedegaard@example.com
+          - img
+          - link "Nettside":
+            - /url: https://www.eliassen.no
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Anders Eide - Lienhøgda 660 6528 Nygård +4728804349 qstroem@example.com Aktiv":
+        - cell "Anders Eide"
+        - cell "-"
+        - cell "Lienhøgda 660 6528 Nygård"
+        - cell "+4728804349 qstroem@example.com":
+          - img
+          - text: "+4728804349"
+          - img
+          - link "qstroem@example.com":
+            - /url: mailto:qstroem@example.com
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Anders Kristensen - Jacobsenvika 24 5704 Holm 967 16 414 kjerstiholm@example.net Aktiv":
+        - cell "Anders Kristensen"
+        - cell "-"
+        - cell "Jacobsenvika 24 5704 Holm"
+        - cell "967 16 414 kjerstiholm@example.net":
+          - img
+          - text: 967 16 414
+          - img
+          - link "kjerstiholm@example.net":
+            - /url: mailto:kjerstiholm@example.net
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Andrea Bakke - Aasskogen 566 6143 Ceciliesund 40773741 asbjoern40@example.com Nettside Aktiv":
+        - cell "Andrea Bakke"
+        - cell "-"
+        - cell "Aasskogen 566 6143 Ceciliesund"
+        - cell "40773741 asbjoern40@example.com Nettside":
+          - img
+          - text: "40773741"
+          - img
+          - link "asbjoern40@example.com":
+            - /url: mailto:asbjoern40@example.com
+          - img
+          - link "Nettside":
+            - /url: https://www.roenning.com
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Andrea Berge - Ellingsengropa 211 7821 Magnusdal 88657680 simen44@example.org Nettside Aktiv":
+        - cell "Andrea Berge"
+        - cell "-"
+        - cell "Ellingsengropa 211 7821 Magnusdal"
+        - cell "88657680 simen44@example.org Nettside":
+          - img
+          - text: "88657680"
+          - img
+          - link "simen44@example.org":
+            - /url: mailto:simen44@example.org
+          - img
+          - link "Nettside":
+            - /url: https://www.andreassen.com
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Andrea Isaksen - Amundseneggen 8D 5396 Mettehavn 402 02 421 maridahl@example.net Aktiv":
+        - cell "Andrea Isaksen"
+        - cell "-"
+        - cell "Amundseneggen 8D 5396 Mettehavn"
+        - cell "402 02 421 maridahl@example.net":
+          - img
+          - text: 402 02 421
+          - img
+          - link "maridahl@example.net":
+            - /url: mailto:maridahl@example.net
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Andrea Solberg - Berntsengropa 142 6298 Holm 98513214 joedegaard@example.org Nettside Aktiv":
+        - cell "Andrea Solberg"
+        - cell "-"
+        - cell "Berntsengropa 142 6298 Holm"
+        - cell "98513214 joedegaard@example.org Nettside":
+          - img
+          - text: "98513214"
+          - img
+          - link "joedegaard@example.org":
+            - /url: mailto:joedegaard@example.org
+          - img
+          - link "Nettside":
+            - /url: https://www.christensen-brekke.com
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Andrea Solheim - Danielsenskogen 81D 4432 Ali 456 10 010 andreahanssen@example.com Nettside Aktiv":
+        - cell "Andrea Solheim"
+        - cell "-"
+        - cell "Danielsenskogen 81D 4432 Ali"
+        - cell "456 10 010 andreahanssen@example.com Nettside":
+          - img
+          - text: 456 10 010
+          - img
+          - link "andreahanssen@example.com":
+            - /url: mailto:andreahanssen@example.com
+          - img
+          - link "Nettside":
+            - /url: https://www.johnsen.no
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Andrea Thorsen - Eliassenplassen 055 0869 Annaås 21 83 16 58 karin40@example.org Aktiv":
+        - cell "Andrea Thorsen"
+        - cell "-"
+        - cell "Eliassenplassen 055 0869 Annaås"
+        - cell "21 83 16 58 karin40@example.org":
+          - img
+          - text: 21 83 16 58
+          - img
+          - link "karin40@example.org":
+            - /url: mailto:karin40@example.org
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Andreas Hagen - Myhreløkka 659 9687 Sæther +47 14 71 27 03 kristian20@example.net Nettside Aktiv":
+        - cell "Andreas Hagen"
+        - cell "-"
+        - cell "Myhreløkka 659 9687 Sæther"
+        - cell "+47 14 71 27 03 kristian20@example.net Nettside":
+          - img
+          - text: +47 14 71 27 03
+          - img
+          - link "kristian20@example.net":
+            - /url: mailto:kristian20@example.net
+          - img
+          - link "Nettside":
+            - /url: https://www.johannessen.net
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Andreas Olsen - Mikkelsenlyngen 57 2125 Leifvåg 969 44 911 thorsenmari@example.org Aktiv":
+        - cell "Andreas Olsen"
+        - cell "-"
+        - cell "Mikkelsenlyngen 57 2125 Leifvåg"
+        - cell "969 44 911 thorsenmari@example.org":
+          - img
+          - text: 969 44 911
+          - img
+          - link "thorsenmari@example.org":
+            - /url: mailto:thorsenmari@example.org
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+      - row "Andreas Simonsen - Bergemoen 43 2410 Sofiehelle 57 39 70 30 marienilsen@example.net Aktiv":
+        - cell "Andreas Simonsen"
+        - cell "-"
+        - cell "Bergemoen 43 2410 Sofiehelle"
+        - cell "57 39 70 30 marienilsen@example.net":
+          - img
+          - text: 57 39 70 30
+          - img
+          - link "marienilsen@example.net":
+            - /url: mailto:marienilsen@example.net
+        - cell "Aktiv"
+        - cell:
+          - button:
+            - img
+- region "Notifications (F8)":
+  - list
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```

@@ -1,0 +1,232 @@
+# Page snapshot
+
+```yaml
+- heading "Larvik Catering" [level=1]
+- navigation:
+  - link "Dashboard":
+    - /url: /
+    - img
+    - text: Dashboard
+  - link "Menyer":
+    - /url: /menus
+    - img
+    - text: Menyer
+  - link "Oppskrifter":
+    - /url: /recipes
+    - img
+    - text: Oppskrifter
+  - link "Kunder":
+    - /url: /customers
+    - img
+    - text: Kunder
+  - link "Ordrer":
+    - /url: /orders
+    - img
+    - text: Ordrer
+  - link "Produkter":
+    - /url: /produkter
+    - img
+    - text: Produkter
+  - link "Leveranser":
+    - /url: /deliveries
+    - img
+    - text: Leveranser
+  - link "Ansatte":
+    - /url: /employees
+    - img
+    - text: Ansatte
+  - link "Rapporter":
+    - /url: /reports
+    - img
+    - text: Rapporter
+  - link "Innstillinger":
+    - /url: /settings
+    - img
+    - text: Innstillinger
+- main:
+  - heading "Menyer" [level=1]
+  - paragraph: Administrer menyer og ukentlig planlegging
+  - link "Ukentlig Menyplan Generer og skriv ut menybestillingsskjema for 4 uker":
+    - /url: /menus/weekly-plan
+    - img
+    - img
+    - heading "Ukentlig Menyplan" [level=3]
+    - paragraph: Generer og skriv ut menybestillingsskjema for 4 uker
+  - link "Registrer Bestilling Registrer ordrer fra utfylte menyskjemaer":
+    - /url: /menus/order-registration
+    - img
+    - img
+    - heading "Registrer Bestilling" [level=3]
+    - paragraph: Registrer ordrer fra utfylte menyskjemaer
+  - link "Menymaler Opprett og administrer gjenbrukbare menymaler":
+    - /url: /menus/templates
+    - img
+    - img
+    - heading "Menymaler" [level=3]
+    - paragraph: Opprett og administrer gjenbrukbare menymaler
+  - link "Periode Administrasjon Administrer perioder, menyer og produkter":
+    - /url: /menus/management
+    - img
+    - img
+    - heading "Periode Administrasjon" [level=3]
+    - paragraph: Administrer perioder, menyer og produkter
+  - img
+  - textbox "Søk i menyer..."
+  - link "Ny meny":
+    - /url: /menus/new
+    - img
+    - text: Ny meny
+  - table:
+    - rowgroup:
+      - row "ID Beskrivelse Menygruppe":
+        - cell "ID"
+        - cell "Beskrivelse"
+        - cell "Menygruppe"
+        - cell
+    - rowgroup:
+      - row "1 Meny 01 -":
+        - cell "1"
+        - cell "Meny 01"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "2 Meny 02 -":
+        - cell "2"
+        - cell "Meny 02"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "3 Meny 03 -":
+        - cell "3"
+        - cell "Meny 03"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "4 Meny 04 -":
+        - cell "4"
+        - cell "Meny 04"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "5 Meny 05 -":
+        - cell "5"
+        - cell "Meny 05"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "6 Meny 06 -":
+        - cell "6"
+        - cell "Meny 06"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "7 Meny 07 -":
+        - cell "7"
+        - cell "Meny 07"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "8 Meny 08 -":
+        - cell "8"
+        - cell "Meny 08"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "9 Meny 09 -":
+        - cell "9"
+        - cell "Meny 09"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "10 Meny 10 -":
+        - cell "10"
+        - cell "Meny 10"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "11 Meny 11 -":
+        - cell "11"
+        - cell "Meny 11"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "12 Meny 12 -":
+        - cell "12"
+        - cell "Meny 12"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "13 Meny 13 -":
+        - cell "13"
+        - cell "Meny 13"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "14 Meny 14 -":
+        - cell "14"
+        - cell "Meny 14"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "15 Meny 15 -":
+        - cell "15"
+        - cell "Meny 15"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "16 Meny 16 -":
+        - cell "16"
+        - cell "Meny 16"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "17 Meny 17 -":
+        - cell "17"
+        - cell "Meny 17"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "18 Meny 18 -":
+        - cell "18"
+        - cell "Meny 18"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "19 Meny 19 -":
+        - cell "19"
+        - cell "Meny 19"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20 Meny 20 -":
+        - cell "20"
+        - cell "Meny 20"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+- region "Notifications (F8)":
+  - list
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```

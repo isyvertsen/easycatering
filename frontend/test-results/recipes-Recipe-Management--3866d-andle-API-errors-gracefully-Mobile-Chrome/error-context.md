@@ -1,0 +1,275 @@
+# Page snapshot
+
+```yaml
+- button:
+  - img
+- heading "Larvik Catering" [level=1]
+- navigation:
+  - link "Dashboard":
+    - /url: /
+    - img
+    - text: Dashboard
+  - link "Menyer":
+    - /url: /menus
+    - img
+    - text: Menyer
+  - link "Oppskrifter":
+    - /url: /recipes
+    - img
+    - text: Oppskrifter
+  - link "Kunder":
+    - /url: /customers
+    - img
+    - text: Kunder
+  - link "Ordrer":
+    - /url: /orders
+    - img
+    - text: Ordrer
+  - link "Produkter":
+    - /url: /produkter
+    - img
+    - text: Produkter
+  - link "Leveranser":
+    - /url: /deliveries
+    - img
+    - text: Leveranser
+  - link "Ansatte":
+    - /url: /employees
+    - img
+    - text: Ansatte
+  - link "Rapporter":
+    - /url: /reports
+    - img
+    - text: Rapporter
+  - link "Innstillinger":
+    - /url: /settings
+    - img
+    - text: Innstillinger
+- main:
+  - heading "Oppskrifter" [level=1]
+  - paragraph: Administrer oppskrifter, beregn næringsverdier og håndter allergener
+  - img
+  - textbox "Søk etter kode eller navn..."
+  - link "Add New":
+    - /url: /recipes/new
+    - img
+    - text: Add New
+  - table:
+    - rowgroup:
+      - row "Kode Navn Porsjoner Brukes til Opprettet Actions":
+        - cell "Kode":
+          - button "Kode":
+            - text: Kode
+            - img
+        - cell "Navn":
+          - button "Navn":
+            - text: Navn
+            - img
+        - cell "Porsjoner":
+          - button "Porsjoner":
+            - text: Porsjoner
+            - img
+        - cell "Brukes til"
+        - cell "Opprettet":
+          - button "Opprettet":
+            - text: Opprettet
+            - img
+        - cell "Actions"
+    - rowgroup:
+      - row "279 Agurksalat 30 Middag 24.07.2023":
+        - cell "279"
+        - cell "Agurksalat"
+        - cell "30"
+        - cell "Middag"
+        - cell "24.07.2023"
+        - cell:
+          - button:
+            - img
+      - row "116 Aprikoskompott 61 - 30.01.2019":
+        - cell "116"
+        - cell "Aprikoskompott"
+        - cell "61"
+        - cell "-"
+        - cell "30.01.2019"
+        - cell:
+          - button:
+            - img
+      - row "26 Aspargessuppe 85 Lunsj 13.01.2018":
+        - cell "26"
+        - cell "Aspargessuppe"
+        - cell "85"
+        - cell "Lunsj"
+        - cell "13.01.2018"
+        - cell:
+          - button:
+            - img
+      - row "75 Aspik 1 kg 10 Lørdagskos 06.03.2018":
+        - cell "75"
+        - cell "Aspik 1 kg"
+        - cell "10"
+        - cell "Lørdagskos"
+        - cell "06.03.2018"
+        - cell:
+          - button:
+            - img
+      - row "119 Baconfett 45 TORSK 01.04.2019":
+        - cell "119"
+        - cell "Baconfett"
+        - cell "45"
+        - cell "TORSK"
+        - cell "01.04.2019"
+        - cell:
+          - button:
+            - img
+      - row "192 Bearnaise Knorr 91 RØKT SVINEKAM 09.06.2021":
+        - cell "192"
+        - cell "Bearnaise Knorr"
+        - cell "91"
+        - cell "RØKT SVINEKAM"
+        - cell "09.06.2021"
+        - cell:
+          - button:
+            - img
+      - row "46 Betasuppe 244 - 24.01.2018":
+        - cell "46"
+        - cell "Betasuppe"
+        - cell "244"
+        - cell "-"
+        - cell "24.01.2018"
+        - cell:
+          - button:
+            - img
+      - row "246 Betasuppe med oksekjøtt 4 Middag 01.06.2022":
+        - cell "246"
+        - cell "Betasuppe med oksekjøtt"
+        - cell "4"
+        - cell "Middag"
+        - cell "01.06.2022"
+        - cell:
+          - button:
+            - img
+      - row "93 Biff Lindstrøm 185 Middag 29.05.2018":
+        - cell "93"
+        - cell "Biff Lindstrøm"
+        - cell "185"
+        - cell "Middag"
+        - cell "29.05.2018"
+        - cell:
+          - button:
+            - img
+      - row "45 Bifflapskaus 120 Middag 24.01.2018":
+        - cell "45"
+        - cell "Bifflapskaus"
+        - cell "120"
+        - cell "Middag"
+        - cell "24.01.2018"
+        - cell:
+          - button:
+            - img
+      - row "51 Biffstroganoff 4 Middag 30.01.2018":
+        - cell "51"
+        - cell "Biffstroganoff"
+        - cell "4"
+        - cell "Middag"
+        - cell "30.01.2018"
+        - cell:
+          - button:
+            - img
+      - row "41 Blomkålsuppe 104 LUNSJ 23.01.2018":
+        - cell "41"
+        - cell "Blomkålsuppe"
+        - cell "104"
+        - cell "LUNSJ"
+        - cell "23.01.2018"
+        - cell:
+          - button:
+            - img
+      - row "144 Blåbærsuppe 95 Dessert 05.03.2020":
+        - cell "144"
+        - cell "Blåbærsuppe"
+        - cell "95"
+        - cell "Dessert"
+        - cell "05.03.2020"
+        - cell:
+          - button:
+            - img
+      - row "61 Bollefrikase med saus 2 Kjøttboller 12.02.2018":
+        - cell "61"
+        - cell "Bollefrikase med saus"
+        - cell "2"
+        - cell "Kjøttboller"
+        - cell "12.02.2018"
+        - cell:
+          - button:
+            - img
+      - row "120 Brennende Kjærlighet 122 Lørdagskos 01.04.2019":
+        - cell "120"
+        - cell "Brennende Kjærlighet"
+        - cell "122"
+        - cell "Lørdagskos"
+        - cell "01.04.2019"
+        - cell:
+          - button:
+            - img
+      - row "263 Bringebærsaus DIA 1 - 17.10.2022":
+        - cell "263"
+        - cell "Bringebærsaus DIA"
+        - cell "1"
+        - cell "-"
+        - cell "17.10.2022"
+        - cell:
+          - button:
+            - img
+      - row "74 Bringebærsuppe 85 DESSERT 05.03.2018":
+        - cell "74"
+        - cell "Bringebærsuppe"
+        - cell "85"
+        - cell "DESSERT"
+        - cell "05.03.2018"
+        - cell:
+          - button:
+            - img
+      - row "32 Brokkolisuppe 89 LUNSJ 16.01.2018":
+        - cell "32"
+        - cell "Brokkolisuppe"
+        - cell "89"
+        - cell "LUNSJ"
+        - cell "16.01.2018"
+        - cell:
+          - button:
+            - img
+      - row "49 Brun Grunnsaus til Fisk 75 FISKEKAKER 27.01.2018":
+        - cell "49"
+        - cell "Brun Grunnsaus til Fisk"
+        - cell "75"
+        - cell "FISKEKAKER"
+        - cell "27.01.2018"
+        - cell:
+          - button:
+            - img
+      - row "100 Brun Grunnsaus til Lammestek 90 Lammestek 13.08.2018":
+        - cell "100"
+        - cell "Brun Grunnsaus til Lammestek"
+        - cell "90"
+        - cell "Lammestek"
+        - cell "13.08.2018"
+        - cell:
+          - button:
+            - img
+  - paragraph: Showing 1 to 20 of 278 results
+  - combobox: "20"
+  - button [disabled]:
+    - img
+  - button [disabled]:
+    - img
+  - text: Page 1 of 14
+  - button:
+    - img
+  - button:
+    - img
+- region "Notifications (F8)":
+  - list
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```

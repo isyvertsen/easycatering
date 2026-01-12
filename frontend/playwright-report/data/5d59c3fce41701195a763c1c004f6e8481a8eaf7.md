@@ -1,0 +1,108 @@
+# Page snapshot
+
+```yaml
+- button:
+  - img
+- heading "Larvik Catering" [level=1]
+- navigation:
+  - link "Dashboard":
+    - /url: /
+    - img
+    - text: Dashboard
+  - link "Menyer":
+    - /url: /menus
+    - img
+    - text: Menyer
+  - link "Oppskrifter":
+    - /url: /recipes
+    - img
+    - text: Oppskrifter
+  - link "Kunder":
+    - /url: /customers
+    - img
+    - text: Kunder
+  - link "Ordrer":
+    - /url: /orders
+    - img
+    - text: Ordrer
+  - link "Produkter":
+    - /url: /produkter
+    - img
+    - text: Produkter
+  - link "Leveranser":
+    - /url: /deliveries
+    - img
+    - text: Leveranser
+  - link "Ansatte":
+    - /url: /employees
+    - img
+    - text: Ansatte
+  - link "Rapporter":
+    - /url: /reports
+    - img
+    - text: Rapporter
+  - link "Innstillinger":
+    - /url: /settings
+    - img
+    - text: Innstillinger
+- main:
+  - heading "Produkter" [level=1]
+  - paragraph: Administrer produkter og GTIN-koder
+  - button "Masse-oppdatering":
+    - img
+    - text: Masse-oppdatering
+  - tablist:
+    - tab "Alle (0)" [selected]
+    - tab "Med GTIN (0)":
+      - img
+      - text: Med GTIN (0)
+    - tab "Uten GTIN (0)":
+      - img
+      - text: Uten GTIN (0)
+  - img
+  - textbox "Søk etter produktnavn eller GTIN..."
+  - link "Add New":
+    - /url: /produkter/new
+    - img
+    - text: Add New
+  - table:
+    - rowgroup:
+      - row "ID Produktnavn GTIN/EAN Lev.nr Pris Actions":
+        - cell "ID":
+          - button "ID":
+            - text: ID
+            - img
+        - cell "Produktnavn":
+          - button "Produktnavn":
+            - text: Produktnavn
+            - img
+        - cell "GTIN/EAN":
+          - button "GTIN/EAN":
+            - text: GTIN/EAN
+            - img
+        - cell "Lev.nr"
+        - cell "Pris":
+          - button "Pris":
+            - text: Pris
+            - img
+        - cell "Actions"
+    - rowgroup:
+      - row "No results found":
+        - cell "No results found"
+  - paragraph: Showing 1 to 0 of 0 results
+  - combobox: "20"
+  - button [disabled]:
+    - img
+  - button [disabled]:
+    - img
+  - text: Page 1 of 0
+  - button:
+    - img
+  - button:
+    - img
+- region "Notifications (F8)":
+  - list
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```

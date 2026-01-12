@@ -1,0 +1,114 @@
+# Page snapshot
+
+```yaml
+- heading "Larvik Catering" [level=1]
+- navigation:
+  - link "Dashboard":
+    - /url: /
+    - img
+    - text: Dashboard
+  - link "Menyer":
+    - /url: /menus
+    - img
+    - text: Menyer
+  - link "Oppskrifter":
+    - /url: /recipes
+    - img
+    - text: Oppskrifter
+  - link "Kunder":
+    - /url: /customers
+    - img
+    - text: Kunder
+  - link "Ordrer":
+    - /url: /orders
+    - img
+    - text: Ordrer
+  - link "Produkter":
+    - /url: /produkter
+    - img
+    - text: Produkter
+  - link "Leveranser":
+    - /url: /deliveries
+    - img
+    - text: Leveranser
+  - link "Ansatte":
+    - /url: /employees
+    - img
+    - text: Ansatte
+  - link "Rapporter":
+    - /url: /reports
+    - img
+    - text: Rapporter
+  - link "Innstillinger":
+    - /url: /settings
+    - img
+    - text: Innstillinger
+- main:
+  - heading "Produkter" [level=1]
+  - paragraph: Administrer produkter og deres informasjon
+  - textbox "Søk etter produktnavn, visningsnavn eller leverandørens produktnr..."
+  - link "Avansert søk":
+    - /url: /products/search
+    - button "Avansert søk":
+      - img
+      - text: Avansert søk
+  - button "Eksporter produkter":
+    - img
+    - text: Eksporter produkter
+  - combobox:
+    - option "Aktive produkter" [selected]
+    - option "Utgåtte produkter"
+  - img
+  - textbox "Search..."
+  - link "Add New":
+    - /url: /products/new
+    - img
+    - text: Add New
+  - table:
+    - rowgroup:
+      - row "Produktnavn Leverandørens produktnr Visningsnavn Pakningstype Pakningsstørrelse Pris Lagermengde Status Webshop Actions":
+        - cell "Produktnavn":
+          - button "Produktnavn":
+            - text: Produktnavn
+            - img
+        - cell "Leverandørens produktnr":
+          - button "Leverandørens produktnr":
+            - text: Leverandørens produktnr
+            - img
+        - cell "Visningsnavn":
+          - button "Visningsnavn":
+            - text: Visningsnavn
+            - img
+        - cell "Pakningstype"
+        - cell "Pakningsstørrelse"
+        - cell "Pris":
+          - button "Pris":
+            - text: Pris
+            - img
+        - cell "Lagermengde":
+          - button "Lagermengde":
+            - text: Lagermengde
+            - img
+        - cell "Status"
+        - cell "Webshop"
+        - cell "Actions"
+    - rowgroup:
+      - row "No results found":
+        - cell "No results found"
+  - paragraph: Showing 1 to 0 of 0 results
+  - combobox: "20"
+  - button [disabled]:
+    - img
+  - button [disabled]:
+    - img
+  - text: Page 1 of 1
+  - button [disabled]:
+    - img
+  - button [disabled]:
+    - img
+- region "Notifications (F8)":
+  - list
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```

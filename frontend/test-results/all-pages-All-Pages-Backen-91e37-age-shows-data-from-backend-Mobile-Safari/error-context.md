@@ -1,0 +1,325 @@
+# Page snapshot
+
+```yaml
+- button:
+  - img
+- heading "Larvik Catering" [level=1]
+- navigation:
+  - link "Dashboard":
+    - /url: /
+    - img
+    - text: Dashboard
+  - link "Menyer":
+    - /url: /menus
+    - img
+    - text: Menyer
+  - link "Oppskrifter":
+    - /url: /recipes
+    - img
+    - text: Oppskrifter
+  - link "Kunder":
+    - /url: /customers
+    - img
+    - text: Kunder
+  - link "Ordrer":
+    - /url: /orders
+    - img
+    - text: Ordrer
+  - link "Produkter":
+    - /url: /produkter
+    - img
+    - text: Produkter
+  - link "Leveranser":
+    - /url: /deliveries
+    - img
+    - text: Leveranser
+  - link "Ansatte":
+    - /url: /employees
+    - img
+    - text: Ansatte
+  - link "Rapporter":
+    - /url: /reports
+    - img
+    - text: Rapporter
+  - link "Innstillinger":
+    - /url: /settings
+    - img
+    - text: Innstillinger
+- main:
+  - heading "Ordrer" [level=1]
+  - paragraph: Administrer bestillinger og leveranser
+  - link "Ny ordre":
+    - /url: /orders/new
+    - img
+    - text: Ny ordre
+  - button "Kundegrupper":
+    - img
+    - text: Kundegrupper
+  - text: "Sorter etter:"
+  - button "Leveringsdato":
+    - text: Leveringsdato
+    - img
+  - button "Ordredato"
+  - img
+  - textbox "Søk etter ordrenr eller kunde..."
+  - table:
+    - rowgroup:
+      - row "Ordrenr Kunde Kundegruppe Ordredato Levering Status Betaling Actions":
+        - cell "Ordrenr":
+          - button "Ordrenr":
+            - text: Ordrenr
+            - img
+        - cell "Kunde":
+          - button "Kunde":
+            - text: Kunde
+            - img
+        - cell "Kundegruppe"
+        - cell "Ordredato":
+          - button "Ordredato":
+            - text: Ordredato
+            - img
+        - cell "Levering":
+          - button "Levering":
+            - text: Levering
+            - img
+        - cell "Status"
+        - cell "Betaling"
+        - cell "Actions"
+    - rowgroup:
+      - row "20292848 Synnøve Ali Hjemmeboende 19.12.2023 19.12.2023 Ukjent -":
+        - cell "20292848"
+        - cell "Synnøve Ali"
+        - cell "Hjemmeboende"
+        - cell "19.12.2023"
+        - cell "19.12.2023"
+        - cell "Ukjent"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292841 Frank Nygård CateringEkstern 19.12.2023 19.12.2023 Ukjent -":
+        - cell "20292841"
+        - cell "Frank Nygård"
+        - cell "CateringEkstern"
+        - cell "19.12.2023"
+        - cell "19.12.2023"
+        - cell "Ukjent"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292831 Stian Tangen Eldresenter/Kantine 19.12.2023 19.12.2023 Ukjent -":
+        - cell "20292831"
+        - cell "Stian Tangen"
+        - cell "Eldresenter/Kantine"
+        - cell "19.12.2023"
+        - cell "19.12.2023"
+        - cell "Ukjent"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292830 Stian Tangen Eldresenter/Kantine 19.12.2023 19.12.2023 Ukjent -":
+        - cell "20292830"
+        - cell "Stian Tangen"
+        - cell "Eldresenter/Kantine"
+        - cell "19.12.2023"
+        - cell "19.12.2023"
+        - cell "Ukjent"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292857 Kristoffer Lien Eldresenter/Kantine 20.12.2023 20.12.2023 Ukjent -":
+        - cell "20292857"
+        - cell "Kristoffer Lien"
+        - cell "Eldresenter/Kantine"
+        - cell "20.12.2023"
+        - cell "20.12.2023"
+        - cell "Ukjent"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292775 Tjølling Sykehjem Felles Sykehjem 18.12.2023 21.12.2023 Bekreftet -":
+        - cell "20292775"
+        - cell "Tjølling Sykehjem Felles"
+        - cell "Sykehjem"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Bekreftet"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292774 Karl Iversen CateringEkstern 18.12.2023 21.12.2023 Ukjent -":
+        - cell "20292774"
+        - cell "Karl Iversen"
+        - cell "CateringEkstern"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Ukjent"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292791 Trygghet og Trening Sykehjem 18.12.2023 21.12.2023 Bekreftet -":
+        - cell "20292791"
+        - cell "Trygghet og Trening"
+        - cell "Sykehjem"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Bekreftet"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292779 Tjølling Sykehjem kafeteria Sykehjem 18.12.2023 21.12.2023 Bekreftet -":
+        - cell "20292779"
+        - cell "Tjølling Sykehjem kafeteria"
+        - cell "Sykehjem"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Bekreftet"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292796 Grevle sykehjem avd Rakke 2 Sykehjem 18.12.2023 21.12.2023 Bekreftet -":
+        - cell "20292796"
+        - cell "Grevle sykehjem avd Rakke 2"
+        - cell "Sykehjem"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Bekreftet"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292780 Tjølling Sykehjem gruppe D Sykehjem 18.12.2023 21.12.2023 Bekreftet -":
+        - cell "20292780"
+        - cell "Tjølling Sykehjem gruppe D"
+        - cell "Sykehjem"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Bekreftet"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292781 Presteløkka Rehabiliteringssenter Sykehjem 18.12.2023 21.12.2023 Bekreftet -":
+        - cell "20292781"
+        - cell "Presteløkka Rehabiliteringssenter"
+        - cell "Sykehjem"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Bekreftet"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292782 Larvik Helsehus Lindrende avd Sykehjem 18.12.2023 21.12.2023 Bekreftet -":
+        - cell "20292782"
+        - cell "Larvik Helsehus Lindrende avd"
+        - cell "Sykehjem"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Bekreftet"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292783 Larvik helsehus Avklaring Sykehjem 18.12.2023 21.12.2023 Bekreftet -":
+        - cell "20292783"
+        - cell "Larvik helsehus Avklaring"
+        - cell "Sykehjem"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Bekreftet"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292797 Grevle sykehjem avd Rakke 1 Sykehjem 18.12.2023 21.12.2023 Bekreftet -":
+        - cell "20292797"
+        - cell "Grevle sykehjem avd Rakke 1"
+        - cell "Sykehjem"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Bekreftet"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292793 Stavern Sykehjem Avd B Farris Sykehjem 18.12.2023 21.12.2023 Bekreftet -":
+        - cell "20292793"
+        - cell "Stavern Sykehjem Avd B Farris"
+        - cell "Sykehjem"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Bekreftet"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292777 Yttersølia Sykehjem Avd C&D Sykehjem 18.12.2023 21.12.2023 Bekreftet -":
+        - cell "20292777"
+        - cell "Yttersølia Sykehjem Avd C&D"
+        - cell "Sykehjem"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Bekreftet"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292794 Stavern Sykehjem Avd A Bukta Sykehjem 18.12.2023 21.12.2023 Bekreftet -":
+        - cell "20292794"
+        - cell "Stavern Sykehjem Avd A Bukta"
+        - cell "Sykehjem"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Bekreftet"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292778 Yttersølia Sykehjem Avd A&B Sykehjem 18.12.2023 21.12.2023 Bekreftet -":
+        - cell "20292778"
+        - cell "Yttersølia Sykehjem Avd A&B"
+        - cell "Sykehjem"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Bekreftet"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+      - row "20292769 Tjølling Sykehjem gruppe F Sykehjem 18.12.2023 21.12.2023 Bekreftet -":
+        - cell "20292769"
+        - cell "Tjølling Sykehjem gruppe F"
+        - cell "Sykehjem"
+        - cell "18.12.2023"
+        - cell "21.12.2023"
+        - cell "Bekreftet"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+  - paragraph: Showing 1 to 20 of 16971 results
+  - combobox: "20"
+  - button [disabled]:
+    - img
+  - button [disabled]:
+    - img
+  - text: Page 1 of 849
+  - button:
+    - img
+  - button:
+    - img
+- region "Notifications (F8)":
+  - list
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```

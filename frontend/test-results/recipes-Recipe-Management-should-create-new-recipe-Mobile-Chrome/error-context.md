@@ -1,0 +1,76 @@
+# Page snapshot
+
+```yaml
+- button:
+  - img
+- heading "Larvik Catering" [level=1]
+- navigation:
+  - link "Dashboard":
+    - /url: /
+    - img
+    - text: Dashboard
+  - link "Menyer":
+    - /url: /menus
+    - img
+    - text: Menyer
+  - link "Oppskrifter":
+    - /url: /recipes
+    - img
+    - text: Oppskrifter
+  - link "Kunder":
+    - /url: /customers
+    - img
+    - text: Kunder
+  - link "Ordrer":
+    - /url: /orders
+    - img
+    - text: Ordrer
+  - link "Produkter":
+    - /url: /produkter
+    - img
+    - text: Produkter
+  - link "Leveranser":
+    - /url: /deliveries
+    - img
+    - text: Leveranser
+  - link "Ansatte":
+    - /url: /employees
+    - img
+    - text: Ansatte
+  - link "Rapporter":
+    - /url: /reports
+    - img
+    - text: Rapporter
+  - link "Innstillinger":
+    - /url: /settings
+    - img
+    - text: Innstillinger
+- main:
+  - heading "Ny oppskrift" [level=1]
+  - paragraph: Opprett en ny oppskrift med ingredienser og næringsberegning
+  - text: Navn
+  - textbox "Navn": Test Oppskrift
+  - paragraph: Gi oppskriften et beskrivende navn
+  - text: Antall porsjoner
+  - spinbutton "Antall porsjoner"
+  - paragraph: Standard antall porsjoner
+  - text: Enhet
+  - combobox "Enhet": Velg enhet
+  - text: Produksjonsmetode
+  - textbox "Produksjonsmetode"
+  - text: Brukes til
+  - textbox "Brukes til"
+  - text: Fremgangsmåte
+  - textbox "Fremgangsmåte"
+  - paragraph: Instruksjoner for tilberedning
+  - text: Merknader
+  - textbox "Merknader"
+  - paragraph: Viktige merknader om oppskriften
+  - button "Opprett"
+  - button "Avbryt"
+- region "Notifications (F8)":
+  - list
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```

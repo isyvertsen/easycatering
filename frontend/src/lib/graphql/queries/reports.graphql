@@ -1,0 +1,64 @@
+query GetQuickStats($period: String) {
+  quickStats(period: $period) {
+    totalRevenue
+    totalOrders
+    activeCustomers
+    averageOrderValue
+    revenueChangePercentage
+    ordersChangePercentage
+    avgOrderChangePercentage
+  }
+}
+
+query GetSalesReport($period: String) {
+  salesReport(period: $period) {
+    monthlyData {
+      month
+      sales
+      orders
+    }
+    categorySales {
+      category
+      amount
+      percentage
+    }
+    paymentMethods {
+      method
+      percentage
+    }
+  }
+}
+
+query GetProductReport($period: String, $limit: Int) {
+  productReport(period: $period, limit: $limit) {
+    topProducts {
+      produktid
+      produktnavn
+      quantity
+      revenue
+    }
+  }
+}
+
+query GetCustomerReport($period: String) {
+  customerReport(period: $period) {
+    segments {
+      segmentType
+      count
+      percentage
+    }
+    activity {
+      frequency
+      count
+    }
+  }
+}
+
+query GetNutritionStats($period: String) {
+  nutritionStats(period: $period) {
+    calories
+    protein
+    carbohydrates
+    fat
+  }
+}

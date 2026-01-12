@@ -1,0 +1,169 @@
+# Page snapshot
+
+```yaml
+- heading "Larvik Catering" [level=1]
+- navigation:
+  - link "Dashboard":
+    - /url: /
+    - img
+    - text: Dashboard
+  - link "Menyer":
+    - /url: /menus
+    - img
+    - text: Menyer
+  - link "Oppskrifter":
+    - /url: /recipes
+    - img
+    - text: Oppskrifter
+  - link "Kunder":
+    - /url: /customers
+    - img
+    - text: Kunder
+  - link "Ordrer":
+    - /url: /orders
+    - img
+    - text: Ordrer
+  - link "Produkter":
+    - /url: /produkter
+    - img
+    - text: Produkter
+  - link "Leveranser":
+    - /url: /deliveries
+    - img
+    - text: Leveranser
+  - link "Ansatte":
+    - /url: /employees
+    - img
+    - text: Ansatte
+  - link "Rapporter":
+    - /url: /reports
+    - img
+    - text: Rapporter
+  - link "Innstillinger":
+    - /url: /settings
+    - img
+    - text: Innstillinger
+- main:
+  - heading "Rediger oppskrift" [level=1]
+  - paragraph: Oppdater oppskriftinformasjon
+  - button "Beregn næringsverdier":
+    - img
+    - text: Beregn næringsverdier
+  - text: Navn
+  - textbox "Navn": Risgrøt
+  - paragraph: Gi oppskriften et beskrivende navn
+  - text: Antall porsjoner
+  - spinbutton "Antall porsjoner": "22"
+  - paragraph: Standard antall porsjoner
+  - text: Enhet
+  - combobox "Enhet": Kilo
+  - text: Produksjonsmetode
+  - textbox "Produksjonsmetode": Tradisjonell
+  - text: Brukes til
+  - textbox "Brukes til"
+  - text: Fremgangsmåte
+  - textbox "Fremgangsmåte": Smør kjelen med Melange. Tilsett ris, vann og melk. Sett på 100 grader, røreverket på 15% og kok opp. Sett kjelen på 85 grader, røreverket på 15%. Tilsett salt. Kok ferdig.(180) Pakkes i former, avkjøles i blåsekjøler og MAP pakkes. Antall TW se på tavla. 4 x 1 kg - 85 x 2 kg
+  - paragraph: Instruksjoner for tilberedning
+  - text: Merknader
+  - textbox "Merknader": Stikk et lite hull i SIDEN på boksen! Forvarm ovnen før du setter inn produktet i kombidamper på DAMP i ca 50 min. Sjekk at det er oppnådd riktig temperatur før servering.
+  - paragraph: Viktige merknader om oppskriften
+  - button "Oppdater"
+  - button "Avbryt"
+  - heading "Ingredienser" [level=3]
+  - paragraph: Administrer oppskriftens ingredienser og beregn næringsverdier
+  - button "Legg til ingrediens":
+    - img
+    - text: Legg til ingrediens
+  - table:
+    - rowgroup:
+      - row "Produkt Mengde Enhet Kostpris Svinn Handlinger":
+        - cell "Produkt"
+        - cell "Mengde"
+        - cell "Enhet"
+        - cell "Kostpris"
+        - cell "Svinn"
+        - cell "Handlinger"
+    - rowgroup:
+      - row "MELANGE MARGARIN 1KG 12 g - -":
+        - cell "MELANGE MARGARIN 1KG"
+        - cell "12"
+        - cell "g"
+        - cell "-"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+          - button:
+            - img
+      - row "SALT JOZO U/JOD 1KG 1 g- gr - -":
+        - cell "SALT JOZO U/JOD 1KG"
+        - cell "1"
+        - cell "g- gr"
+        - cell "-"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+          - button:
+            - img
+      - row "H-MELK 1 L 800 ml - -":
+        - cell "H-MELK 1 L"
+        - cell "800"
+        - cell "ml"
+        - cell "-"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+          - button:
+            - img
+      - row "GRØTRIS PARADISO 10KG 140 g - -":
+        - cell "GRØTRIS PARADISO 10KG"
+        - cell "140"
+        - cell "g"
+        - cell "-"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+          - button:
+            - img
+      - row "VANN/KRAFT 1 dl - -":
+        - cell "VANN/KRAFT"
+        - cell "1"
+        - cell "dl"
+        - cell "-"
+        - cell "-"
+        - cell:
+          - button:
+            - img
+          - button:
+            - img
+  - heading "Næringsverdier totalt" [level=3]
+  - paragraph: Beregnet basert på alle ingredienser
+  - paragraph: Energi
+  - paragraph: 0 kJ
+  - paragraph: 0 kcal
+  - paragraph: Fett
+  - paragraph: 0.0 g
+  - paragraph: "hvorav mettet: 0.0 g"
+  - paragraph: Karbohydrater
+  - paragraph: 0.0 g
+  - paragraph: "hvorav sukker: 0.0 g"
+  - paragraph: Kostfiber
+  - paragraph: 0.0 g
+  - paragraph: Protein
+  - paragraph: 0.0 g
+  - paragraph: Salt
+  - paragraph: 0.0 g
+  - heading "Næringsinformasjon" [level=3]
+  - paragraph: Ingen data tilgjengelig
+  - alert:
+    - img
+    - text: Beregn næringsverdier for å se informasjon her.
+- region "Notifications (F8)":
+  - list
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```
