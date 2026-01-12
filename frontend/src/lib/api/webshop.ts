@@ -165,6 +165,28 @@ export interface WebshopOrderByTokenResponse {
   token_utloper: string
 }
 
+/**
+ * Draft order line for auto-save
+ */
+export interface DraftOrderLine {
+  produktid: number
+  antall: number
+  pris?: number
+}
+
+/**
+ * Draft order response
+ */
+export interface DraftOrder {
+  ordreid: number
+  kundeid?: number
+  kundenavn?: string
+  ordredato?: string
+  ordrestatusid: number
+  ordrelinjer: OrderLine[]
+  total_sum: number
+}
+
 // ============================================================================
 // API CLIENT FUNCTIONS
 // ============================================================================
@@ -486,6 +508,67 @@ export const webshopApi = {
       ordre_ids: orderIds,
       ordrestatusid: statusId
     })
+    return response.data
+  },
+
+  // ==========================================================================
+  // DRAFT ORDERS (Auto-save)
+  // ==========================================================================
+
+  /**
+   * Get current draft order
+   *
+   * Backend endpoint: GET /api/v1/webshop/draft-ordre
+   * Returns the draft order (status 10) with all lines, or null if none exists
+   */
+  getDraftOrder: async (): Promise<DraftOrder | null> => {
+    const response = await apiClient.get('/v1/webshop/draft-ordre')
+    return response.data
+  },
+
+  /**
+   * Create or update draft order
+   *
+   * Backend endpoint: PUT /api/v1/webshop/draft-ordre
+   * Creates a new draft order or updates existing one with the provided lines
+   */
+  updateDraftOrder: async (ordrelinjer: DraftOrderLine[]): Promise<DraftOrder> => {
+    const response = await apiClient.put('/v1/webshop/draft-ordre', {
+      ordrelinjer
+    })
+    return response.data
+  },
+
+  /**
+   * Delete draft order
+   *
+   * Backend endpoint: DELETE /api/v1/webshop/draft-ordre/:id
+   */
+  deleteDraftOrder: async (orderId: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/v1/webshop/draft-ordre/${orderId}`)
+    return response.data
+  },
+
+  /**
+   * Submit draft order (status 10 -> 15)
+   *
+   * Backend endpoint: POST /api/v1/webshop/draft-ordre/:id/submit
+   */
+  submitDraftOrder: async (
+    orderId: number,
+    leveringsdato?: string,
+    informasjon?: string
+  ): Promise<WebshopOrderCreateResponse> => {
+    const queryParams = new URLSearchParams()
+    if (leveringsdato) queryParams.append('leveringsdato', leveringsdato)
+    if (informasjon) queryParams.append('informasjon', informasjon)
+
+    const queryString = queryParams.toString()
+    const url = queryString
+      ? `/v1/webshop/draft-ordre/${orderId}/submit?${queryString}`
+      : `/v1/webshop/draft-ordre/${orderId}/submit`
+
+    const response = await apiClient.post(url)
     return response.data
   }
 }

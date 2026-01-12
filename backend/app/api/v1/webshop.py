@@ -22,6 +22,8 @@ from app.schemas.webshop import (
     WebshopOrderByTokenResponse,
     WebshopCancelRequest,
     WebshopCancelResponse,
+    WebshopDraftOrder,
+    WebshopDraftOrderUpdate,
 )
 
 router = APIRouter()
@@ -410,4 +412,145 @@ async def cancel_order(
     return WebshopCancelResponse(
         message=f"Ordre {status_text}",
         ordrestatusid=new_status
+    )
+
+
+# =============================================================================
+# Draft orders (auto-save)
+# =============================================================================
+
+@router.get("/draft-ordre", response_model=Optional[WebshopDraftOrder])
+async def get_draft_order(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get the current draft order for the user.
+
+    Returns the draft order (status 10) with all order lines,
+    or null if no draft exists.
+    """
+    service = WebshopService(db)
+
+    # Check webshop access
+    access = await service.check_webshop_access(current_user)
+    if not access.has_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=access.message or "Ingen webshop-tilgang"
+        )
+
+    return await service.get_draft_order(current_user)
+
+
+@router.put("/draft-ordre", response_model=WebshopDraftOrder)
+async def update_draft_order(
+    draft_data: WebshopDraftOrderUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Create or update a draft order.
+
+    If no draft order exists, creates one with status 10 (Startet).
+    Replaces all existing order lines with the provided lines.
+    """
+    service = WebshopService(db)
+
+    # Check webshop access
+    access = await service.check_webshop_access(current_user)
+    if not access.has_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=access.message or "Ingen webshop-tilgang"
+        )
+
+    try:
+        return await service.create_or_update_draft_order(
+            current_user,
+            draft_data.ordrelinjer
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.delete("/draft-ordre/{order_id}")
+async def delete_draft_order(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Delete a draft order.
+
+    Only works for orders with status 10 belonging to the user.
+    """
+    service = WebshopService(db)
+
+    success = await service.delete_draft_order(current_user, order_id)
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Draft-ordre ikke funnet"
+        )
+
+    return {"message": "Draft-ordre slettet"}
+
+
+@router.post("/draft-ordre/{order_id}/submit", response_model=WebshopOrderCreateResponse)
+async def submit_draft_order(
+    order_id: int,
+    leveringsdato: Optional[str] = Query(None, description="Delivery date (YYYY-MM-DD)"),
+    informasjon: Optional[str] = Query(None, description="Additional information"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Submit a draft order (change status from 10 to 15).
+
+    This finalizes the draft and sends it for approval.
+    """
+    from datetime import datetime as dt
+
+    service = WebshopService(db)
+
+    # Check webshop access
+    access = await service.check_webshop_access(current_user)
+    if not access.has_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=access.message or "Ingen webshop-tilgang"
+        )
+
+    # Parse delivery date if provided
+    lev_dato = None
+    if leveringsdato:
+        try:
+            lev_dato = dt.strptime(leveringsdato, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ugyldig datoformat. Bruk YYYY-MM-DD"
+            )
+
+    order = await service.submit_draft_order(
+        current_user,
+        order_id,
+        leveringsdato=lev_dato,
+        informasjon=informasjon
+    )
+
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Draft-ordre ikke funnet"
+        )
+
+    return WebshopOrderCreateResponse(
+        ordre=order,
+        message="Ordre sendt til godkjenning"
     )

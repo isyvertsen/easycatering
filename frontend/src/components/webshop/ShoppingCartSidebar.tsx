@@ -10,8 +10,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
+import { Minus, Plus, Trash2, ShoppingBag, Cloud, CloudOff, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 
 interface ShoppingCartSidebarProps {
   open: boolean
@@ -19,8 +20,10 @@ interface ShoppingCartSidebarProps {
 }
 
 export function ShoppingCartSidebar({ open, onOpenChange }: ShoppingCartSidebarProps) {
-  const { items, updateQuantity, removeItem, clearCart, getTotalPrice } = useCart()
+  const { items, updateQuantity, removeItem, clearCart, getTotalPrice, isSaving, isSynced, lastSaved } = useCart()
   const router = useRouter()
+  const { status: sessionStatus } = useSession()
+  const isLoggedIn = sessionStatus === 'authenticated'
 
   const handleCheckout = () => {
     onOpenChange(false)
@@ -37,6 +40,27 @@ export function ShoppingCartSidebar({ open, onOpenChange }: ShoppingCartSidebarP
               ? "Handlekurven er tom"
               : `${items.length} produkt${items.length !== 1 ? "er" : ""} i kurven`}
           </SheetDescription>
+          {/* Save status indicator */}
+          {isLoggedIn && items.length > 0 && (
+            <div className="flex items-center gap-2 text-xs mt-2">
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                  <span className="text-muted-foreground">Lagrer...</span>
+                </>
+              ) : isSynced ? (
+                <>
+                  <Cloud className="h-3 w-3 text-green-600" />
+                  <span className="text-green-600">Lagret i databasen</span>
+                </>
+              ) : (
+                <>
+                  <CloudOff className="h-3 w-3 text-amber-600" />
+                  <span className="text-amber-600">Ikke lagret</span>
+                </>
+              )}
+            </div>
+          )}
         </SheetHeader>
 
         {items.length === 0 ? (

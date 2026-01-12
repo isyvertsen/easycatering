@@ -165,3 +165,30 @@ class WebshopCancelResponse(BaseSchema):
     """Response after cancelling an order."""
     message: str
     ordrestatusid: int
+
+
+# =============================================================================
+# Draft order schemas (auto-save)
+# =============================================================================
+
+class WebshopDraftOrderLineUpdate(BaseModel):
+    """Single order line for draft order update."""
+    produktid: int
+    antall: float = Field(..., gt=0)
+    pris: Optional[float] = None
+
+
+class WebshopDraftOrderUpdate(BaseModel):
+    """Schema for updating a draft order's lines."""
+    ordrelinjer: List[WebshopDraftOrderLineUpdate]
+
+
+class WebshopDraftOrder(BaseSchema):
+    """Draft order response."""
+    ordreid: int
+    kundeid: Optional[int] = None
+    kundenavn: Optional[str] = None
+    ordredato: Optional[datetime] = None
+    ordrestatusid: int
+    ordrelinjer: List[WebshopOrderLine] = []
+    total_sum: float = 0
