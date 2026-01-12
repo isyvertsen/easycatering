@@ -5,12 +5,13 @@ from contextlib import asynccontextmanager
 import logging
 
 from app.core.config import settings
-from app.core.logging import setup_logging
+from app.core.logging import setup_logging, shutdown_logging
 from app.core.migrations import run_migrations
 from app.core.exceptions import setup_exception_handlers
 from app.api import health, auth, anonymization, admin
 from app.api.v1 import api_router as v1_router
 from app.infrastructure.database.session import engine, Base
+from app.middleware.activity_logger import ActivityLoggerMiddleware
 
 # Import all models to ensure they're registered with Base.metadata
 import app.models  # noqa: F401
@@ -37,6 +38,7 @@ async def lifespan(app: FastAPI):
     
     yield
     logger.info("Shutting down Catering System API...")
+    shutdown_logging()
 
 
 app = FastAPI(
@@ -60,6 +62,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add activity logging middleware
+app.add_middleware(ActivityLoggerMiddleware)
 
 # Include routers
 app.include_router(health.router, prefix="/api/health", tags=["health"])
