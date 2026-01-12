@@ -91,6 +91,9 @@ class Settings(BaseSettings):
     # Frontend URL for email links
     FRONTEND_URL: str = Field(default="http://localhost:3000", env="FRONTEND_URL")
 
+    # Cron job API key for automated tasks
+    CRON_API_KEY: str = Field(default="", env="CRON_API_KEY")
+
     @field_validator("CORS_ORIGINS", mode="after")
     @classmethod
     def ensure_cors_origins_list(cls, v: Union[str, List[str]]) -> List[str]:

@@ -13,6 +13,7 @@ import {
   cleanupOldLogs,
   AppLogListParams,
 } from '@/lib/api/app-logs'
+import { toast } from '@/hooks/use-toast'
 
 const QUERY_KEYS = {
   appLogs: 'app-logs',
@@ -118,9 +119,20 @@ export function useCleanupOldLogs() {
 
   return useMutation({
     mutationFn: cleanupOldLogs,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.appLogs] })
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.appLogStats] })
+      toast({
+        title: 'Logger slettet',
+        description: data.message,
+      })
+    },
+    onError: () => {
+      toast({
+        title: 'Sletting feilet',
+        description: 'Kunne ikke slette gamle logger',
+        variant: 'destructive',
+      })
     },
   })
 }
