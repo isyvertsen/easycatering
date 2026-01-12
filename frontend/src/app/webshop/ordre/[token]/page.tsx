@@ -351,7 +351,7 @@ export default function OrderByTokenPage({
                     <li>Takk for handelen!</li>
                   </>
                 )}
-                {ordre.ordrestatusid >= 85 && ordre.ordrestatusid < 95 && (
+                {ordre.ordrestatusid && ordre.ordrestatusid >= 85 && ordre.ordrestatusid < 95 && (
                   <li>Ordren er fakturert</li>
                 )}
                 {ordre.kansellertdato && (
