@@ -115,4 +115,9 @@ export const activityLogsApi = {
     a.click()
     URL.revokeObjectURL(downloadUrl)
   },
+
+  cleanupOldLogs: async (daysToKeep: number = 90): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/v1/activity-logs/cleanup?days_to_keep=${daysToKeep}`)
+    return response.data
+  },
 }

@@ -28,11 +28,23 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import {
   useAppLogsList,
   useAppLogStats,
   useLogLevels,
   useExceptionTypes,
   useExportAppLogs,
+  useCleanupOldLogs,
 } from '@/hooks/useAppLogs'
 import { AppLogListParams, AppLog } from '@/lib/api/app-logs'
 import {
@@ -47,6 +59,7 @@ import {
   Clock,
   TrendingUp,
   BarChart3,
+  Trash2,
 } from 'lucide-react'
 import {
   AreaChart,
@@ -201,6 +214,7 @@ export default function AppLogPage() {
   const { data: levels } = useLogLevels()
   const { data: exceptionTypes } = useExceptionTypes()
   const exportMutation = useExportAppLogs()
+  const cleanupMutation = useCleanupOldLogs()
 
   const handleParamsChange = (newParams: Partial<AppLogListParams>) => {
     setParams((prev) => ({ ...prev, ...newParams }))
@@ -236,10 +250,38 @@ export default function AppLogPage() {
             System logger, feilmeldinger og debugging
           </p>
         </div>
-        <Button onClick={handleExport} disabled={exportMutation.isPending}>
-          <Download className="h-4 w-4 mr-2" />
-          Eksporter CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={handleExport} disabled={exportMutation.isPending}>
+            <Download className="h-4 w-4 mr-2" />
+            Eksporter CSV
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={cleanupMutation.isPending}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Slett gamle logger
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Slett gamle logger</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Dette vil slette alle applikasjonslogger som er eldre enn 30 dager.
+                  Denne handlingen kan ikke angres.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => cleanupMutation.mutate(30)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Slett logger
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
       {/* Stats Cards */}

@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { activityLogsApi, ActivityLogListParams } from '@/lib/api/activity-logs'
 import { toast } from '@/hooks/use-toast'
 
@@ -47,6 +47,28 @@ export function useExportActivityLogs() {
       toast({
         title: 'Eksport feilet',
         description: 'Kunne ikke eksportere aktivitetsloggen',
+        variant: 'destructive',
+      })
+    },
+  })
+}
+
+export function useCleanupActivityLogs() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (daysToKeep: number = 90) => activityLogsApi.cleanupOldLogs(daysToKeep),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['activity-logs'] })
+      toast({
+        title: 'Logger slettet',
+        description: data.message,
+      })
+    },
+    onError: () => {
+      toast({
+        title: 'Sletting feilet',
+        description: 'Kunne ikke slette gamle logger',
         variant: 'destructive',
       })
     },
