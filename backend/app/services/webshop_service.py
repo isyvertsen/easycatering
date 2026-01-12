@@ -403,6 +403,61 @@ class WebshopService:
             total_pages=total_pages
         )
 
+    async def get_orders_by_status(
+        self,
+        status_id: int,
+        page: int = 1,
+        page_size: int = 20,
+        search: Optional[str] = None
+    ) -> WebshopOrderListResponse:
+        """Get orders by status (admin only)."""
+        query = select(Ordrer).where(Ordrer.ordrestatusid == status_id)
+
+        if search:
+            search_filter = f"%{search}%"
+            query = query.where(
+                (Ordrer.kundenavn.ilike(search_filter)) |
+                (func.cast(Ordrer.ordreid, String).ilike(search_filter))
+            )
+
+        # Count total
+        count_query = select(func.count()).select_from(query.subquery())
+        total_result = await self.db.execute(count_query)
+        total = total_result.scalar()
+
+        # Order by date
+        query = query.order_by(Ordrer.ordredato.desc())
+
+        # Apply pagination
+        offset = (page - 1) * page_size
+        query = query.offset(offset).limit(page_size)
+
+        result = await self.db.execute(query)
+        orders = result.scalars().all()
+
+        items = [
+            WebshopOrder(
+                ordreid=o.ordreid,
+                kundeid=o.kundeid,
+                kundenavn=o.kundenavn,
+                ordredato=o.ordredato,
+                leveringsdato=o.leveringsdato,
+                informasjon=o.informasjon,
+                ordrestatusid=o.ordrestatusid
+            )
+            for o in orders
+        ]
+
+        total_pages = (total + page_size - 1) // page_size if total > 0 else 1
+
+        return WebshopOrderListResponse(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages
+        )
+
     async def update_order_status(self, order_id: int, status_id: int) -> bool:
         """Update order status (admin only)."""
         query = select(Ordrer).where(Ordrer.ordreid == order_id)

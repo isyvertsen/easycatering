@@ -198,8 +198,37 @@ async def get_webshop_order(
 
 
 # =============================================================================
-# Admin - Order approval
+# Admin - Order management
 # =============================================================================
+
+@router.get("/ordre/status", response_model=WebshopOrderListResponse)
+async def list_orders_by_status(
+    order_status: int = Query(..., alias="status", description="Order status to filter by"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    search: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    List orders by status.
+
+    Admin only - returns orders with the specified status.
+    """
+    if current_user.rolle != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Kun admin har tilgang"
+        )
+
+    service = WebshopService(db)
+    return await service.get_orders_by_status(
+        status_id=order_status,
+        page=page,
+        page_size=page_size,
+        search=search
+    )
+
 
 @router.get("/ordre/godkjenning", response_model=WebshopOrderListResponse)
 async def list_orders_for_approval(
