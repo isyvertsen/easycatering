@@ -27,7 +27,6 @@ class Produkter(Base):
     oppdatert = Column(Boolean)
     webshop = Column(Boolean)
     mvaverdi = Column(Float)
-    ssma_timestamp = Column(Text)
     lagerid = Column(Float)
     utregningsfaktor = Column(Float)
     utregnetpris = Column(Float)

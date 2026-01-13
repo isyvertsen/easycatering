@@ -22,4 +22,3 @@ class KategorierUpdate(KategorierBase):
 class Kategorier(KategorierBase):
     """Category response schema."""
     kategoriid: int
-    ssma_timestamp: Optional[str] = None

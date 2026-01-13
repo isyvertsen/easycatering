@@ -23,4 +23,3 @@ class Ordredetaljer(OrdredetaljerBase):
     """Order detail response schema."""
     ordreid: int
     unik: int
-    ssma_timestamp: Optional[str] = None

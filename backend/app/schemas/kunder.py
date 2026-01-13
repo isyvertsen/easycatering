@@ -54,4 +54,3 @@ class KunderUpdate(KunderBase):
 class Kunder(KunderBase):
     """Customer response schema."""
     kundeid: int
-    ssma_timestamp: Optional[str] = None

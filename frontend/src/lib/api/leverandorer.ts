@@ -10,7 +10,7 @@ export interface LeverandorListParams extends BaseListParams {
 export type LeverandorListResponse = BaseListResponse<Leverandor>
 
 // CreateData type - omit id and leverandorid since they are server-generated
-export type LeverandorCreateData = Omit<Leverandor, 'id' | 'leverandorid' | 'ssma_timestamp'>
+export type LeverandorCreateData = Omit<Leverandor, 'id' | 'leverandorid'>
 
 // Bruk generisk CRUD factory
 export const leverandorerApi = {

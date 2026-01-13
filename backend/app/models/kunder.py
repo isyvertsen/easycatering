@@ -39,7 +39,6 @@ class Kunder(Base):
     inndato = Column(DateTime)
     avsluttet = Column(Boolean)
     eksportkatalog = Column(Text)
-    ssma_timestamp = Column(Text)
     mobilnummer = Column(Text)
     formkost = Column(Boolean)
     sykehjemid = Column(BigInteger, ForeignKey("tblkunder.kundeid"))

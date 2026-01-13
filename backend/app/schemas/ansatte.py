@@ -38,4 +38,3 @@ class AnsatteUpdate(AnsatteBase):
 class Ansatte(AnsatteBase):
     """Employee response schema."""
     ansattid: int
-    ssma_timestamp: Optional[str] = None

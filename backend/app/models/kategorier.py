@@ -11,4 +11,3 @@ class Kategorier(Base):
     kategoriid = Column(BigInteger, primary_key=True, index=True)
     kategori = Column(Text)
     beskrivelse = Column(Text)
-    ssma_timestamp = Column(Text)

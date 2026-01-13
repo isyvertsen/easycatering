@@ -43,4 +43,3 @@ class ProdukterUpdate(ProdukterBase):
 class Produkter(ProdukterBase):
     """Product response schema."""
     produktid: int
-    ssma_timestamp: Optional[str] = None

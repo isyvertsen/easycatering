@@ -19,4 +19,3 @@ class Leverandorer(Base):
     bestillingsnr = Column(Text)
     utgatt = Column(Boolean)
     webside = Column(Text)
-    ssma_timestamp = Column(Text)
