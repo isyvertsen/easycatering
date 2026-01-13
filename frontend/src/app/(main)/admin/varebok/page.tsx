@@ -43,6 +43,7 @@ import {
   Check,
   X,
   ChevronRight,
+  ChevronLeft,
   Package,
   AlertCircle,
   CheckCircle2,
@@ -96,6 +97,8 @@ interface UploadedFileInfo {
   products_count: number
 }
 
+type StatusFilter = 'all' | 'exact' | 'partial' | 'none'
+
 export default function VarebokMatchingPage() {
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('products')
@@ -104,6 +107,9 @@ export default function VarebokMatchingPage() {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [supplierName, setSupplierName] = useState('')
   const [isUploading, setIsUploading] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 100
 
   // Match confirmation state
   const [pendingMatch, setPendingMatch] = useState<{
@@ -134,13 +140,35 @@ export default function VarebokMatchingPage() {
   })
 
   // Fetch recipe products with matches
-  const { data: products = [], isLoading: productsLoading, refetch: refetchProducts } = useQuery<RecipeProductWithMatches[]>({
+  const { data: allProducts = [], isLoading: productsLoading, refetch: refetchProducts } = useQuery<RecipeProductWithMatches[]>({
     queryKey: ['varebok-recipe-products'],
     queryFn: async () => {
-      const response = await apiClient.get('/v1/varebok/recipe-products?limit=100')
+      const response = await apiClient.get('/v1/varebok/recipe-products?limit=1000')
       return response.data
     },
   })
+
+  // Filter products by status
+  const filteredProducts = allProducts.filter((product) => {
+    if (statusFilter === 'all') return true
+    if (statusFilter === 'exact') return product.has_exact_match
+    if (statusFilter === 'partial') return !product.has_exact_match && product.best_match
+    if (statusFilter === 'none') return !product.has_exact_match && !product.best_match
+    return true
+  })
+
+  // Pagination
+  const totalPages = Math.ceil(filteredProducts.length / pageSize)
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  )
+
+  // Reset page when filter changes
+  const handleFilterChange = (filter: StatusFilter) => {
+    setStatusFilter(filter)
+    setCurrentPage(1)
+  }
 
   // Delete supplier mutation
   const deleteSupplierMutation = useMutation({
@@ -287,9 +315,12 @@ export default function VarebokMatchingPage() {
         </Button>
       </div>
 
-      {/* Stats cards */}
+      {/* Stats cards - clickable for filtering */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card
+          className={`cursor-pointer transition-all hover:shadow-md ${statusFilter === 'all' ? 'ring-2 ring-primary' : ''}`}
+          onClick={() => handleFilterChange('all')}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Produkter i oppskrifter</CardTitle>
           </CardHeader>
@@ -297,7 +328,10 @@ export default function VarebokMatchingPage() {
             <div className="text-2xl font-bold">{stats?.total_recipe_products ?? '-'}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card
+          className={`cursor-pointer transition-all hover:shadow-md ${statusFilter === 'exact' ? 'ring-2 ring-green-600' : ''}`}
+          onClick={() => handleFilterChange('exact')}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Eksakt match</CardTitle>
           </CardHeader>
@@ -305,7 +339,10 @@ export default function VarebokMatchingPage() {
             <div className="text-2xl font-bold text-green-600">{stats?.matched_products ?? '-'}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card
+          className={`cursor-pointer transition-all hover:shadow-md ${statusFilter === 'partial' ? 'ring-2 ring-yellow-600' : ''}`}
+          onClick={() => handleFilterChange('partial')}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Delvis match</CardTitle>
           </CardHeader>
@@ -313,7 +350,10 @@ export default function VarebokMatchingPage() {
             <div className="text-2xl font-bold text-yellow-600">{stats?.partial_matches ?? '-'}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card
+          className={`cursor-pointer transition-all hover:shadow-md ${statusFilter === 'none' ? 'ring-2 ring-red-600' : ''}`}
+          onClick={() => handleFilterChange('none')}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Ingen match</CardTitle>
           </CardHeader>
@@ -327,7 +367,7 @@ export default function VarebokMatchingPage() {
         <TabsList>
           <TabsTrigger value="products">
             <Package className="h-4 w-4 mr-2" />
-            Produkter ({products.length})
+            Produkter ({filteredProducts.length})
           </TabsTrigger>
           <TabsTrigger value="upload">
             <Upload className="h-4 w-4 mr-2" />
@@ -348,51 +388,87 @@ export default function VarebokMatchingPage() {
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-              ) : products.length === 0 ? (
+              ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  Ingen produkter funnet. Last opp en leverandorfil forst.
+                  {statusFilter === 'all'
+                    ? 'Ingen produkter funnet. Last opp en leverandorfil først.'
+                    : `Ingen produkter med "${statusFilter === 'exact' ? 'eksakt match' : statusFilter === 'partial' ? 'delvis match' : 'ingen match'}" status.`}
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Produkt</TableHead>
-                      <TableHead>EAN</TableHead>
-                      <TableHead>Leverandornr</TableHead>
-                      <TableHead className="text-right">Oppskrifter</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {products.map((product) => (
-                      <TableRow
-                        key={product.produktid}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => setSelectedProduct(product)}
-                      >
-                        <TableCell className="font-medium">
-                          {product.produktnavn || '-'}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {product.ean_kode || '-'}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {product.leverandorsproduktnr || '-'}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {product.recipe_count}
-                        </TableCell>
-                        <TableCell>
-                          {getProductStatusBadge(product)}
-                        </TableCell>
-                        <TableCell>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        </TableCell>
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Produkt</TableHead>
+                        <TableHead>EAN</TableHead>
+                        <TableHead>Leverandornr</TableHead>
+                        <TableHead className="text-right">Oppskrifter</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead></TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedProducts.map((product) => (
+                        <TableRow
+                          key={product.produktid}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => setSelectedProduct(product)}
+                        >
+                          <TableCell className="font-medium">
+                            {product.produktnavn || '-'}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {product.ean_kode || '-'}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {product.leverandorsproduktnr || '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {product.recipe_count}
+                          </TableCell>
+                          <TableCell>
+                            {getProductStatusBadge(product)}
+                          </TableCell>
+                          <TableCell>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <p className="text-sm text-muted-foreground">
+                        Viser {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, filteredProducts.length)} av {filteredProducts.length} produkter
+                      </p>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Forrige
+                        </Button>
+                        <span className="text-sm">
+                          Side {currentPage} av {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          Neste
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
