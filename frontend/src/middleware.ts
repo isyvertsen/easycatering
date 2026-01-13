@@ -34,6 +34,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(signInUrl)
   }
 
+  // If session has refresh error, redirect to sign in with error message
+  if (session.error === 'RefreshAccessTokenError') {
+    const signInUrl = new URL('/auth/signin', request.url)
+    signInUrl.searchParams.set('error', 'SessionExpired')
+    signInUrl.searchParams.set('callbackUrl', request.url)
+    return NextResponse.redirect(signInUrl)
+  }
+
   return NextResponse.next()
 }
 
