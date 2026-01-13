@@ -72,3 +72,9 @@ class VarebokStats(BaseModel):
     partial_matches: int = Field(..., description="Products with fuzzy match only")
     no_matches: int = Field(..., description="Products without any match")
     total_varebok_products: int = Field(..., description="Products in Varebok CSV")
+
+
+class UploadedFileInfo(BaseModel):
+    """Information about an uploaded supplier file."""
+    supplier_name: str
+    products_count: int

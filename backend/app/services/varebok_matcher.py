@@ -1,5 +1,6 @@
 """Varebok product matching service."""
 import csv
+import io
 import logging
 from pathlib import Path
 from typing import List, Optional, Dict, Tuple
@@ -17,7 +18,7 @@ from app.schemas.varebok import (
 
 logger = logging.getLogger(__name__)
 
-# Path to Varebok CSV
+# Path to Varebok CSV (fallback)
 VAREBOK_CSV_PATH = Path(__file__).parent.parent.parent / "data" / "Varebok Larvik kommunale catering.csv"
 
 # CSV column indices (0-based)
@@ -34,6 +35,65 @@ CSV_COLUMNS = {
     "pris_pakn": 28,
     "leverandor_navn": 40,
 }
+
+
+def parse_varebok_csv(content: str) -> List[VarebokProduct]:
+    """
+    Parse Varebok CSV content into VarebokProduct objects.
+
+    Args:
+        content: CSV file content as string
+
+    Returns:
+        List of VarebokProduct objects
+    """
+    products = []
+    reader = csv.reader(io.StringIO(content), delimiter=";")
+
+    try:
+        next(reader)  # Skip header
+    except StopIteration:
+        return []
+
+    for row in reader:
+        if len(row) < 30:
+            continue
+
+        try:
+            mengde = None
+            if len(row) > CSV_COLUMNS["mengde"] and row[CSV_COLUMNS["mengde"]]:
+                try:
+                    mengde = float(row[CSV_COLUMNS["mengde"]].replace(",", "."))
+                except ValueError:
+                    pass
+
+            pris = None
+            if len(row) > CSV_COLUMNS["pris_pakn"] and row[CSV_COLUMNS["pris_pakn"]]:
+                try:
+                    pris = float(row[CSV_COLUMNS["pris_pakn"]].replace(",", "."))
+                except ValueError:
+                    pass
+
+            product = VarebokProduct(
+                varenummer=row[CSV_COLUMNS["varenummer"]].strip(),
+                nytt_varenummer=row[CSV_COLUMNS["nytt_varenummer"]].strip() or None,
+                varenavn=row[CSV_COLUMNS["varenavn"]].strip(),
+                ean_d_pakn=row[CSV_COLUMNS["ean_d_pakn"]].strip() or None,
+                ean_f_pakn=row[CSV_COLUMNS["ean_f_pakn"]].strip() or None,
+                kategori_navn=row[CSV_COLUMNS["kategori_navn"]].strip() or None,
+                hovedvaregruppe_navn=row[CSV_COLUMNS["hovedvaregruppe_navn"]].strip() or None,
+                mengde=mengde,
+                maleenhet=row[CSV_COLUMNS["maleenhet"]].strip() or None if len(row) > CSV_COLUMNS["maleenhet"] else None,
+                pris=pris,
+                leverandor_navn=row[CSV_COLUMNS["leverandor_navn"]].strip() or None if len(row) > CSV_COLUMNS["leverandor_navn"] else None,
+            )
+            products.append(product)
+        except Exception as e:
+            logger.warning(f"Error parsing row: {e}")
+            continue
+
+    logger.info(f"Parsed {len(products)} products from CSV content")
+    return products
 
 
 class VarebokMatcherService:

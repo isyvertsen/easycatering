@@ -1,20 +1,110 @@
 """Varebok product matching API endpoints."""
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, Query
+import csv
+import io
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db, get_current_user
 from app.domain.entities.user import User
-from app.services.varebok_matcher import VarebokMatcherService
+from app.services.varebok_matcher import VarebokMatcherService, parse_varebok_csv
 from app.schemas.varebok import (
     VarebokStats,
     RecipeProductWithMatches,
     MatchResult,
     MatchApplyRequest,
     MatchApplyResponse,
+    VarebokProduct,
+    UploadedFileInfo,
 )
 
 router = APIRouter()
+
+# In-memory storage for uploaded supplier files
+_uploaded_files: dict[str, List[VarebokProduct]] = {}
+
+
+@router.post("/upload")
+async def upload_supplier_file(
+    current_user: User = Depends(get_current_user),
+    file: UploadFile = File(...),
+    supplier_name: str = Form(..., description="Name of the supplier (e.g., 'VOIS', 'ASKO')"),
+):
+    """
+    Upload a supplier product file (CSV format).
+
+    The file should be semicolon-separated with columns for:
+    - EAN codes (D-pakn and/or F-pakn)
+    - Varenummer (product number)
+    - Varenavn (product name)
+    """
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="File must be a CSV file")
+
+    try:
+        # Read file content
+        content = await file.read()
+
+        # Try different encodings
+        for encoding in ['cp1252', 'utf-8', 'iso-8859-1']:
+            try:
+                text_content = content.decode(encoding)
+                break
+            except UnicodeDecodeError:
+                continue
+        else:
+            raise HTTPException(status_code=400, detail="Could not decode file. Try UTF-8 or Windows-1252 encoding.")
+
+        # Parse the CSV
+        products = parse_varebok_csv(text_content)
+
+        if not products:
+            raise HTTPException(status_code=400, detail="No products found in file")
+
+        # Store in memory
+        _uploaded_files[supplier_name] = products
+
+        return {
+            "success": True,
+            "supplier": supplier_name,
+            "products_count": len(products),
+            "filename": file.filename,
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error parsing file: {str(e)}")
+
+
+@router.get("/suppliers", response_model=List[UploadedFileInfo])
+async def get_uploaded_suppliers(
+    current_user: User = Depends(get_current_user),
+):
+    """Get list of uploaded supplier files."""
+    return [
+        UploadedFileInfo(supplier_name=name, products_count=len(products))
+        for name, products in _uploaded_files.items()
+    ]
+
+
+@router.delete("/suppliers/{supplier_name}")
+async def delete_supplier_file(
+    supplier_name: str,
+    current_user: User = Depends(get_current_user),
+):
+    """Delete an uploaded supplier file."""
+    if supplier_name not in _uploaded_files:
+        raise HTTPException(status_code=404, detail=f"Supplier {supplier_name} not found")
+
+    del _uploaded_files[supplier_name]
+    return {"success": True, "message": f"Supplier {supplier_name} deleted"}
+
+
+def get_all_supplier_products() -> List[VarebokProduct]:
+    """Get all products from all uploaded suppliers."""
+    all_products = []
+    for products in _uploaded_files.values():
+        all_products.extend(products)
+    return all_products
 
 
 @router.get("/status", response_model=VarebokStats)
