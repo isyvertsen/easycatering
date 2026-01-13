@@ -125,6 +125,9 @@ export interface Order {
   ordrelevert?: string
   levertagresso?: string
   kundegruppenavn?: string
+  // Webshop order tracking
+  bestilt_av?: number
+  bestilt_av_navn?: string
   // Relations
   kunde?: Customer
   ansatt?: Employee
