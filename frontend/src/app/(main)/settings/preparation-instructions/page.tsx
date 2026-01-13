@@ -116,6 +116,11 @@ export default function PreparationInstructionsPage() {
       return
     }
 
+    // Close the create dialog first to avoid stacked modals
+    if (mode === "create") {
+      setShowCreateDialog(false)
+    }
+
     toast.loading("AI analyserer tilberedningsinstruksjonen...", { id: "enhance-instruction" })
 
     const result = await enhanceInstruction(text.trim())
@@ -129,9 +134,16 @@ export default function PreparationInstructionsPage() {
       })
       setEnhanceMode(mode)
       setTempEditId(editId || null)
-      setShowEnhanceDialog(true)
+      // Use setTimeout to ensure first dialog is fully unmounted
+      setTimeout(() => {
+        setShowEnhanceDialog(true)
+      }, 0)
     } else {
       toast.error("Kunne ikke analysere instruksjonen med AI", { id: "enhance-instruction" })
+      // Reopen create dialog if enhancement failed
+      if (mode === "create") {
+        setShowCreateDialog(true)
+      }
     }
   }
 

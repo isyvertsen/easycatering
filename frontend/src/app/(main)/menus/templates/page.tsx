@@ -285,7 +285,7 @@ export default function MenuTemplatesPage() {
       </Dialog>
 
       {/* Delete Dialog */}
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Er du sikker?</AlertDialogTitle>

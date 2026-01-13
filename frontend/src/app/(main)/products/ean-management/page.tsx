@@ -575,13 +575,22 @@ export default function EanManagementPage() {
   // Handle manual creation from preview dialog
   const handleCreateManualFromPreview = () => {
     if (previewDialog.product) {
-      setCreateDialog({
-        open: true,
+      const prefillData = {
         prefillGtin: previewDialog.product.ean_kode || undefined,
         prefillName: previewDialog.product.produktnavn,
-      })
+      }
+      // Close preview dialog first to avoid stacked modals
+      handleRejectSync()
+      // Then open create dialog after a microtask delay
+      setTimeout(() => {
+        setCreateDialog({
+          open: true,
+          ...prefillData,
+        })
+      }, 0)
+    } else {
+      handleRejectSync()
     }
-    handleRejectSync()
   }
 
   const handleOpenCreateDialog = (product?: ProductMissingEan) => {
