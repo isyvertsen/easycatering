@@ -50,7 +50,9 @@ export default function MenuDetailPage() {
   const fetchMenuGroups = async () => {
     try {
       const response = await api.get("/v1/menygruppe")
-      setMenuGroups(response.data)
+      // API returns { items: [...] }, not a direct array
+      const groups = response.data.items || response.data
+      setMenuGroups(Array.isArray(groups) ? groups : [])
     } catch (error) {
       console.error("Failed to fetch menu groups:", error)
     }
@@ -147,11 +149,11 @@ export default function MenuDetailPage() {
             <div>
               <Label htmlFor="menygruppe">Menu Group</Label>
               <Select
-                value={formData.menygruppe?.toString() || ""}
+                value={formData.menygruppe?.toString() || "none"}
                 onValueChange={(value) =>
                   setFormData({
                     ...formData,
-                    menygruppe: value ? parseInt(value) : null,
+                    menygruppe: value && value !== "none" ? parseInt(value) : null,
                   })
                 }
               >
@@ -159,10 +161,13 @@ export default function MenuDetailPage() {
                   <SelectValue placeholder="Select a menu group" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">Ingen</SelectItem>
                   {menuGroups.map((group) => (
-                    <SelectItem key={group.gruppeid} value={group.gruppeid.toString()}>
-                      {group.gruppe}
+                    <SelectItem
+                      key={group.menygruppeid}
+                      value={group.menygruppeid.toString()}
+                    >
+                      {group.beskrivelse || `Gruppe ${group.menygruppeid}`}
                     </SelectItem>
                   ))}
                 </SelectContent>
