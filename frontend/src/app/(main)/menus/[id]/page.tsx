@@ -164,10 +164,10 @@ export default function MenuDetailPage() {
                   <SelectItem value="none">Ingen</SelectItem>
                   {menuGroups.map((group) => (
                     <SelectItem
-                      key={group.menygruppeid}
-                      value={group.menygruppeid.toString()}
+                      key={group.gruppeid}
+                      value={group.gruppeid?.toString() || ""}
                     >
-                      {group.beskrivelse || `Gruppe ${group.menygruppeid}`}
+                      {group.beskrivelse || `Gruppe ${group.gruppeid}`}
                     </SelectItem>
                   ))}
                 </SelectContent>

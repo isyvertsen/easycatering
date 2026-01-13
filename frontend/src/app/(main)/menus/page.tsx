@@ -58,9 +58,11 @@ export default function MenusPage() {
         const groups = response.data.items || response.data
         if (Array.isArray(groups)) {
           groups.forEach((group: any) => {
-            // Use menygruppeid as key, beskrivelse as display value
-            const id = group.menygruppeid || group.gruppeid
-            groupsMap[id] = group.beskrivelse || ""
+            // API returns gruppeid (not menygruppeid)
+            const id = group.gruppeid
+            if (id) {
+              groupsMap[id] = group.beskrivelse || ""
+            }
           })
         }
         setMenuGroups(groupsMap)
