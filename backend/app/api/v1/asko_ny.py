@@ -22,14 +22,16 @@ async def get_asko_ny_products(
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    sok: Optional[str] = Query(None, description="Search in product name or EAN"),
+    search: Optional[str] = Query(None, description="Search in product name or EAN (standard parameter)"),
+    sok: Optional[str] = Query(None, description="Search in product name or EAN (deprecated, use 'search')"),
 ) -> List[AskoNy]:
     """Get all Asko NY products."""
     query = select(AskoNyModel)
 
-    # Search by name or EAN
-    if sok:
-        search_term = f"%{sok}%"
+    # Search by name or EAN (support both 'search' and 'sok' for backward compatibility)
+    search_term_input = search or sok
+    if search_term_input:
+        search_term = f"%{search_term_input}%"
         query = query.where(
             (AskoNyModel.varenavn.ilike(search_term)) |
             (AskoNyModel.eannummer.ilike(search_term))

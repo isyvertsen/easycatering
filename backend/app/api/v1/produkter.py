@@ -32,7 +32,8 @@ async def get_produkter(
     limit: int = Query(100, ge=1, le=10000),
     aktiv: Optional[bool] = Query(None, description="Filter by active status"),
     kategori: Optional[int] = Query(None, description="Filter by category ID"),
-    sok: Optional[str] = Query(None, description="Search in product name"),
+    search: Optional[str] = Query(None, description="Search in product name (standard parameter)"),
+    sok: Optional[str] = Query(None, description="Search in product name (deprecated, use 'search')"),
     rett_komponent: Optional[bool] = Query(None, description="Filter by dish component status"),
     has_gtin: Optional[bool] = Query(None, description="Filter by GTIN presence: true=has GTIN, false=missing GTIN"),
     leverandor_ids: Optional[str] = Query(None, description="Comma-separated list of leverandor IDs to filter by"),
@@ -86,9 +87,10 @@ async def get_produkter(
                 )
             )
 
-    # Search by name, ID, or codes
-    if sok:
-        search_term = f"%{sok}%"
+    # Search by name, ID, or codes (support both 'search' and 'sok' for backward compatibility)
+    search_term_input = search or sok
+    if search_term_input:
+        search_term = f"%{search_term_input}%"
         base_query = base_query.where(
             or_(
                 ProdukterModel.produktnavn.ilike(search_term),

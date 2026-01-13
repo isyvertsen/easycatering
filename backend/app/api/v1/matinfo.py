@@ -27,7 +27,7 @@ from app.schemas.matinfo import (
     ProductExportResponse
 )
 from app.services.product_export import ProductExporter
-from app.services.product_search import ProductSearchService
+from app.services.enhanced_product_search import EnhancedProductSearchService
 from app.core.config import settings
 import logging
 
@@ -939,7 +939,7 @@ async def search_products(
     
     Returns products with their details and links to tblprodukter via GTIN.
     """
-    search_service = ProductSearchService()
+    search_service = EnhancedProductSearchService()
     
     if source == "llm":
         result = await search_service.search_llm(q, db, limit)
@@ -973,7 +973,7 @@ async def hybrid_search_products(
     limit = request.get("limit", 20)
     filters = request.get("filters", {})
     
-    search_service = ProductSearchService()
+    search_service = EnhancedProductSearchService()
     
     # Always do database search
     db_results = await search_service.search_database(query, db, limit)
