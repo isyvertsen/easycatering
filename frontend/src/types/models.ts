@@ -141,6 +141,7 @@ export interface OrderLine {
   antall?: number
   rabatt?: number
   ident?: string
+  ssma_timestamp?: string
   // Relations
   produkt?: Product
 }
@@ -171,23 +172,12 @@ export interface Product {
   utregnetpris?: number
   visningsnavn?: string
   visningsnavn2?: string
-  allergenprodukt?: boolean
-  energikj?: number
-  kalorier?: number
-  fett?: number
-  mettetfett?: number
-  karbohydrater?: number
-  sukkerarter?: number
-  kostfiber?: number
-  protein?: number
-  salt?: number
-  monodisakk?: number
-  matvareid?: string
-  webshopsted?: string
+  rett_komponent?: boolean
   ssma_timestamp?: string
   // Relations
   kategori?: Category
   leverandor?: Supplier
+  // Note: Nutrition data (energikj, kalorier, fett, etc.) is in matinfo_products, not tblprodukter
 }
 
 export interface Category {

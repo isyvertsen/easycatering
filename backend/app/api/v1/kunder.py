@@ -19,11 +19,15 @@ async def get_kunder(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     aktiv: Optional[bool] = Query(True, description="Filter by active status"),
-    sok: Optional[str] = Query(None, description="Search in customer name"),
+    search: Optional[str] = Query(None, description="Search in customer name (standard parameter)"),
+    sok: Optional[str] = Query(None, description="Search in customer name (deprecated, use 'search')"),
 ) -> List[Kunder]:
     """Get all customers."""
+    # Support both 'search' and 'sok' for backward compatibility
+    search_term_input = search or sok
+
     query = select(KunderModel)
-    
+
     # Filter by active status
     if aktiv is not None:
         if aktiv:
@@ -32,10 +36,10 @@ async def get_kunder(
             )
         else:
             query = query.where(KunderModel.kundeinaktiv == True)
-    
+
     # Search by name
-    if sok:
-        search_term = f"%{sok}%"
+    if search_term_input:
+        search_term = f"%{search_term_input}%"
         query = query.where(
             or_(
                 KunderModel.kundenavn.ilike(search_term),

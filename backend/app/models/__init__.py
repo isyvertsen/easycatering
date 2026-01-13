@@ -17,10 +17,14 @@ from .kalkylegruppe import Kalkylegruppe
 from .periode import Periode
 from .periode_meny import PeriodeMeny
 from .matinfo_products import MatinfoProduct, MatinfoAllergen, MatinfoNutrient
+from .matinfo_updates import MatinfoGTINUpdate, MatinfoSyncLog
 from .combined_dish import CombinedDish, CombinedDishRecipe, CombinedDishProduct
 from .preparation_instruction import PreparationInstruction
 from .label_template import LabelTemplate, TemplateParameter, TemplateShare, PrintHistory
+from .report_templates import ReportTemplates
 from .customer_access_token import CustomerAccessToken
+from .activity_log import ActivityLog
+from .app_log import AppLog
 
 __all__ = [
     "Ansatte",
@@ -43,6 +47,8 @@ __all__ = [
     "MatinfoProduct",
     "MatinfoAllergen",
     "MatinfoNutrient",
+    "MatinfoGTINUpdate",
+    "MatinfoSyncLog",
     "CombinedDish",
     "CombinedDishRecipe",
     "CombinedDishProduct",
@@ -51,5 +57,8 @@ __all__ = [
     "TemplateParameter",
     "TemplateShare",
     "PrintHistory",
+    "ReportTemplates",
     "CustomerAccessToken",
+    "ActivityLog",
+    "AppLog",
 ]

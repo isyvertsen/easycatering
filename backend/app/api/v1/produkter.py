@@ -32,7 +32,8 @@ async def get_produkter(
     limit: int = Query(100, ge=1, le=10000),
     aktiv: Optional[bool] = Query(None, description="Filter by active status"),
     kategori: Optional[int] = Query(None, description="Filter by category ID"),
-    sok: Optional[str] = Query(None, description="Search in product name"),
+    search: Optional[str] = Query(None, description="Search in product name (standard parameter)"),
+    sok: Optional[str] = Query(None, description="Search in product name (deprecated, use 'search')"),
     rett_komponent: Optional[bool] = Query(None, description="Filter by dish component status"),
     has_gtin: Optional[bool] = Query(None, description="Filter by GTIN presence: true=has GTIN, false=missing GTIN"),
     leverandor_ids: Optional[str] = Query(None, description="Comma-separated list of leverandor IDs to filter by"),
@@ -86,9 +87,10 @@ async def get_produkter(
                 )
             )
 
-    # Search by name, ID, or codes
-    if sok:
-        search_term = f"%{sok}%"
+    # Search by name, ID, or codes (support both 'search' and 'sok' for backward compatibility)
+    search_term_input = search or sok
+    if search_term_input:
+        search_term = f"%{search_term_input}%"
         base_query = base_query.where(
             or_(
                 ProdukterModel.produktnavn.ilike(search_term),
@@ -266,17 +268,6 @@ class MatinfoSearchResult(BaseModel):
     nutrients: List["MatinfoNutrientInfo"] = []
 
 
-class GtinUpdateRequest(BaseModel):
-    """Request for å oppdatere GTIN."""
-    produktid: int
-    gtin: str
-
-
-class BulkGtinUpdateRequest(BaseModel):
-    """Request for masse-oppdatering av GTIN."""
-    updates: List[GtinUpdateRequest]
-
-
 @router.get("/matinfo/search", response_model=List[MatinfoSearchResult])
 async def search_matinfo_products(
     query: str = Query(..., min_length=2, description="Søketekst (produktnavn, merke, ingredienser)"),
@@ -370,153 +361,6 @@ async def search_matinfo_products(
         )
         for pid in product_ids if pid in products_map
     ]
-
-
-@router.patch("/{produkt_id}/gtin")
-async def update_produkt_gtin(
-    produkt_id: int,
-    gtin: str = Body(..., embed=True, description="Ny GTIN/EAN-kode"),
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> Dict[str, Any]:
-    """
-    Oppdater GTIN/EAN-kode for et produkt.
-
-    Renser automatisk GTIN (fjerner bindestreker, validerer lengde).
-    """
-    # Hent produkt
-    result = await db.execute(
-        select(ProdukterModel).where(ProdukterModel.produktid == produkt_id)
-    )
-    produkt = result.scalar_one_or_none()
-
-    if not produkt:
-        raise HTTPException(status_code=404, detail="Produkt ikke funnet")
-
-    # Rens GTIN
-    clean_gtin = gtin.strip().replace("-", "").replace(" ", "")
-
-    # Valider GTIN-lengde (8, 12, 13, eller 14 siffer)
-    if clean_gtin and len(clean_gtin) not in [8, 12, 13, 14]:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Ugyldig GTIN-lengde: {len(clean_gtin)}. Må være 8, 12, 13 eller 14 siffer."
-        )
-
-    # Sjekk om GTIN finnes i Matinfo
-    matinfo_match = None
-    if clean_gtin:
-        matinfo_result = await db.execute(
-            select(MatinfoProduct).where(MatinfoProduct.gtin == clean_gtin)
-        )
-        matinfo_match = matinfo_result.scalar_one_or_none()
-
-    # Oppdater produkt
-    old_gtin = produkt.ean_kode
-    produkt.ean_kode = clean_gtin if clean_gtin else None
-
-    await db.commit()
-    await db.refresh(produkt)
-
-    return {
-        "produktid": produkt_id,
-        "produktnavn": produkt.produktnavn,
-        "old_gtin": old_gtin,
-        "new_gtin": clean_gtin,
-        "matinfo_match": {
-            "found": matinfo_match is not None,
-            "product_name": matinfo_match.name if matinfo_match else None,
-            "brand": matinfo_match.brand if matinfo_match else None
-        } if clean_gtin else None,
-        "message": "GTIN oppdatert"
-    }
-
-
-@router.post("/bulk-update-gtin")
-async def bulk_update_gtin(
-    updates: BulkGtinUpdateRequest,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> Dict[str, Any]:
-    """
-    Masse-oppdatering av GTIN for flere produkter.
-
-    Returnerer statistikk over oppdateringer og eventuelle feil.
-    """
-    results = {
-        "total": len(updates.updates),
-        "success": 0,
-        "failed": 0,
-        "matinfo_matches": 0,
-        "details": []
-    }
-
-    for update in updates.updates:
-        try:
-            # Hent produkt
-            result = await db.execute(
-                select(ProdukterModel).where(ProdukterModel.produktid == update.produktid)
-            )
-            produkt = result.scalar_one_or_none()
-
-            if not produkt:
-                results["failed"] += 1
-                results["details"].append({
-                    "produktid": update.produktid,
-                    "status": "error",
-                    "message": "Produkt ikke funnet"
-                })
-                continue
-
-            # Rens GTIN
-            clean_gtin = update.gtin.strip().replace("-", "").replace(" ", "")
-
-            # Valider lengde
-            if clean_gtin and len(clean_gtin) not in [8, 12, 13, 14]:
-                results["failed"] += 1
-                results["details"].append({
-                    "produktid": update.produktid,
-                    "status": "error",
-                    "message": f"Ugyldig GTIN-lengde: {len(clean_gtin)}"
-                })
-                continue
-
-            # Sjekk Matinfo
-            matinfo_match = None
-            if clean_gtin:
-                matinfo_result = await db.execute(
-                    select(MatinfoProduct).where(MatinfoProduct.gtin == clean_gtin)
-                )
-                matinfo_match = matinfo_result.scalar_one_or_none()
-                if matinfo_match:
-                    results["matinfo_matches"] += 1
-
-            # Oppdater
-            old_gtin = produkt.ean_kode
-            produkt.ean_kode = clean_gtin if clean_gtin else None
-
-            results["success"] += 1
-            results["details"].append({
-                "produktid": update.produktid,
-                "produktnavn": produkt.produktnavn,
-                "status": "success",
-                "old_gtin": old_gtin,
-                "new_gtin": clean_gtin,
-                "matinfo_match": matinfo_match is not None
-            })
-
-        except Exception as e:
-            results["failed"] += 1
-            results["details"].append({
-                "produktid": update.produktid,
-                "status": "error",
-                "message": str(e)
-            })
-
-    # Commit alle endringer
-    await db.commit()
-
-    return results
 
 
 @router.get("/{produkt_id}/matinfo-suggestions", response_model=List[MatinfoSearchResult])

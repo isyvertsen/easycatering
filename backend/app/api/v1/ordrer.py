@@ -14,6 +14,7 @@ from app.models.kunder import Kunder as KunderModel
 from app.schemas.ordrer import Ordrer, OrdrerCreate, OrdrerUpdate
 from app.schemas.ordredetaljer import Ordredetaljer, OrdredetaljerCreate
 from app.schemas.pagination import PaginatedResponse
+from app.services.order_status_service import OrderStatusService, OrderStatusError
 
 router = APIRouter()
 
@@ -254,19 +255,13 @@ async def cancel_ordre(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Cancel an order."""
-    result = await db.execute(
-        select(OrdrerModel).where(OrdrerModel.ordreid == ordre_id)
-    )
-    ordre = result.scalar_one_or_none()
+    service = OrderStatusService(db)
 
-    if not ordre:
-        raise HTTPException(status_code=404, detail="Ordre ikke funnet")
-
-    ordre.kansellertdato = datetime.now()
-    ordre.ordrestatusid = 99  # Kansellert (fra tblordrestatus)
-    await db.commit()
-
-    return {"message": "Ordre kansellert"}
+    try:
+        await service.cancel_order(ordre_id)
+        return {"message": "Ordre kansellert"}
+    except OrderStatusError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
 
 
 @router.post("/{ordre_id}/duplicate", response_model=Ordrer)
@@ -330,27 +325,13 @@ async def update_ordre_status(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Update order status with workflow logic."""
-    result = await db.execute(
-        select(OrdrerModel).where(OrdrerModel.ordreid == ordre_id)
-    )
-    ordre = result.scalar_one_or_none()
+    service = OrderStatusService(db)
 
-    if not ordre:
-        raise HTTPException(status_code=404, detail="Ordre ikke funnet")
-
-    if ordre.kansellertdato:
-        raise HTTPException(status_code=400, detail="Kan ikke endre status på kansellert ordre")
-
-    ordre.ordrestatusid = status_id
-
-    # Set delivered flag if marking as delivered
-    if status_id == 4:
-        ordre.ordrelevert = True
-
-    await db.commit()
-
-    status_names = {1: "Ny", 2: "Under behandling", 3: "Godkjent", 4: "Levert"}
-    return {"message": f"Ordrestatus endret til {status_names.get(status_id, 'Ukjent')}"}
+    try:
+        success, message = await service.update_status(ordre_id, status_id)
+        return {"message": message}
+    except OrderStatusError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
 
 
 @router.post("/batch/status")
@@ -361,28 +342,13 @@ async def batch_update_status(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Batch update order status for multiple orders."""
-    result = await db.execute(
-        select(OrdrerModel).where(
-            OrdrerModel.ordreid.in_(ordre_ids),
-            OrdrerModel.kansellertdato.is_(None)  # Only non-cancelled orders
-        )
-    )
-    orders = result.scalars().all()
+    service = OrderStatusService(db)
 
-    if not orders:
-        raise HTTPException(status_code=404, detail="Ingen gyldige ordrer funnet")
-
-    updated_count = 0
-    for ordre in orders:
-        ordre.ordrestatusid = status_id
-        if status_id == 4:
-            ordre.ordrelevert = True
-        updated_count += 1
-
-    await db.commit()
-
-    status_names = {1: "Ny", 2: "Under behandling", 3: "Godkjent", 4: "Levert"}
-    return {
-        "message": f"{updated_count} ordrer oppdatert til status '{status_names.get(status_id, 'Ukjent')}'",
-        "updated_count": updated_count
-    }
+    try:
+        result = await service.batch_update_status(ordre_ids, status_id)
+        return {
+            "message": result["message"],
+            "updated_count": result["updated_count"]
+        }
+    except OrderStatusError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)

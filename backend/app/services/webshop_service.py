@@ -13,6 +13,7 @@ from app.models.kunde_gruppe import Kundegruppe
 from app.models.ordrer import Ordrer
 from app.models.ordredetaljer import Ordredetaljer
 from app.domain.entities.user import User
+from app.services.order_status_service import OrderStatusService, OrderStatusError
 from app.schemas.webshop import (
     WebshopProduct,
     WebshopProductListResponse,
@@ -462,31 +463,28 @@ class WebshopService:
         )
 
     async def update_order_status(self, order_id: int, status_id: int) -> bool:
-        """Update order status (admin only)."""
-        query = select(Ordrer).where(Ordrer.ordreid == order_id)
-        result = await self.db.execute(query)
-        order = result.scalar_one_or_none()
+        """Update order status (admin only).
 
-        if not order:
+        Uses shared OrderStatusService for consistent workflow logic.
+        """
+        status_service = OrderStatusService(self.db)
+        try:
+            await status_service.update_status(order_id, status_id)
+            return True
+        except OrderStatusError:
             return False
 
-        order.ordrestatusid = status_id
-        await self.db.commit()
-        return True
-
     async def batch_update_status(self, order_ids: List[int], status_id: int) -> int:
-        """Batch update order status (admin only)."""
-        query = select(Ordrer).where(Ordrer.ordreid.in_(order_ids))
-        result = await self.db.execute(query)
-        orders = result.scalars().all()
+        """Batch update order status (admin only).
 
-        count = 0
-        for order in orders:
-            order.ordrestatusid = status_id
-            count += 1
-
-        await self.db.commit()
-        return count
+        Uses shared OrderStatusService for consistent workflow logic.
+        """
+        status_service = OrderStatusService(self.db)
+        try:
+            result = await status_service.batch_update_status(order_ids, status_id)
+            return result["updated_count"]
+        except OrderStatusError:
+            return 0
 
     async def get_order_by_token(self, token: str) -> Optional[WebshopOrderByTokenResponse]:
         """Get order by token (for public access via email link).
@@ -591,6 +589,8 @@ class WebshopService:
     ) -> Tuple[bool, int]:
         """Cancel an order.
 
+        Uses shared OrderStatusService for consistent workflow logic.
+
         Args:
             order_id: The order ID to cancel
             arsak: Reason for cancellation (optional)
@@ -599,26 +599,14 @@ class WebshopService:
         Returns:
             Tuple of (success, new_status_id)
         """
-        query = select(Ordrer).where(Ordrer.ordreid == order_id)
-        result = await self.db.execute(query)
-        order = result.scalar_one_or_none()
-
-        if not order:
+        status_service = OrderStatusService(self.db)
+        try:
+            success, new_status = await status_service.cancel_order(
+                order_id, for_sen=for_sen, arsak=arsak
+            )
+            return success, new_status
+        except OrderStatusError:
             return False, 0
-
-        # Determine status: 98 for late cancellation, 99 for normal
-        new_status = 98 if for_sen else 99
-
-        # Update order
-        order.ordrestatusid = new_status
-        order.kansellertdato = datetime.utcnow()
-        if arsak and order.informasjon:
-            order.informasjon = f"{order.informasjon}\n\nKansellert: {arsak}"
-        elif arsak:
-            order.informasjon = f"Kansellert: {arsak}"
-
-        await self.db.commit()
-        return True, new_status
 
     # =========================================================================
     # Draft order methods (auto-save)

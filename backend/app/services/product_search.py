@@ -1,4 +1,22 @@
-"""Product search service supporting both database and LLM search."""
+"""Product search service supporting both database and LLM search.
+
+DEPRECATED: This module is deprecated. Use EnhancedProductSearchService instead.
+
+The functionality has been consolidated into EnhancedProductSearchService which provides:
+- All methods from this service (search_database, search_llm)
+- Additional features (fuzzy_search, get_suggestions, get_recent_searches)
+- Redis caching for improved performance
+
+Migration:
+    # Before (deprecated)
+    from app.services.product_search import ProductSearchService
+    service = ProductSearchService()
+
+    # After (recommended)
+    from app.services.enhanced_product_search import EnhancedProductSearchService
+    service = EnhancedProductSearchService()
+"""
+import warnings
 import httpx
 import json
 from typing import List, Dict, Any, Optional
