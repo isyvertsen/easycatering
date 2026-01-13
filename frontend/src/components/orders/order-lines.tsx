@@ -303,7 +303,7 @@ export function OrderLines({ orderId, readOnly = false }: OrderLinesProps) {
               
               return (
                 <TableRow key={line.unik}>
-                  <TableCell>{line.produkt?.produktnavn || `Produkt ${line.produktid}`}</TableCell>
+                  <TableCell className="capitalize">{(line.produkt?.produktnavn || `Produkt ${line.produktid}`).toLowerCase()}</TableCell>
                   <TableCell className="text-right">{line.antall}</TableCell>
                   <TableCell className="text-right">kr {line.pris?.toFixed(2) || '0.00'}</TableCell>
                   <TableCell className="text-right">{line.rabatt || 0}%</TableCell>

@@ -8,7 +8,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 
 
 class ReportService:
@@ -361,7 +361,7 @@ class ReportService:
         data: Dict[str, Any]
     ) -> bytes:
         """
-        Generate pick list PDF for warehouse using ReportLab.
+        Generate simple Excel-style pick list PDF for warehouse.
 
         Args:
             data: Dictionary with order data
@@ -373,151 +373,148 @@ class ReportService:
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            rightMargin=2*cm,
-            leftMargin=2*cm,
-            topMargin=2*cm,
-            bottomMargin=2*cm
+            rightMargin=1*cm,
+            leftMargin=1*cm,
+            topMargin=1*cm,
+            bottomMargin=1*cm
         )
 
         elements = []
         styles = getSampleStyleSheet()
 
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=24,
-            textColor=colors.HexColor('#d97706'),
-            spaceAfter=30,
-            alignment=1,
-        )
-
-        heading_style = ParagraphStyle(
-            'CustomHeading',
-            parent=styles['Heading2'],
-            fontSize=13,
-            textColor=colors.HexColor('#d97706'),
-            spaceAfter=12,
-            borderWidth=2,
-            borderColor=colors.HexColor('#d97706'),
-            borderPadding=6,
-        )
-
-        # Header
-        elements.append(Paragraph("PLUKKLISTE", title_style))
-        elements.append(Paragraph("Larvik Kommune Catering", styles['Normal']))
-        elements.append(Spacer(1, 2*cm))
-
-        # Order details
-        elements.append(Paragraph("Ordredetaljer", heading_style))
-        order_details = [
-            ["Ordrenummer:", str(data.get('ordrenummer', ''))],
-            ["Leveringsdato:", data.get('leveringsdato', '')],
-            ["Kunde:", data.get('kunde', {}).get('navn', '')]
-        ]
-        order_table = Table(order_details, colWidths=[4*cm, 12*cm])
-        order_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 11),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        # Compact header with order info
+        header_data = [[
+            f"Ordre: {data.get('ordrenummer', '')}",
+            f"Kunde: {data.get('kunde', {}).get('navn', '')}",
+            f"Levering: {data.get('leveringsdato', '')}",
+            "Plukket: ____"
+        ]]
+        header_table = Table(header_data, colWidths=[4*cm, 7*cm, 4*cm, 3*cm])
+        header_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
         ]))
-        elements.append(order_table)
-        elements.append(Spacer(1, 1*cm))
+        elements.append(header_table)
+        elements.append(Spacer(1, 0.3*cm))
 
-        # Products to pick
-        elements.append(Paragraph("Produkter å plukke", heading_style))
-
-        products_data = [["ID", "Produktnavn", "Antall", "✓"]]
+        # Products table - simple Excel style
+        products_data = [["Produktnavn", "Antall", "✓"]]
         for produkt in data.get('produkter', []):
             products_data.append([
-                str(produkt.get('produktid', '')),
-                produkt.get('navn', ''),
-                f"{produkt.get('antall', '')} {produkt.get('enhet', '')}",
-                ''  # Empty checkbox column
+                produkt.get('navn', '').title(),
+                f"{produkt.get('antall', '')} {produkt.get('enhet', '')}".strip(),
+                ''
             ])
 
-        products_table = Table(products_data, colWidths=[2*cm, 8*cm, 3*cm, 3*cm])
+        products_table = Table(products_data, colWidths=[12*cm, 4*cm, 2*cm])
         products_table.setStyle(TableStyle([
             # Header row
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#d97706')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#e5e5e5')),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 11),
-            ('ALIGN', (2, 0), (-1, 0), 'CENTER'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('ALIGN', (1, 0), (-1, 0), 'CENTER'),
 
             # Data rows
-            ('FONTSIZE', (0, 1), (-1, -1), 11),
-            ('ALIGN', (2, 1), (-1, -1), 'CENTER'),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#fff7ed')]),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-
-            # Checkbox column - thicker border
-            ('BOX', (3, 1), (3, -1), 1, colors.HexColor('#d97706')),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('ALIGN', (1, 1), (-1, -1), 'CENTER'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
 
             # All rows
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-            ('LEFTPADDING', (0, 0), (-1, -1), 8),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
         ]))
         elements.append(products_table)
 
-        # Instructions
-        elements.append(Spacer(1, 2*cm))
-        instructions_style = ParagraphStyle(
-            'Instructions',
-            parent=styles['Normal'],
-            fontSize=11,
-            leftIndent=10,
-            rightIndent=10,
-            spaceBefore=10,
-            spaceAfter=10,
-            backColor=colors.HexColor('#fff7ed'),
-            borderWidth=1,
-            borderColor=colors.HexColor('#d97706'),
-            borderPadding=10,
+        # Build PDF
+        doc.build(elements)
+
+        buffer.seek(0)
+        return buffer.getvalue()
+
+    async def generate_batch_pick_list_pdf(
+        self,
+        orders_data: list[Dict[str, Any]]
+    ) -> bytes:
+        """
+        Generate simple Excel-style combined pick list PDF for multiple orders.
+
+        Args:
+            orders_data: List of dictionaries with order data
+
+        Returns:
+            Combined PDF file as bytes
+        """
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=1*cm,
+            leftMargin=1*cm,
+            topMargin=1*cm,
+            bottomMargin=1*cm
         )
-        elements.append(Paragraph(
-            "<b>Instruksjoner:</b><br/>"
-            "1. Plukk produktene fra lager i rekkefølge<br/>"
-            "2. Merk av i ✓-kolonnen når produktet er plukket<br/>"
-            "3. Dobbeltsjekk antall før pakking<br/>"
-            "4. Signer nederst når alle produkter er plukket",
-            instructions_style
-        ))
 
-        # Signature section
-        elements.append(Spacer(1, 2*cm))
-        elements.append(Paragraph("Signatur", heading_style))
-        elements.append(Spacer(1, 0.5*cm))
+        elements = []
 
-        signature_data = [
-            [Paragraph("<b>Plukket av:</b>", styles['Normal']),
-             Paragraph("<b>Sjekket av:</b>", styles['Normal'])],
-            ['', ''],  # Space for signature
-            ['_' * 40, '_' * 40],  # Signature line
-            [Paragraph("<font size=9>Navn og dato</font>", styles['Normal']),
-             Paragraph("<font size=9>Navn og dato</font>", styles['Normal'])]
-        ]
-        signature_table = Table(signature_data, colWidths=[8*cm, 8*cm], rowHeights=[None, 2*cm, None, None])
-        signature_table.setStyle(TableStyle([
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-        ]))
-        elements.append(signature_table)
+        for i, data in enumerate(orders_data):
+            # Add page break before each order except the first
+            if i > 0:
+                elements.append(PageBreak())
 
-        # Footer
-        elements.append(Spacer(1, 1*cm))
-        footer_style = ParagraphStyle(
-            'Footer',
-            parent=styles['Normal'],
-            fontSize=9,
-            textColor=colors.HexColor('#666666'),
-        )
-        elements.append(Paragraph(f"Generert: {data.get('generert_dato', '')}", footer_style))
-        elements.append(Paragraph("Larvik Kommune Catering - Internbruk", footer_style))
+            # Compact header with order info
+            header_data = [[
+                f"Ordre: {data.get('ordrenummer', '')}",
+                f"Kunde: {data.get('kunde', {}).get('navn', '')}",
+                f"Levering: {data.get('leveringsdato', '')}",
+                "Plukket: ____"
+            ]]
+            header_table = Table(header_data, colWidths=[4*cm, 7*cm, 4*cm, 3*cm])
+            header_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ]))
+            elements.append(header_table)
+            elements.append(Spacer(1, 0.3*cm))
+
+            # Products table - simple Excel style
+            products_data = [["Produktnavn", "Antall", "✓"]]
+            for produkt in data.get('produkter', []):
+                products_data.append([
+                    produkt.get('navn', '').title(),
+                    f"{produkt.get('antall', '')} {produkt.get('enhet', '')}".strip(),
+                    ''
+                ])
+
+            products_table = Table(products_data, colWidths=[12*cm, 4*cm, 2*cm])
+            products_table.setStyle(TableStyle([
+                # Header row
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#e5e5e5')),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
+                ('ALIGN', (1, 0), (-1, 0), 'CENTER'),
+
+                # Data rows
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('ALIGN', (1, 1), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+
+                # All rows
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('TOPPADDING', (0, 0), (-1, -1), 4),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                ('LEFTPADDING', (0, 0), (-1, -1), 4),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+            ]))
+            elements.append(products_table)
 
         # Build PDF
         doc.build(elements)

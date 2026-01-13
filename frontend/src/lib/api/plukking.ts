@@ -125,3 +125,75 @@ export async function bulkUpdatePlukkstatus(
   const response = await apiClient.post(`/v1/plukking/bulk-update-status?plukkstatus=${plukkstatus}`, ordreIds)
   return response.data
 }
+
+// Pick registration types
+export interface PickDetailLine {
+  produktid: number
+  unik: number
+  produktnavn?: string
+  antall: number
+  plukket_antall?: number
+  enhet?: string
+}
+
+export interface PickDetailsResponse {
+  ordreid: number
+  kundenavn?: string
+  leveringsdato?: string
+  plukkstatus?: string
+  lines: PickDetailLine[]
+}
+
+export interface PickedLineInput {
+  produktid: number
+  unik: number
+  plukket_antall: number
+}
+
+/**
+ * Get order details for pick registration
+ */
+export async function getPickDetails(ordreId: number): Promise<PickDetailsResponse> {
+  const response = await apiClient.get<PickDetailsResponse>(`/v1/plukking/${ordreId}/plukkdetaljer`)
+  return response.data
+}
+
+/**
+ * Register picked quantities for an order
+ */
+export async function registerPickQuantities(
+  ordreId: number,
+  lines: PickedLineInput[]
+): Promise<{ message: string; updated_count: number; ordreid: number; plukkstatus: string }> {
+  const response = await apiClient.post(`/v1/plukking/${ordreId}/registrer-plukk`, { lines })
+  return response.data
+}
+
+// AI Scan types
+export interface ScannedLine {
+  produktid: number
+  unik: number
+  plukket_antall: number
+}
+
+export interface ScanPickListResponse {
+  success: boolean
+  lines: ScannedLine[]
+  confidence: number
+  notes: string
+  error?: string
+}
+
+/**
+ * Scan a pick list image using AI Vision
+ */
+export async function scanPickList(
+  ordreId: number,
+  imageBase64: string
+): Promise<ScanPickListResponse> {
+  const response = await apiClient.post<ScanPickListResponse>(
+    `/v1/plukking/${ordreId}/scan-plukkliste`,
+    { image_base64: imageBase64 }
+  )
+  return response.data
+}

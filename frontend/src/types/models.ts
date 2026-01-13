@@ -143,6 +143,8 @@ export interface OrderLine {
   antall?: number
   rabatt?: number
   ident?: string
+  // Pick registration
+  plukket_antall?: number
   // Direct product info (from webshop API)
   produktnavn?: string
   visningsnavn?: string

@@ -448,6 +448,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(AddKundeIdToUsers())
         migration_runner.add_migration(DropSsmaTimestampColumns())
         migration_runner.add_migration(AddBestiltAvToOrders())
+        migration_runner.add_migration(AddPlukketAntallToOrderDetails())
     return migration_runner
 
 
@@ -1062,6 +1063,24 @@ class AddBestiltAvToOrders(Migration):
             await conn.execute(text("""
                 ALTER TABLE tblordrer
                 ADD COLUMN IF NOT EXISTS bestilt_av INTEGER REFERENCES users(id) ON DELETE SET NULL
+            """))
+
+
+class AddPlukketAntallToOrderDetails(Migration):
+    """Add plukket_antall field to tblordredetaljer for tracking picked quantities."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260113_003_plukket_antall",
+            description="Add plukket_antall field to tblordredetaljer for pick registration"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Add plukket_antall column
+            await conn.execute(text("""
+                ALTER TABLE tblordredetaljer
+                ADD COLUMN IF NOT EXISTS plukket_antall FLOAT DEFAULT NULL
             """))
 
 

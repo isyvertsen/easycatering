@@ -41,6 +41,14 @@ async def lifespan(app: FastAPI):
 
     yield
     logger.info(f"Shutting down Catering System API v{APP_VERSION}")
+
+    # Properly dispose of database connections to avoid event loop errors on restart
+    try:
+        await engine.dispose()
+        logger.info("Database connections disposed")
+    except Exception as e:
+        logger.warning(f"Error disposing database connections: {e}")
+
     shutdown_logging()
 
 

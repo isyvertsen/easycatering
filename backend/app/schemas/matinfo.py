@@ -79,12 +79,11 @@ class GPCResponse(BaseModel):
     """GPC classification response."""
     segment: Optional[List[Dict[str, Any]]] = None
     family: Optional[List[Dict[str, Any]]] = None
-    class_: Optional[List[Dict[str, Any]]] = None
+    class_: Optional[List[Dict[str, Any]]] = Field(default=None, alias="class")
     brick: Optional[List[Dict[str, Any]]] = None
     gpcAttributes: Optional[List[GPCAttributeResponse]] = None
 
-    class Config:
-        fields = {"class_": "class"}
+    model_config = {"populate_by_name": True}
 
 
 class PreparationsResponse(BaseModel):
@@ -163,8 +162,7 @@ class ProductDetailResponse(BaseModel):
     preparations: Optional[PreparationsResponse] = None
     storageInfo: Optional[StorageInfoResponse] = None
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 
 class ProductListResponse(BaseModel):

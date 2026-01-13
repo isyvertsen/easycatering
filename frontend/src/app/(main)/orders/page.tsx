@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useOrdersList, useBatchUpdateOrderStatus } from "@/hooks/useOrders"
@@ -9,16 +9,37 @@ import { Order } from "@/types/models"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Filter, ArrowUp, ArrowDown, CheckCircle, PlayCircle, Package, Search } from "lucide-react"
+import { Plus, Filter, ArrowUp, ArrowDown, CheckCircle, PlayCircle, Package, Search, FileDown } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
+import { reportsApi } from "@/lib/api/reports"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+
+// Status options for filtering
+const STATUS_OPTIONS = [
+  { id: 10, label: "Startet" },
+  { id: 15, label: "Bestilt" },
+  { id: 20, label: "Godkjent" },
+  { id: 25, label: "Plukkliste" },
+  { id: 30, label: "Plukket" },
+  { id: 35, label: "Pakkliste" },
+  { id: 80, label: "Godkjent mottaker" },
+  { id: 85, label: "Fakturert" },
+  { id: 90, label: "Sendt regnskap" },
+  { id: 95, label: "Kreditert" },
+  { id: 98, label: "For sen kansellering" },
+  { id: 99, label: "Kansellert" },
+]
+
+// Default: show non-delivered orders (status < 80, excluding cancelled)
+const DEFAULT_STATUS_IDS = [10, 15, 20, 25, 30, 35]
+const STORAGE_KEY = "orders-status-filter"
 
 const getOrderStatus = (order: Order) => {
   if (order.kansellertdato) {
@@ -55,6 +76,7 @@ export default function OrdersPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilterLoaded, setStatusFilterLoaded] = useState(false)
   const [params, setParams] = useState({
     skip: 0,
     limit: 20,
@@ -62,10 +84,30 @@ export default function OrdersPage() {
     sort_by: 'leveringsdato' as 'leveringsdato' | 'ordredato',
     sort_order: 'asc' as 'asc' | 'desc',
     kundegruppe_ids: [] as number[],
+    status_ids: [] as number[],
   })
   const [selectedOrders, setSelectedOrders] = useState<number[]>([])
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
 
-  const { data, isLoading } = useOrdersList(params)
+  // Load status filter from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      try {
+        const statusIds = JSON.parse(stored) as number[]
+        // Only use stored value if it's a valid non-empty array
+        if (Array.isArray(statusIds) && statusIds.length > 0) {
+          setParams(prev => ({ ...prev, status_ids: statusIds }))
+        }
+        // If empty array or invalid, keep default (show all)
+      } catch {
+        // Invalid JSON, keep default (show all)
+      }
+    }
+    setStatusFilterLoaded(true)
+  }, [])
+
+  const { data, isLoading } = useOrdersList(params, { enabled: statusFilterLoaded })
   const { data: kundegrupper } = useKundegrupper()
   const batchStatusMutation = useBatchUpdateOrderStatus()
 
@@ -94,6 +136,34 @@ export default function OrdersPage() {
         : [...prev.kundegruppe_ids, gruppeid],
       skip: 0, // Reset to first page when filtering
     }))
+  }
+
+  const handleStatusToggle = (statusId: number) => {
+    setParams(prev => {
+      let newStatusIds: number[]
+      if (prev.status_ids.length === 0) {
+        // Currently showing all - click means "show all except this one"
+        newStatusIds = STATUS_OPTIONS.map(s => s.id).filter(id => id !== statusId)
+      } else if (prev.status_ids.includes(statusId)) {
+        // Remove from filter
+        newStatusIds = prev.status_ids.filter(id => id !== statusId)
+      } else {
+        // Add to filter
+        newStatusIds = [...prev.status_ids, statusId]
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newStatusIds))
+      return { ...prev, status_ids: newStatusIds, skip: 0 }
+    })
+  }
+
+  const clearStatusFilter = () => {
+    localStorage.removeItem(STORAGE_KEY)
+    setParams(prev => ({ ...prev, status_ids: [], skip: 0 }))
+  }
+
+  const resetStatusFilter = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_STATUS_IDS))
+    setParams(prev => ({ ...prev, status_ids: DEFAULT_STATUS_IDS, skip: 0 }))
   }
 
   const handleSortChange = (field: 'leveringsdato' | 'ordredato') => {
@@ -149,6 +219,35 @@ export default function OrdersPage() {
         description: "Kunne ikke oppdatere ordrer",
         variant: "destructive",
       })
+    }
+  }
+
+  const handlePickListWithPdf = async () => {
+    if (selectedOrders.length === 0) return
+
+    setIsGeneratingPdf(true)
+    try {
+      // First generate and download the PDF
+      await reportsApi.downloadBatchPickList(selectedOrders)
+
+      // Then update status to 25 (Plukkliste)
+      const result = await batchStatusMutation.mutateAsync({
+        orderIds: selectedOrders,
+        statusId: 25
+      })
+      toast({
+        title: "Plukkliste generert",
+        description: `PDF lastet ned og ${result.message}`,
+      })
+      setSelectedOrders([])
+    } catch (error) {
+      toast({
+        title: "Feil",
+        description: "Kunne ikke generere plukkliste",
+        variant: "destructive",
+      })
+    } finally {
+      setIsGeneratingPdf(false)
     }
   }
 
@@ -229,6 +328,53 @@ export default function OrdersPage() {
           </PopoverContent>
         </Popover>
 
+        {/* Status filter */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Filter className="mr-2 h-4 w-4" />
+              Status
+              {params.status_ids.length > 0 && params.status_ids.length < STATUS_OPTIONS.length && (
+                <Badge variant="secondary" className="ml-2">
+                  {params.status_ids.length}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h4 className="font-medium">Filtrer etter status</h4>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="sm" onClick={resetStatusFilter}>
+                    Standard
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={clearStatusFilter}>
+                    Vis alle
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {STATUS_OPTIONS.map(status => (
+                  <div key={status.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`status-${status.id}`}
+                      checked={params.status_ids.length === 0 || params.status_ids.includes(status.id)}
+                      onCheckedChange={() => handleStatusToggle(status.id)}
+                    />
+                    <Label
+                      htmlFor={`status-${status.id}`}
+                      className="text-sm font-normal cursor-pointer flex-1"
+                    >
+                      {status.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
         {/* Sort controls */}
         <div className="flex items-center gap-2">
           <Label className="text-sm">Sorter etter:</Label>
@@ -274,11 +420,11 @@ export default function OrdersPage() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => handleBatchStatusUpdate(25)}
-              disabled={batchStatusMutation.isPending}
+              onClick={handlePickListWithPdf}
+              disabled={batchStatusMutation.isPending || isGeneratingPdf}
             >
-              <PlayCircle className="mr-1 h-4 w-4" />
-              Plukkliste
+              <FileDown className="mr-1 h-4 w-4" />
+              {isGeneratingPdf ? "Genererer..." : "Plukkliste"}
             </Button>
             <Button
               size="sm"
