@@ -13,7 +13,8 @@ import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { reportsApi } from "@/lib/api/reports"
-import { Copy, FileText, Truck, CheckCircle, Clock, Package, PlayCircle, ClipboardList } from "lucide-react"
+import { Copy, FileText, Truck, CheckCircle, Clock, Package, PlayCircle, ClipboardList, Info, RotateCcw } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface OrderEditPageProps {
   params: Promise<{ id: string }>
@@ -29,16 +30,23 @@ const getOrderStatus = (order: Order) => {
   if (order.sentbekreftelse) {
     return { label: "Bekreftet", variant: "secondary" as const }
   }
-  if (order.ordrestatusid === 1) {
-    return { label: "Ny", variant: "outline" as const }
+
+  const statusMap: Record<number, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+    10: { label: "Startet", variant: "outline" },
+    15: { label: "Bestilt", variant: "outline" },
+    20: { label: "Godkjent", variant: "default" },
+    25: { label: "Plukkliste", variant: "secondary" },
+    30: { label: "Plukket", variant: "secondary" },
+    35: { label: "Pakkliste", variant: "secondary" },
+    80: { label: "Godkjent mottaker", variant: "default" },
+    85: { label: "Fakturert", variant: "default" },
+    90: { label: "Sendt regnskap", variant: "default" },
+    95: { label: "Kreditert", variant: "secondary" },
+    98: { label: "For sen kansellering", variant: "destructive" },
+    99: { label: "Kansellert", variant: "destructive" },
   }
-  if (order.ordrestatusid === 2) {
-    return { label: "Under behandling", variant: "secondary" as const }
-  }
-  if (order.ordrestatusid === 3) {
-    return { label: "Godkjent", variant: "default" as const }
-  }
-  return { label: "Ukjent", variant: "outline" as const }
+
+  return statusMap[order.ordrestatusid] || { label: "Ukjent", variant: "outline" as const }
 }
 
 export default function OrderEditPage({ params }: OrderEditPageProps) {
@@ -108,10 +116,14 @@ export default function OrderEditPage({ params }: OrderEditPageProps) {
   const handleStatusChange = async (statusId: number) => {
     try {
       await updateStatusMutation.mutateAsync({ id: Number(id), statusId })
-      const statusNames: Record<number, string> = { 1: "Ny", 2: "Under behandling", 3: "Godkjent", 4: "Levert" }
+      const statusNames: Record<number, string> = {
+        10: "Startet", 15: "Bestilt", 20: "Godkjent", 25: "Plukkliste",
+        30: "Plukket", 35: "Pakkliste", 80: "Godkjent mottaker",
+        85: "Fakturert", 90: "Sendt regnskap", 99: "Kansellert"
+      }
       toast({
         title: "Status oppdatert",
-        description: `Ordrestatus endret til "${statusNames[statusId]}"`,
+        description: `Ordrestatus endret til "${statusNames[statusId] || statusId}"`,
       })
     } catch (error) {
       toast({
@@ -189,6 +201,8 @@ export default function OrderEditPage({ params }: OrderEditPageProps) {
   const status = getOrderStatus(order)
   const isCancelled = !!order.kansellertdato
   const isDelivered = !!order.ordrelevert
+  // Order lines can only be edited when status < 20 (before "Godkjent")
+  const isApproved = order.ordrestatusid >= 20
 
   return (
     <div className="space-y-6">
@@ -262,9 +276,26 @@ export default function OrderEditPage({ params }: OrderEditPageProps) {
         </div>
         
         <div className="space-y-6">
+          {isApproved && !isCancelled && !isDelivered && (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between">
+                <span>Ordrelinjer kan ikke endres når ordren er godkjent.</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleStatusChange(10)}
+                  disabled={updateStatusMutation.isPending}
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Åpne igjen
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
           <OrderLines
             orderId={Number(id)}
-            readOnly={isCancelled || isDelivered}
+            readOnly={isCancelled || isDelivered || isApproved}
           />
 
           {/* Status Workflow */}
@@ -279,26 +310,17 @@ export default function OrderEditPage({ params }: OrderEditPageProps) {
               <CardContent>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
-                    variant={order.ordrestatusid === 1 ? "default" : "outline"}
-                    onClick={() => handleStatusChange(1)}
+                    variant={order.ordrestatusid === 15 ? "default" : "outline"}
+                    onClick={() => handleStatusChange(15)}
                     disabled={updateStatusMutation.isPending || isDelivered}
                     className="justify-start"
                   >
                     <Clock className="mr-2 h-4 w-4" />
-                    Ny
+                    Bestilt
                   </Button>
                   <Button
-                    variant={order.ordrestatusid === 2 ? "default" : "outline"}
-                    onClick={() => handleStatusChange(2)}
-                    disabled={updateStatusMutation.isPending || isDelivered}
-                    className="justify-start"
-                  >
-                    <PlayCircle className="mr-2 h-4 w-4" />
-                    Under behandling
-                  </Button>
-                  <Button
-                    variant={order.ordrestatusid === 3 ? "default" : "outline"}
-                    onClick={() => handleStatusChange(3)}
+                    variant={order.ordrestatusid === 20 ? "default" : "outline"}
+                    onClick={() => handleStatusChange(20)}
                     disabled={updateStatusMutation.isPending || isDelivered}
                     className="justify-start"
                   >
@@ -306,13 +328,22 @@ export default function OrderEditPage({ params }: OrderEditPageProps) {
                     Godkjent
                   </Button>
                   <Button
-                    variant={order.ordrestatusid === 4 || isDelivered ? "default" : "outline"}
-                    onClick={() => handleStatusChange(4)}
+                    variant={order.ordrestatusid === 25 ? "default" : "outline"}
+                    onClick={() => handleStatusChange(25)}
+                    disabled={updateStatusMutation.isPending || isDelivered}
+                    className="justify-start"
+                  >
+                    <PlayCircle className="mr-2 h-4 w-4" />
+                    Plukkliste
+                  </Button>
+                  <Button
+                    variant={order.ordrestatusid === 30 ? "default" : "outline"}
+                    onClick={() => handleStatusChange(30)}
                     disabled={updateStatusMutation.isPending || isDelivered}
                     className="justify-start"
                   >
                     <Package className="mr-2 h-4 w-4" />
-                    Levert
+                    Plukket
                   </Button>
                 </div>
               </CardContent>

@@ -59,11 +59,9 @@ export default function WebshopLayout({
 }) {
   return (
     <CartProvider>
-      <div className="min-h-screen bg-muted/30">
-        <WebshopAccessCheck>
-          {children}
-        </WebshopAccessCheck>
-      </div>
+      <WebshopAccessCheck>
+        {children}
+      </WebshopAccessCheck>
       <Toaster />
     </CartProvider>
   )

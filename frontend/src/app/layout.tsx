@@ -1,9 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Providers } from './providers'
-import { TopNav } from '@/components/layout/top-nav'
 import { Toaster } from '@/components/ui/toaster'
-import { DocumentationChatbot } from '@/components/chatbot'
 import { ErrorBoundary } from '@/components/error/error-boundary'
 import './globals.css'
 
@@ -28,15 +26,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers>
           <ErrorBoundary showDetails={true}>
-            <div className="min-h-screen bg-muted/30">
-              <TopNav />
-              <main className="container mx-auto px-6 py-8 max-w-7xl">
-                {children}
-              </main>
-            </div>
+            {children}
           </ErrorBoundary>
           <Toaster />
-          <DocumentationChatbot />
         </Providers>
       </body>
     </html>
