@@ -227,3 +227,33 @@ export function useBatchApproveWebshopOrders() {
     },
   })
 }
+
+/**
+ * Reopen an order for editing (sets status back to 10)
+ */
+export function useReopenWebshopOrder() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: (id: number) => webshopApi.reopenOrder(id),
+    onSuccess: (data, variables) => {
+      // Invalidate order query
+      queryClient.invalidateQueries({ queryKey: ['webshop', 'order', variables] })
+      // Invalidate my orders list
+      queryClient.invalidateQueries({ queryKey: ['webshop', 'my-orders'] })
+
+      toast({
+        title: 'Ordre gjenåpnet',
+        description: 'Du kan nå redigere ordren',
+      })
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Feil ved gjenåpning',
+        description: error.response?.data?.detail || 'Kunne ikke gjenåpne ordre',
+        variant: 'destructive',
+      })
+    },
+  })
+}

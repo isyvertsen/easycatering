@@ -2,13 +2,15 @@
 
 import { use } from "react"
 import Link from "next/link"
-import { useWebshopOrder, useWebshopOrderLines } from "@/hooks/useWebshop"
+import { useRouter } from "next/navigation"
+import { useWebshopOrder, useWebshopOrderLines, useReopenWebshopOrder } from "@/hooks/useWebshop"
 import { format } from "date-fns"
 import { nb } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Package } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ArrowLeft, Package, Info, RotateCcw } from "lucide-react"
 import { Order } from "@/types/models"
 
 const getOrderStatus = (order: Order) => {
@@ -48,9 +50,21 @@ export default function OrderDetailsPage({
 }) {
   const { id } = use(params)
   const orderId = parseInt(id)
+  const router = useRouter()
 
   const { data: order, isLoading: orderLoading, error: orderError } = useWebshopOrder(orderId)
   const { data: orderLines, isLoading: linesLoading } = useWebshopOrderLines(orderId)
+  const reopenMutation = useReopenWebshopOrder()
+
+  const handleReopen = async () => {
+    try {
+      await reopenMutation.mutateAsync(orderId)
+      // Redirect to webshop to continue editing
+      router.push("/webshop")
+    } catch (error) {
+      // Error is handled by the mutation
+    }
+  }
 
   if (orderLoading || linesLoading) {
     return (
@@ -83,6 +97,11 @@ export default function OrderDetailsPage({
   }
 
   const status = getOrderStatus(order)
+  const statusId = order.ordrestatusid ?? 0
+  const isCancelled = !!order.kansellertdato
+  const isDelivered = !!order.ordrelevert
+  // Allow reopening orders that are submitted but not yet delivered (status 15-35)
+  const canReopen = !isCancelled && !isDelivered && statusId >= 15 && statusId < 80
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-4xl">
@@ -147,6 +166,25 @@ export default function OrderDetailsPage({
           </CardContent>
         </Card>
 
+        {/* Reopen Order Alert */}
+        {canReopen && (
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>Vil du endre ordren? Du kan gjenåpne den for redigering.</span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleReopen}
+                disabled={reopenMutation.isPending}
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                {reopenMutation.isPending ? "Åpner..." : "Åpne igjen"}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Order Lines */}
         <Card>
           <CardHeader>
@@ -167,7 +205,7 @@ export default function OrderDetailsPage({
                   >
                     <div className="flex-1">
                       <p className="font-medium">
-                        {line.produkt?.visningsnavn || line.produkt?.produktnavn || "Ukjent produkt"}
+                        {line.visningsnavn || line.produktnavn || "Ukjent produkt"}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {line.pris?.toFixed(2) || "0.00"} kr × {line.antall || 0}
