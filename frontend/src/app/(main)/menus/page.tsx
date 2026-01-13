@@ -54,9 +54,15 @@ export default function MenusPage() {
       try {
         const response = await api.get("/v1/menygruppe")
         const groupsMap: Record<number, string> = {}
-        response.data.forEach((group: any) => {
-          groupsMap[group.gruppeid] = group.gruppe || group.beskrivelse || ""
-        })
+        // API returns { items: [...] }, not a direct array
+        const groups = response.data.items || response.data
+        if (Array.isArray(groups)) {
+          groups.forEach((group: any) => {
+            // Use menygruppeid as key, beskrivelse as display value
+            const id = group.menygruppeid || group.gruppeid
+            groupsMap[id] = group.beskrivelse || ""
+          })
+        }
         setMenuGroups(groupsMap)
       } catch (error) {
         console.error("Failed to fetch menu groups:", error)
