@@ -1,6 +1,6 @@
 """Menu group schemas."""
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class MenygruppeBase(BaseModel):
@@ -20,7 +20,10 @@ class MenygruppeUpdate(MenygruppeBase):
 
 class Menygruppe(MenygruppeBase):
     """Menu group response schema."""
-    gruppeid: int
+    # Use validation_alias to read from 'menygruppeid' on the model
+    # and serialization_alias to output as 'gruppeid'
+    gruppeid: int = Field(validation_alias="menygruppeid")
 
     class Config:
         from_attributes = True
+        populate_by_name = True
