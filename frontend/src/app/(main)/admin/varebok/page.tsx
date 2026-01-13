@@ -224,8 +224,12 @@ export default function VarebokMatchingPage() {
       // Skip confirmation, apply directly
       applyMatchMutation.mutate({ produktid, varebok_varenummer })
     } else {
-      // Show confirmation dialog
-      setPendingMatch({ produktid, varebok_varenummer, productName, matchName })
+      // Close the product dialog FIRST to avoid stacking modals
+      setSelectedProduct(null)
+      // Then show confirmation dialog (after a micro-delay to ensure cleanup)
+      setTimeout(() => {
+        setPendingMatch({ produktid, varebok_varenummer, productName, matchName })
+      }, 0)
     }
   }
 
