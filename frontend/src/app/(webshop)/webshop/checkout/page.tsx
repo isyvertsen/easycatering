@@ -1,26 +1,36 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useCart } from "@/contexts/CartContext"
-import { useCreateWebshopOrder } from "@/hooks/useWebshop"
+import { useCreateWebshopOrder, useDefaultDeliveryDate } from "@/hooks/useWebshop"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { ShoppingBag, ArrowLeft } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ShoppingBag, ArrowLeft, Calendar } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
+import { nb } from "date-fns/locale"
 
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, getTotalPrice, clearCart } = useCart()
   const createOrder = useCreateWebshopOrder()
+  const { data: defaultDelivery } = useDefaultDeliveryDate()
 
   const [leveringsdato, setLeveringsdato] = useState("")
   const [informasjon, setInformasjon] = useState("")
   const [leveringsadresse, setLeveringsadresse] = useState("")
+
+  // Set default delivery date when loaded
+  useEffect(() => {
+    if (defaultDelivery?.leveringsdato && !leveringsdato) {
+      setLeveringsdato(defaultDelivery.leveringsdato)
+    }
+  }, [defaultDelivery, leveringsdato])
 
   // Redirect if cart is empty
   if (items.length === 0 && !createOrder.isPending) {
@@ -96,7 +106,18 @@ export default function CheckoutPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="leveringsdato">Ønsket leveringsdato (valgfritt)</Label>
+                <Label htmlFor="leveringsdato">Leveringsdato</Label>
+                {defaultDelivery?.ukedag_navn && (
+                  <Alert className="mb-2">
+                    <Calendar className="h-4 w-4" />
+                    <AlertDescription>
+                      Din faste leveringsdag er <strong>{defaultDelivery.ukedag_navn}</strong>.
+                      {leveringsdato && (
+                        <> Neste levering: <strong>{format(new Date(leveringsdato), "d. MMMM yyyy", { locale: nb })}</strong></>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <Input
                   id="leveringsdato"
                   type="date"
@@ -105,7 +126,9 @@ export default function CheckoutPage() {
                   min={format(new Date(), "yyyy-MM-dd")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Hvis du ikke velger dato, leveres ordren så snart som mulig
+                  {defaultDelivery?.leveringsdato
+                    ? "Du kan endre dato hvis du ønsker en annen leveringsdag"
+                    : "Velg ønsket leveringsdato"}
                 </p>
               </div>
 
@@ -150,24 +173,30 @@ export default function CheckoutPage() {
               <CardTitle>Ordresammendrag</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {items.map((item) => (
-                <div
-                  key={item.produktid}
-                  className="flex justify-between items-start pb-3 border-b last:border-b-0"
-                >
-                  <div className="flex-1">
+              {items.map((item) => {
+                // Capitalize helper
+                const capitalize = (str: string) =>
+                  str.toLowerCase().replace(/(?:^|[\s-])(\w)/g, (m) => m.toUpperCase())
+
+                return (
+                  <div
+                    key={item.produktid}
+                    className="flex justify-between items-start pb-3 border-b last:border-b-0"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium">
+                        {capitalize(item.produktnavn)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.pris.toFixed(2)} kr × {item.antall}
+                      </p>
+                    </div>
                     <p className="font-medium">
-                      {item.visningsnavn || item.produktnavn}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {item.pris.toFixed(2)} kr × {item.antall}
+                      {(item.pris * item.antall).toFixed(2)} kr
                     </p>
                   </div>
-                  <p className="font-medium">
-                    {(item.pris * item.antall).toFixed(2)} kr
-                  </p>
-                </div>
-              ))}
+                )
+              })}
 
               <div className="pt-4 border-t">
                 <div className="flex justify-between items-center text-lg font-bold">

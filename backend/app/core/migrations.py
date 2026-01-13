@@ -447,6 +447,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(AddPickingStatusToOrders())
         migration_runner.add_migration(AddKundeIdToUsers())
         migration_runner.add_migration(DropSsmaTimestampColumns())
+        migration_runner.add_migration(AddBestiltAvToOrders())
     return migration_runner
 
 
@@ -1043,6 +1044,24 @@ class AddPickingStatusToOrders(Migration):
             await conn.execute(text("""
                 CREATE INDEX IF NOT EXISTS idx_tblordrer_picking_workflow
                 ON tblordrer(plukkstatus, leveringsdato, kansellertdato)
+            """))
+
+
+class AddBestiltAvToOrders(Migration):
+    """Add bestilt_av field to tblordrer to track who placed webshop orders."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260113_002_bestilt_av",
+            description="Add bestilt_av field to tblordrer for tracking webshop order creator"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Add bestilt_av column (user who placed the order)
+            await conn.execute(text("""
+                ALTER TABLE tblordrer
+                ADD COLUMN IF NOT EXISTS bestilt_av INTEGER REFERENCES users(id) ON DELETE SET NULL
             """))
 
 

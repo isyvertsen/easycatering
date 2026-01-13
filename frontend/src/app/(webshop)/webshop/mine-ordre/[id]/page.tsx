@@ -3,14 +3,15 @@
 import { use } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useWebshopOrder, useWebshopOrderLines, useReopenWebshopOrder } from "@/hooks/useWebshop"
+import { useWebshopOrder, useWebshopOrderLines, useReopenWebshopOrder, useCancelMyWebshopOrder } from "@/hooks/useWebshop"
+import { useCart } from "@/contexts/CartContext"
 import { format } from "date-fns"
 import { nb } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft, Package, Info, RotateCcw } from "lucide-react"
+import { ArrowLeft, Package, Info, RotateCcw, X } from "lucide-react"
 import { Order } from "@/types/models"
 
 const getOrderStatus = (order: Order) => {
@@ -55,12 +56,29 @@ export default function OrderDetailsPage({
   const { data: order, isLoading: orderLoading, error: orderError } = useWebshopOrder(orderId)
   const { data: orderLines, isLoading: linesLoading } = useWebshopOrderLines(orderId)
   const reopenMutation = useReopenWebshopOrder()
+  const cancelMutation = useCancelMyWebshopOrder()
+  const { loadDraftOrder } = useCart()
 
   const handleReopen = async () => {
     try {
       await reopenMutation.mutateAsync(orderId)
+      // Reload cart to show the reopened order
+      await loadDraftOrder()
       // Redirect to webshop to continue editing
       router.push("/webshop")
+    } catch (error) {
+      // Error is handled by the mutation
+    }
+  }
+
+  const handleCancel = async () => {
+    if (!confirm("Er du sikker på at du vil kansellere denne ordren?")) {
+      return
+    }
+    try {
+      await cancelMutation.mutateAsync(orderId)
+      // Redirect to orders list
+      router.push("/webshop/mine-ordre")
     } catch (error) {
       // Error is handled by the mutation
     }
@@ -102,6 +120,8 @@ export default function OrderDetailsPage({
   const isDelivered = !!order.ordrelevert
   // Allow reopening orders that are submitted but not yet delivered (status 15-35)
   const canReopen = !isCancelled && !isDelivered && statusId >= 15 && statusId < 80
+  // Allow cancelling only for orders with status 15 (Bestilt - before approval)
+  const canCancel = !isCancelled && !isDelivered && statusId === 15
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-4xl">
@@ -180,6 +200,25 @@ export default function OrderDetailsPage({
               >
                 <RotateCcw className="mr-2 h-4 w-4" />
                 {reopenMutation.isPending ? "Åpner..." : "Åpne igjen"}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Cancel Order Alert */}
+        {canCancel && (
+          <Alert variant="destructive">
+            <X className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>Vil du kansellere ordren? Dette kan ikke angres.</span>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={handleCancel}
+                disabled={cancelMutation.isPending}
+              >
+                <X className="mr-2 h-4 w-4" />
+                {cancelMutation.isPending ? "Kansellerer..." : "Kanseller ordre"}
               </Button>
             </AlertDescription>
           </Alert>

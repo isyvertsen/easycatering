@@ -50,6 +50,69 @@ async def check_webshop_access(
     return await service.check_webshop_access(current_user)
 
 
+@router.get("/default-leveringsdato")
+async def get_default_delivery_date(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get the default delivery date for the current user's customer.
+
+    Calculates the next delivery date based on the customer's preferred
+    delivery day (leveringsdag). The delivery date is always in the next week.
+
+    Returns:
+    - leveringsdato: The calculated delivery date (ISO format)
+    - leveringsdag: The customer's preferred delivery day (1=Monday, 7=Sunday)
+    - ukedag_navn: The weekday name in Norwegian
+    """
+    from app.services.webshop_service import calculate_next_delivery_date
+    from sqlalchemy import select
+    from app.models.kunder import Kunder
+
+    if not current_user.kundeid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Bruker er ikke knyttet til en kunde"
+        )
+
+    query = select(Kunder).where(Kunder.kundeid == current_user.kundeid)
+    result = await db.execute(query)
+    kunde = result.scalar_one_or_none()
+
+    if not kunde:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Kunde ikke funnet"
+        )
+
+    if not kunde.leveringsdag:
+        return {
+            "leveringsdato": None,
+            "leveringsdag": None,
+            "ukedag_navn": None,
+            "message": "Kunden har ikke registrert foretrukket leveringsdag"
+        }
+
+    ukedag_navn_map = {
+        1: "Mandag",
+        2: "Tirsdag",
+        3: "Onsdag",
+        4: "Torsdag",
+        5: "Fredag",
+        6: "Lørdag",
+        7: "Søndag"
+    }
+
+    leveringsdato = calculate_next_delivery_date(kunde.leveringsdag)
+
+    return {
+        "leveringsdato": leveringsdato.strftime("%Y-%m-%d"),
+        "leveringsdag": kunde.leveringsdag,
+        "ukedag_navn": ukedag_navn_map.get(kunde.leveringsdag, "Ukjent")
+    }
+
+
 # =============================================================================
 # Products
 # =============================================================================
@@ -184,46 +247,8 @@ async def list_my_orders(
     )
 
 
-@router.get("/ordre/{order_id}", response_model=WebshopOrderDetail)
-async def get_webshop_order(
-    order_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Get a single order with details."""
-    service = WebshopService(db)
-
-    order = await service.get_order(order_id, current_user)
-    if not order:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ordre ikke funnet"
-        )
-
-    return order
-
-
-@router.get("/ordre/{order_id}/linjer", response_model=List[WebshopOrderLine])
-async def get_webshop_order_lines(
-    order_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Get order lines for a specific order."""
-    service = WebshopService(db)
-
-    order = await service.get_order(order_id, current_user)
-    if not order:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ordre ikke funnet"
-        )
-
-    return order.ordrelinjer
-
-
 # =============================================================================
-# Admin - Order management
+# Admin - Order management (static routes MUST come before {order_id} routes)
 # =============================================================================
 
 @router.get("/ordre/status", response_model=WebshopOrderListResponse)
@@ -340,6 +365,7 @@ async def batch_approve_orders(
 
 # =============================================================================
 # Token-based order access (no authentication required)
+# These routes use /ordre/token/{token} - must come before /ordre/{order_id}
 # =============================================================================
 
 @router.get("/ordre/token/{token}", response_model=WebshopOrderByTokenResponse)
@@ -391,6 +417,48 @@ async def confirm_receipt_by_token(
         )
 
     return {"message": "Mottak bekreftet"}
+
+
+# =============================================================================
+# Order detail routes (dynamic {order_id} routes - MUST come LAST)
+# =============================================================================
+
+@router.get("/ordre/{order_id}", response_model=WebshopOrderDetail)
+async def get_webshop_order(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get a single order with details."""
+    service = WebshopService(db)
+
+    order = await service.get_order(order_id, current_user)
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ordre ikke funnet"
+        )
+
+    return order
+
+
+@router.get("/ordre/{order_id}/linjer", response_model=List[WebshopOrderLine])
+async def get_webshop_order_lines(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get order lines for a specific order."""
+    service = WebshopService(db)
+
+    order = await service.get_order(order_id, current_user)
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ordre ikke funnet"
+        )
+
+    return order.ordrelinjer
 
 
 # =============================================================================
@@ -565,6 +633,57 @@ async def reopen_order(
         )
 
     return {"message": "Ordre gjenåpnet for redigering", "ordrestatusid": 10}
+
+
+@router.post("/ordre/{order_id}/kanseller-min-ordre")
+async def cancel_my_order(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Cancel own order before it's approved.
+
+    Users can only cancel orders with status 15 (Bestilt).
+    Once an order is approved (status >= 20), it cannot be cancelled by the user.
+    """
+    service = WebshopService(db)
+
+    # Get the order (this checks ownership)
+    order = await service.get_order(order_id, current_user)
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ordre ikke funnet"
+        )
+
+    # Only allow cancellation of orders with status 15 (Bestilt)
+    if order.ordrestatusid != 15:
+        if order.ordrestatusid == 10:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ordren er ikke sendt inn ennå. Du kan slette den i handlekurven."
+            )
+        elif order.ordrestatusid in [98, 99]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ordren er allerede kansellert"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ordren er allerede godkjent og kan ikke kanselleres. Kontakt administrator."
+            )
+
+    # Update status to 99 (Kansellert)
+    success = await service.update_order_status(order_id, 99)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Kunne ikke kansellere ordre"
+        )
+
+    return {"message": "Ordre kansellert", "ordrestatusid": 99}
 
 
 @router.post("/draft-ordre/{order_id}/submit", response_model=WebshopOrderCreateResponse)

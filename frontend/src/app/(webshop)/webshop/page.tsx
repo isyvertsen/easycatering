@@ -9,6 +9,7 @@ import { Search, ShoppingCart, Filter, LayoutGrid, List } from "lucide-react"
 import { ProductCard } from "@/components/webshop/ProductCard"
 import { ProductListItem } from "@/components/webshop/ProductListItem"
 import { ShoppingCartSidebar } from "@/components/webshop/ShoppingCartSidebar"
+import { CartSummaryPanel } from "@/components/webshop/CartSummaryPanel"
 import {
   Select,
   SelectContent,
@@ -154,73 +155,84 @@ export default function WebshopPage() {
         </ToggleGroup>
       </div>
 
-      {/* Loading State */}
-      {isLoading && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">Laster produkter...</p>
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <div className="text-center py-12">
-          <p className="text-destructive">
-            Kunne ikke laste produkter. Vennligst prøv igjen senere.
-          </p>
-        </div>
-      )}
-
-      {/* Product Grid/List */}
-      {data && data.items.length > 0 && (
-        <>
-          {viewMode === "grid" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {data.items.map((product) => (
-                <ProductCard key={product.produktid} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {data.items.map((product) => (
-                <ProductListItem key={product.produktid} product={product} />
-              ))}
+      {/* Main content with cart panel */}
+      <div className="flex gap-6">
+        {/* Product section */}
+        <div className="flex-1 min-w-0">
+          {/* Loading State */}
+          {isLoading && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Laster produkter...</p>
             </div>
           )}
 
-          {/* Pagination */}
-          {data.total_pages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-8">
-              <Button
-                variant="outline"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                Forrige
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Side {page} av {data.total_pages}
-              </span>
-              <Button
-                variant="outline"
-                onClick={() => setPage((p) => Math.min(data.total_pages, p + 1))}
-                disabled={page === data.total_pages}
-              >
-                Neste
-              </Button>
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-12">
+              <p className="text-destructive">
+                Kunne ikke laste produkter. Vennligst prøv igjen senere.
+              </p>
             </div>
           )}
-        </>
-      )}
 
-      {/* No Results */}
-      {data && data.items.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">
-            Ingen produkter funnet.
-            {searchTerm && " Prøv et annet søkeord."}
-          </p>
+          {/* Product Grid/List */}
+          {data && data.items.length > 0 && (
+            <>
+              {viewMode === "grid" ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {data.items.map((product) => (
+                    <ProductCard key={product.produktid} product={product} />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {data.items.map((product) => (
+                    <ProductListItem key={product.produktid} product={product} />
+                  ))}
+                </div>
+              )}
+
+              {/* Pagination */}
+              {data.total_pages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-8">
+                  <Button
+                    variant="outline"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    Forrige
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Side {page} av {data.total_pages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    onClick={() => setPage((p) => Math.min(data.total_pages, p + 1))}
+                    disabled={page === data.total_pages}
+                  >
+                    Neste
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* No Results */}
+          {data && data.items.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                Ingen produkter funnet.
+                {searchTerm && " Prøv et annet søkeord."}
+              </p>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Cart Summary Panel - visible on larger screens */}
+        <div className="hidden lg:block w-96 shrink-0">
+          <CartSummaryPanel />
+        </div>
+      </div>
 
       {/* Shopping Cart Sidebar */}
       <ShoppingCartSidebar open={cartOpen} onOpenChange={setCartOpen} />
