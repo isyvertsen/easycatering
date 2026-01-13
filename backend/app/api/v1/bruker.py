@@ -37,7 +37,7 @@ async def get_brukere(
     db: AsyncSession = Depends(get_db),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    search: Optional[str] = Query(None),
+    search: Optional[str] = Query(None, max_length=200),
     rolle: Optional[str] = Query(None),
     is_active: Optional[bool] = Query(None),
     sort_by: Optional[str] = Query("id"),

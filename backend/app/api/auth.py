@@ -1,20 +1,31 @@
 """Authentication endpoints."""
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 import httpx
 
 from app.core.config import settings
-from app.core.security import create_access_token, create_refresh_token, verify_token
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    verify_token,
+    verify_token_with_blacklist,
+)
+from app.core.rate_limiter import auth_limiter, strict_limiter
+from app.core.token_blacklist import add_to_blacklist, blacklist_all_user_tokens
 from app.infrastructure.database.session import get_db
 from app.domain.services.user_service import UserService
 from app.schemas.auth import Token, TokenRefresh, LoginRequest, GoogleAuthRequest
 from app.schemas.user import UserCreate, UserResponse
 
 router = APIRouter()
+security = HTTPBearer(auto_error=False)
 
 
 @router.post("/register", response_model=UserResponse)
+@strict_limiter.limit  # 3 per 5 minutes - prevent spam registration
 async def register(
+    request: Request,
     user_data: UserCreate,
     db: AsyncSession = Depends(get_db),
 ):
@@ -40,7 +51,9 @@ async def register(
 
 
 @router.post("/login", response_model=Token)
+@auth_limiter.limit  # 5 per minute - prevent brute force
 async def login(
+    request: Request,
     credentials: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ):
@@ -74,13 +87,15 @@ async def login(
 
 
 @router.post("/refresh", response_model=Token)
+@auth_limiter.limit  # 5 per minute
 async def refresh_token(
+    request: Request,
     token_data: TokenRefresh,
     db: AsyncSession = Depends(get_db),
 ):
     """Refresh access token."""
-    # Verify refresh token
-    user_id = verify_token(token_data.refresh_token, token_type="refresh")
+    # Verify refresh token (with blacklist check)
+    user_id = await verify_token_with_blacklist(token_data.refresh_token, token_type="refresh")
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -108,7 +123,9 @@ async def refresh_token(
 
 
 @router.post("/google", response_model=Token)
+@auth_limiter.limit  # 5 per minute
 async def google_auth(
+    request: Request,
     auth_data: GoogleAuthRequest,
     db: AsyncSession = Depends(get_db),
 ):
@@ -140,11 +157,15 @@ async def google_auth(
     
     if not user:
         # Check if email exists
-        user = await user_service.get_by_email(google_data["email"])
-        if user:
-            # Link Google account
-            user.google_id = google_data["sub"]
-            await db.commit()
+        existing_user = await user_service.get_by_email(google_data["email"])
+        if existing_user:
+            # Email exists but not linked to Google - require password login first
+            # This prevents account takeover if someone controls a Google account with victim's email
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="En konto med denne e-postadressen eksisterer allerede. "
+                       "Logg inn med passord først, og koble deretter Google-kontoen din i innstillinger."
+            )
         else:
             # Create new user (inactive until admin approval)
             user = await user_service.create(
@@ -164,9 +185,82 @@ async def google_auth(
     # Create tokens
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
-    
+
     return Token(
         access_token=access_token,
         refresh_token=refresh_token,
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convert to seconds
     )
+
+
+@router.post("/logout")
+async def logout(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    """
+    Logout current session by blacklisting the access token.
+
+    The token will be added to a blacklist and will no longer be valid,
+    even if it hasn't expired yet.
+    """
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No token provided"
+        )
+
+    token = credentials.credentials
+
+    # Verify token is valid before blacklisting
+    user_id = verify_token(token, token_type="access")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+
+    # Add token to blacklist
+    success = await add_to_blacklist(token, token_type="access")
+
+    if success:
+        return {"message": "Utlogget"}
+    else:
+        # Redis not available, but we still return success
+        # (client should discard token anyway)
+        return {"message": "Utlogget (token blacklist ikke tilgjengelig)"}
+
+
+@router.post("/logout-all")
+async def logout_all_sessions(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Logout all sessions for the current user.
+
+    All tokens issued before this point will be invalidated,
+    forcing re-login on all devices.
+    """
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No token provided"
+        )
+
+    token = credentials.credentials
+
+    # Verify token
+    user_id = verify_token(token, token_type="access")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+
+    # Blacklist all tokens for this user
+    success = await blacklist_all_user_tokens(int(user_id))
+
+    if success:
+        return {"message": "Utlogget fra alle enheter"}
+    else:
+        return {"message": "Kunne ikke logge ut fra alle enheter (Redis ikke tilgjengelig)"}

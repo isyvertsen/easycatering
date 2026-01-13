@@ -2,8 +2,14 @@
 
 These endpoints are secured with API key authentication for use by cron jobs.
 Set CRON_API_KEY environment variable and pass it in the X-Cron-API-Key header.
+
+Security requirements:
+- CRON_API_KEY must be at least 32 characters long
+- All cron operations are logged for audit purposes
 """
-from fastapi import APIRouter, Depends, Query, HTTPException, Header
+import logging
+import secrets
+from fastapi import APIRouter, Depends, Query, HTTPException, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
@@ -12,20 +18,43 @@ from app.services.activity_log_service import ActivityLogService
 from app.services.app_log_service import AppLogService
 
 router = APIRouter(prefix="/cron", tags=["cron"])
+logger = logging.getLogger(__name__)
+
+# Minimum required length for CRON_API_KEY
+MIN_API_KEY_LENGTH = 32
 
 
-def verify_cron_api_key(x_cron_api_key: str = Header(..., alias="X-Cron-API-Key")):
-    """Verify the cron API key from header."""
+def verify_cron_api_key(
+    request: Request,
+    x_cron_api_key: str = Header(..., alias="X-Cron-API-Key")
+):
+    """Verify the cron API key from header with security logging."""
+    client_ip = request.client.host if request.client else "unknown"
+
     if not settings.CRON_API_KEY:
+        logger.warning(f"CRON API key not configured. Request from IP: {client_ip}")
         raise HTTPException(
             status_code=503,
             detail="Cron API key not configured. Set CRON_API_KEY environment variable."
         )
-    if x_cron_api_key != settings.CRON_API_KEY:
+
+    # Check minimum key length for security
+    if len(settings.CRON_API_KEY) < MIN_API_KEY_LENGTH:
+        logger.error(f"CRON API key is too short (min {MIN_API_KEY_LENGTH} chars). Request from IP: {client_ip}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Cron API key is too weak. Must be at least {MIN_API_KEY_LENGTH} characters."
+        )
+
+    # Use constant-time comparison to prevent timing attacks
+    if not secrets.compare_digest(x_cron_api_key, settings.CRON_API_KEY):
+        logger.warning(f"Invalid CRON API key attempt from IP: {client_ip}")
         raise HTTPException(
             status_code=401,
             detail="Invalid cron API key"
         )
+
+    logger.info(f"CRON API access granted from IP: {client_ip}")
     return True
 
 

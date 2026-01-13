@@ -22,7 +22,7 @@ async def get_asko_ny_products(
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    search: Optional[str] = Query(None, description="Search in product name or EAN (standard parameter)"),
+    search: Optional[str] = Query(None, max_length=200, description="Search in product name or EAN (standard parameter)"),
     sok: Optional[str] = Query(None, description="Search in product name or EAN (deprecated, use 'search')"),
 ) -> List[AskoNy]:
     """Get all Asko NY products."""

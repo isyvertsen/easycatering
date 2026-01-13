@@ -30,9 +30,8 @@ class EnhancedProductSearchService:
     def init_redis(self):
         """Initialize Redis connection for caching."""
         try:
-            self.redis_client = redis.Redis(
-                host=settings.REDIS_HOST if hasattr(settings, 'REDIS_HOST') else 'localhost',
-                port=settings.REDIS_PORT if hasattr(settings, 'REDIS_PORT') else 6379,
+            self.redis_client = redis.from_url(
+                settings.REDIS_URL,
                 decode_responses=True
             )
         except Exception as e:

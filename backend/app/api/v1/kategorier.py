@@ -28,7 +28,7 @@ async def get_kategorier(
     db: AsyncSession = Depends(get_db),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
-    search: Optional[str] = Query(None, description="Search by name or description"),
+    search: Optional[str] = Query(None, max_length=200, description="Search by name or description"),
     sort_by: Optional[str] = Query(None, description="Field to sort by"),
     sort_order: Literal["asc", "desc"] = Query("asc", description="Sort order"),
 ) -> KategorierListResponse:

@@ -54,7 +54,7 @@ def _get_week_dates(year: int, week: int) -> tuple[datetime, datetime]:
 async def get_perioder(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
-    search: Optional[str] = Query(None, description="Search by week number"),
+    search: Optional[str] = Query(None, max_length=200, description="Search by week number"),
     sort_by: Optional[str] = Query(None, description="Field to sort by"),
     sort_order: Literal["asc", "desc"] = Query("desc", description="Sort order"),
     from_date: Optional[datetime] = None,

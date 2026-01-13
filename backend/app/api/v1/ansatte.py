@@ -20,7 +20,7 @@ async def get_ansatte(
     limit: int = Query(100, ge=1, le=1000),
     aktiv: Optional[bool] = Query(True, description="Filter by active status"),
     avdeling: Optional[str] = Query(None, description="Filter by department"),
-    search: Optional[str] = Query(None, description="Search by name, email, or phone"),
+    search: Optional[str] = Query(None, max_length=200, description="Search by name, email, or phone"),
 ) -> List[Ansatte]:
     """Get all employees."""
     query = select(AnsatteModel)

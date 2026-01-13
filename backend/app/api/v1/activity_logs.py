@@ -40,7 +40,7 @@ async def get_activity_logs(
     response_status: Optional[int] = Query(None),
     date_from: Optional[datetime] = Query(None),
     date_to: Optional[datetime] = Query(None),
-    search: Optional[str] = Query(None),
+    search: Optional[str] = Query(None, max_length=200),
     sort_by: str = Query("created_at"),
     sort_order: Literal["asc", "desc"] = Query("desc"),
 ):

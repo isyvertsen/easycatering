@@ -32,7 +32,7 @@ async def get_produkter(
     limit: int = Query(100, ge=1, le=10000),
     aktiv: Optional[bool] = Query(None, description="Filter by active status"),
     kategori: Optional[int] = Query(None, description="Filter by category ID"),
-    search: Optional[str] = Query(None, description="Search in product name (standard parameter)"),
+    search: Optional[str] = Query(None, max_length=200, description="Search in product name (standard parameter)"),
     sok: Optional[str] = Query(None, description="Search in product name (deprecated, use 'search')"),
     rett_komponent: Optional[bool] = Query(None, description="Filter by dish component status"),
     has_gtin: Optional[bool] = Query(None, description="Filter by GTIN presence: true=has GTIN, false=missing GTIN"),
