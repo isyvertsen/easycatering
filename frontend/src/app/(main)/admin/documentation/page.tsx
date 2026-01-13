@@ -375,7 +375,7 @@ graph TD
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Systemdokumentasjon</h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Komplett dokumentasjon for Larvik Catering System
         </p>
       </div>

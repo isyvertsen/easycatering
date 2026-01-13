@@ -147,7 +147,7 @@ export function GitHubIntegration() {
 
   const getStateIcon = (state: string, draft?: boolean) => {
     if (draft) {
-      return <Clock className="h-4 w-4 text-gray-500" />
+      return <Clock className="h-4 w-4 text-muted-foreground" />
     }
     return state === 'open' ? (
       <AlertCircle className="h-4 w-4 text-green-600" />
@@ -159,19 +159,19 @@ export function GitHubIntegration() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="text-gray-500">Laster GitHub-data...</div>
+        <div className="text-muted-foreground">Laster GitHub-data...</div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <div className="flex items-center gap-2 text-red-800">
+      <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+        <div className="flex items-center gap-2 text-destructive">
           <AlertCircle className="h-5 w-5" />
           <span>{error}</span>
         </div>
-        <p className="mt-2 text-sm text-red-700">
+        <p className="mt-2 text-sm text-destructive/80">
           Sjekk at repository-navnet er korrekt og at du har tilgang til GitHub API.
         </p>
       </div>
@@ -192,7 +192,7 @@ export function GitHubIntegration() {
 
         <TabsContent value="issues" className="space-y-4">
           {issues.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               Ingen åpne issues
             </div>
           ) : (
@@ -200,13 +200,13 @@ export function GitHubIntegration() {
               {issues.map((issue) => (
                 <div
                   key={issue.number}
-                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-start gap-3">
                     {getStateIcon(issue.state)}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-medium text-gray-900 flex-1">
+                        <h3 className="font-medium flex-1">
                           {issue.title}
                         </h3>
                         <a
@@ -218,7 +218,7 @@ export function GitHubIntegration() {
                           <ExternalLink className="h-4 w-4" />
                         </a>
                       </div>
-                      <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                         <Badge variant="secondary" className="text-xs">
                           {getRepoName(issue.repository_url)}
                         </Badge>
@@ -255,7 +255,7 @@ export function GitHubIntegration() {
 
         <TabsContent value="prs" className="space-y-4">
           {pullRequests.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               Ingen åpne pull requests
             </div>
           ) : (
@@ -263,13 +263,13 @@ export function GitHubIntegration() {
               {pullRequests.map((pr) => (
                 <div
                   key={pr.number}
-                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-start gap-3">
                     <GitPullRequest className="h-4 w-4 text-green-600 mt-1" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-medium text-gray-900 flex-1">
+                        <h3 className="font-medium flex-1">
                           {pr.title}
                           {pr.draft && (
                             <Badge variant="outline" className="ml-2">
@@ -286,7 +286,7 @@ export function GitHubIntegration() {
                           <ExternalLink className="h-4 w-4" />
                         </a>
                       </div>
-                      <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                         {pr.repository_url && (
                           <>
                             <Badge variant="secondary" className="text-xs">
@@ -309,9 +309,9 @@ export function GitHubIntegration() {
         </TabsContent>
       </Tabs>
 
-      <div className="border-t pt-4">
+      <div className="border-t border-border pt-4">
         <div className="flex flex-col gap-2">
-          <p className="text-sm text-gray-600 font-medium">GitHub Repositories:</p>
+          <p className="text-sm text-muted-foreground font-medium">GitHub Repositories:</p>
           {GITHUB_REPOS.map(repo => (
             <a
               key={repo}
