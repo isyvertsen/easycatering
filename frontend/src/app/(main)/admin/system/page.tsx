@@ -60,8 +60,8 @@ export default function SystemStatusPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Systemstatus</h1>
-          <p className="text-gray-500 mt-2">Oversikt over systemets helsetilstand</p>
+          <h1 className="text-3xl font-bold">Systemstatus</h1>
+          <p className="text-muted-foreground mt-2">Oversikt over systemets helsetilstand</p>
         </div>
         <Button onClick={checkHealth} variant="outline">
           <RefreshCw className="h-4 w-4 mr-2" />
@@ -84,7 +84,7 @@ export default function SystemStatusPage() {
           <div className="flex items-center gap-4">
             {getStatusBadge(health.status)}
             {health.lastChecked && (
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 Sist sjekket: {health.lastChecked.toLocaleTimeString('nb-NO')}
               </span>
             )}
@@ -104,11 +104,11 @@ export default function SystemStatusPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">Status</span>
+              <span className="text-sm text-muted-foreground">Status</span>
               {getStatusBadge(health.status)}
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">Versjon</span>
+              <span className="text-sm text-muted-foreground">Versjon</span>
               <span className="font-mono text-sm">{health.backendVersion || '-'}</span>
             </div>
           </CardContent>
@@ -124,11 +124,11 @@ export default function SystemStatusPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">Status</span>
+              <span className="text-sm text-muted-foreground">Status</span>
               <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Kjører</Badge>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">Versjon</span>
+              <span className="text-sm text-muted-foreground">Versjon</span>
               <span className="font-mono text-sm">{health.frontendVersion || '-'}</span>
             </div>
           </CardContent>
@@ -144,11 +144,11 @@ export default function SystemStatusPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">Status</span>
+              <span className="text-sm text-muted-foreground">Status</span>
               {getDatabaseStatusBadge(health.details?.database)}
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">Navn</span>
+              <span className="text-sm text-muted-foreground">Navn</span>
               <span className="font-mono text-sm">{health.databaseName || '-'}</span>
             </div>
           </CardContent>
@@ -162,7 +162,7 @@ export default function SystemStatusPage() {
           <CardDescription>Rådata fra /api/health/ready</CardDescription>
         </CardHeader>
         <CardContent>
-          <pre className="bg-gray-100 p-4 rounded-lg text-sm font-mono overflow-auto">
+          <pre className="bg-muted p-4 rounded-lg text-sm font-mono overflow-auto">
             {JSON.stringify({
               status: health.status === 'healthy' ? 'ready' : health.status,
               version: health.backendVersion,
