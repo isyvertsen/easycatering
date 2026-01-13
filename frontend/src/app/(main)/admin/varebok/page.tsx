@@ -574,7 +574,7 @@ export default function VarebokMatchingPage() {
       </Tabs>
 
       {/* Product match dialog */}
-      <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
+      <Dialog open={!!selectedProduct} onOpenChange={(open) => !open && setSelectedProduct(null)}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Matchforslag</DialogTitle>
@@ -696,7 +696,7 @@ export default function VarebokMatchingPage() {
       </Dialog>
 
       {/* Delete confirmation */}
-      <AlertDialog open={!!deleteSupplier} onOpenChange={() => setDeleteSupplier(null)}>
+      <AlertDialog open={!!deleteSupplier} onOpenChange={(open) => !open && setDeleteSupplier(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Slett leverandorfil?</AlertDialogTitle>
@@ -718,9 +718,11 @@ export default function VarebokMatchingPage() {
       </AlertDialog>
 
       {/* Match confirmation dialog */}
-      <AlertDialog open={!!pendingMatch} onOpenChange={() => {
-        setPendingMatch(null)
-        setDontShowAgainChecked(false)
+      <AlertDialog open={!!pendingMatch} onOpenChange={(open) => {
+        if (!open) {
+          setPendingMatch(null)
+          setDontShowAgainChecked(false)
+        }
       }}>
         <AlertDialogContent>
           <AlertDialogHeader>
