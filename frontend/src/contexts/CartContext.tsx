@@ -26,6 +26,26 @@ const CART_STORAGE_KEY = 'webshop-cart'
 const DRAFT_ORDER_ID_KEY = 'webshop-draft-order-id'
 const SAVE_DEBOUNCE_MS = 1000 // Wait 1 second before saving
 
+// Validate cart item from localStorage
+function isValidCartItem(item: unknown): item is CartItem {
+  if (!item || typeof item !== 'object') return false
+  const i = item as Record<string, unknown>
+  return (
+    typeof i.produktid === 'number' && i.produktid > 0 &&
+    typeof i.produktnavn === 'string' &&
+    typeof i.pris === 'number' && i.pris >= 0 &&
+    typeof i.antall === 'number' && i.antall > 0 &&
+    (i.visningsnavn === undefined || typeof i.visningsnavn === 'string') &&
+    (i.bilde === undefined || typeof i.bilde === 'string')
+  )
+}
+
+// Validate cart items array from localStorage
+function validateCartItems(data: unknown): CartItem[] {
+  if (!Array.isArray(data)) return []
+  return data.filter(isValidCartItem)
+}
+
 /**
  * Shopping Cart Provider with backend sync
  *
@@ -48,7 +68,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const pendingSaveRef = useRef(false)
   const isClearingRef = useRef(false) // Prevents auto-reload after intentional clear
 
-  // Load cart from localStorage on mount
+  // Load cart from localStorage on mount with validation
   useEffect(() => {
     const stored = localStorage.getItem(CART_STORAGE_KEY)
     const storedDraftId = localStorage.getItem(DRAFT_ORDER_ID_KEY)
@@ -56,14 +76,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
-        setItems(parsed)
+        // Validate all cart items before using
+        const validItems = validateCartItems(parsed)
+        if (validItems.length !== parsed.length) {
+          console.warn('Some invalid cart items were filtered out')
+        }
+        setItems(validItems)
       } catch (error) {
         console.error('Failed to parse cart from localStorage', error)
       }
     }
 
     if (storedDraftId) {
-      setDraftOrderId(parseInt(storedDraftId, 10))
+      const draftId = parseInt(storedDraftId, 10)
+      // Validate draft order ID is a positive integer
+      if (!isNaN(draftId) && draftId > 0) {
+        setDraftOrderId(draftId)
+      } else {
+        console.warn('Invalid draft order ID in localStorage, ignoring')
+        localStorage.removeItem(DRAFT_ORDER_ID_KEY)
+      }
     }
 
     setIsHydrated(true)

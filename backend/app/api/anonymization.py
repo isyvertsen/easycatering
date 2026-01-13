@@ -8,6 +8,8 @@ from typing import Dict, Any, Optional
 import logging
 
 from app.infrastructure.database.session import get_db
+from app.api.admin import get_current_admin
+from app.domain.entities.user import User
 from scripts.anonymize_customers import CustomerAnonymizer
 
 router = APIRouter()
@@ -17,6 +19,7 @@ logger = logging.getLogger(__name__)
 @router.post("/customers/{customer_id}/anonymize")
 async def anonymize_customer(
     customer_id: int,
+    admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
     """
@@ -58,6 +61,7 @@ async def anonymize_all_customers(
     background_tasks: BackgroundTasks,
     batch_size: int = 100,
     kundegruppe: Optional[int] = None,
+    admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
     """

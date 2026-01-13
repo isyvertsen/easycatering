@@ -29,6 +29,14 @@ async def lifespan(app: FastAPI):
     """Handle application lifecycle events."""
     logger.info(f"Starting up Catering System API v{APP_VERSION}")
 
+    # Security warning for AUTH_BYPASS
+    if settings.AUTH_BYPASS:
+        logger.warning("=" * 60)
+        logger.warning("WARNING: AUTH_BYPASS is ENABLED!")
+        logger.warning("All authentication is bypassed. This should NEVER be used in production.")
+        logger.warning("Set AUTH_BYPASS=false in production environments.")
+        logger.warning("=" * 60)
+
     # Run database migrations
     try:
         logger.info("Running database migrations...")

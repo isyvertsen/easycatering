@@ -123,11 +123,12 @@ export default function AIReportGeneratorPage() {
   const handleOpenInNewTab = () => {
     if (!generatedHtml) return
 
-    const newWindow = window.open()
-    if (newWindow) {
-      newWindow.document.write(generatedHtml)
-      newWindow.document.close()
-    }
+    // Use blob URL instead of document.write to prevent XSS
+    const blob = new Blob([generatedHtml], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank')
+    // Clean up blob URL after a short delay to allow the new tab to load
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   return (

@@ -19,7 +19,7 @@ export function MarkdownViewer({ content }: MarkdownViewerProps) {
     mermaid.initialize({
       startOnLoad: true,
       theme: 'default',
-      securityLevel: 'loose',
+      securityLevel: 'strict',
       fontFamily: 'inherit',
     })
 
