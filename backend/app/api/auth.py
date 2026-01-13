@@ -140,11 +140,15 @@ async def google_auth(
     
     if not user:
         # Check if email exists
-        user = await user_service.get_by_email(google_data["email"])
-        if user:
-            # Link Google account
-            user.google_id = google_data["sub"]
-            await db.commit()
+        existing_user = await user_service.get_by_email(google_data["email"])
+        if existing_user:
+            # Email exists but not linked to Google - require password login first
+            # This prevents account takeover if someone controls a Google account with victim's email
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="En konto med denne e-postadressen eksisterer allerede. "
+                       "Logg inn med passord først, og koble deretter Google-kontoen din i innstillinger."
+            )
         else:
             # Create new user (inactive until admin approval)
             user = await user_service.create(
