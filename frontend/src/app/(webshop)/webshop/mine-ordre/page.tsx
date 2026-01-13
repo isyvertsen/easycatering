@@ -32,10 +32,7 @@ const getOrderStatus = (order: Order) => {
   }
 
   const statusMap: Record<number, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-    1: { label: "Ny", variant: "outline" },
-    5: { label: "Ny ordre", variant: "outline" },
-    8: { label: "Ny webshop", variant: "outline" },
-    10: { label: "Startet", variant: "secondary" },
+    10: { label: "Startet", variant: "outline" },
     15: { label: "Bestilt", variant: "outline" },
     20: { label: "Godkjent", variant: "default" },
     25: { label: "Plukkliste", variant: "secondary" },
@@ -44,6 +41,8 @@ const getOrderStatus = (order: Order) => {
     80: { label: "Godkjent mottaker", variant: "default" },
     85: { label: "Fakturert", variant: "default" },
     90: { label: "Sendt regnskap", variant: "default" },
+    95: { label: "Kreditert", variant: "secondary" },
+    98: { label: "For sen kansellering", variant: "destructive" },
     99: { label: "Kansellert", variant: "destructive" },
   }
 

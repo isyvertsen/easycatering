@@ -33,12 +33,7 @@ const getOrderStatus = (order: Order) => {
 
   // Map ordrestatusid til lesbar status
   const statusMap: Record<number, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-    1: { label: "Ny", variant: "outline" },
-    2: { label: "Fakturert", variant: "default" },
-    3: { label: "Levert", variant: "default" },
-    5: { label: "Ny ordre", variant: "outline" },
-    8: { label: "Ny webshop", variant: "outline" },
-    10: { label: "Startet", variant: "secondary" },
+    10: { label: "Startet", variant: "outline" },
     15: { label: "Bestilt", variant: "outline" },
     20: { label: "Godkjent", variant: "default" },
     25: { label: "Plukkliste", variant: "secondary" },
@@ -47,6 +42,8 @@ const getOrderStatus = (order: Order) => {
     80: { label: "Godkjent mottaker", variant: "default" },
     85: { label: "Fakturert", variant: "default" },
     90: { label: "Sendt regnskap", variant: "default" },
+    95: { label: "Kreditert", variant: "secondary" },
+    98: { label: "For sen kansellering", variant: "destructive" },
     99: { label: "Kansellert", variant: "destructive" },
   }
 
@@ -267,16 +264,7 @@ export default function OrdersPage() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => handleBatchStatusUpdate(2)}
-              disabled={batchStatusMutation.isPending}
-            >
-              <PlayCircle className="mr-1 h-4 w-4" />
-              Under behandling
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleBatchStatusUpdate(3)}
+              onClick={() => handleBatchStatusUpdate(20)}
               disabled={batchStatusMutation.isPending}
             >
               <CheckCircle className="mr-1 h-4 w-4" />
@@ -285,11 +273,20 @@ export default function OrdersPage() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => handleBatchStatusUpdate(4)}
+              onClick={() => handleBatchStatusUpdate(25)}
+              disabled={batchStatusMutation.isPending}
+            >
+              <PlayCircle className="mr-1 h-4 w-4" />
+              Plukkliste
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleBatchStatusUpdate(30)}
               disabled={batchStatusMutation.isPending}
             >
               <Package className="mr-1 h-4 w-4" />
-              Marker levert
+              Plukket
             </Button>
           </div>
           <Button

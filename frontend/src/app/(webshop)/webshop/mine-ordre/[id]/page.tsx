@@ -23,10 +23,7 @@ const getOrderStatus = (order: Order) => {
   }
 
   const statusMap: Record<number, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-    1: { label: "Ny", variant: "outline" },
-    5: { label: "Ny ordre", variant: "outline" },
-    8: { label: "Ny webshop", variant: "outline" },
-    10: { label: "Startet", variant: "secondary" },
+    10: { label: "Startet", variant: "outline" },
     15: { label: "Bestilt", variant: "outline" },
     20: { label: "Godkjent", variant: "default" },
     25: { label: "Plukkliste", variant: "secondary" },
@@ -35,6 +32,8 @@ const getOrderStatus = (order: Order) => {
     80: { label: "Godkjent mottaker", variant: "default" },
     85: { label: "Fakturert", variant: "default" },
     90: { label: "Sendt regnskap", variant: "default" },
+    95: { label: "Kreditert", variant: "secondary" },
+    98: { label: "For sen kansellering", variant: "destructive" },
     99: { label: "Kansellert", variant: "destructive" },
   }
 
@@ -212,23 +211,32 @@ export default function OrderDetailsPage({
             <div className="space-y-2 text-sm">
               <p className="font-semibold">Ordrestatus:</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                {order.ordrestatusid === 1 && (
+                {(order.ordrestatusid === 10 || order.ordrestatusid === 15) && (
                   <>
                     <li>Ordren venter på godkjenning fra administrator</li>
                     <li>Du vil bli varslet når ordren er behandlet</li>
                   </>
                 )}
-                {order.ordrestatusid === 2 && (
-                  <>
-                    <li>Ordren er under behandling</li>
-                    <li>Administrator gjennomgår bestillingen</li>
-                  </>
-                )}
-                {order.ordrestatusid === 3 && (
+                {order.ordrestatusid === 20 && (
                   <>
                     <li>Ordren er godkjent</li>
                     <li>Produktene klargjøres for levering</li>
                   </>
+                )}
+                {(order.ordrestatusid === 25 || order.ordrestatusid === 30 || order.ordrestatusid === 35) && (
+                  <>
+                    <li>Ordren er under pakking</li>
+                    <li>Produktene klargjøres for levering</li>
+                  </>
+                )}
+                {order.ordrestatusid === 80 && (
+                  <li>Ordren er godkjent av mottaker</li>
+                )}
+                {order.ordrestatusid === 85 && (
+                  <li>Ordren er fakturert</li>
+                )}
+                {order.ordrestatusid === 90 && (
+                  <li>Ordren er sendt til regnskap</li>
                 )}
                 {order.ordrelevert && <li>Ordren er levert</li>}
                 {order.kansellertdato && (
