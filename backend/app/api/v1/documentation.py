@@ -1,5 +1,5 @@
 """Documentation API endpoints."""
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
 from fastapi.responses import FileResponse
 
@@ -15,6 +15,65 @@ from app.schemas.documentation import (
 
 router = APIRouter()
 doc_service = DocumentationService()
+
+
+# Magic bytes signatures for common image formats
+IMAGE_SIGNATURES = {
+    b'\x89PNG\r\n\x1a\n': ('.png', 'image/png'),
+    b'\xff\xd8\xff': ('.jpg', 'image/jpeg'),
+    b'GIF87a': ('.gif', 'image/gif'),
+    b'GIF89a': ('.gif', 'image/gif'),
+    b'RIFF': ('.webp', 'image/webp'),  # WebP starts with RIFF, but we check more below
+}
+
+
+def validate_image_content(content: bytes, claimed_extension: str) -> Tuple[bool, str]:
+    """
+    Validate that file content matches a valid image format.
+
+    Args:
+        content: The raw file bytes
+        claimed_extension: The file extension from the filename
+
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    if len(content) < 12:
+        return False, "File is too small to be a valid image"
+
+    # Check for PNG
+    if content[:8] == b'\x89PNG\r\n\x1a\n':
+        if claimed_extension not in ('.png',):
+            return False, f"File content is PNG but extension is {claimed_extension}"
+        return True, ""
+
+    # Check for JPEG (various markers)
+    if content[:3] == b'\xff\xd8\xff':
+        if claimed_extension not in ('.jpg', '.jpeg'):
+            return False, f"File content is JPEG but extension is {claimed_extension}"
+        return True, ""
+
+    # Check for GIF
+    if content[:6] in (b'GIF87a', b'GIF89a'):
+        if claimed_extension not in ('.gif',):
+            return False, f"File content is GIF but extension is {claimed_extension}"
+        return True, ""
+
+    # Check for WebP (RIFF + WEBP)
+    if content[:4] == b'RIFF' and content[8:12] == b'WEBP':
+        if claimed_extension not in ('.webp',):
+            return False, f"File content is WebP but extension is {claimed_extension}"
+        return True, ""
+
+    # Check for SVG (XML-based)
+    # SVG can start with XML declaration or directly with <svg
+    content_start = content[:1024].lower()
+    if b'<svg' in content_start or (b'<?xml' in content_start and b'svg' in content_start):
+        if claimed_extension not in ('.svg',):
+            return False, f"File content is SVG but extension is {claimed_extension}"
+        return True, ""
+
+    return False, "File content does not match any supported image format"
 
 
 @router.get("/", response_model=List[DocumentationFile])
@@ -63,7 +122,7 @@ async def upload_image(
     Accepts image files and saves them to the docs/images directory.
     Returns the URL path to access the image.
     """
-    # Validate file type
+    # Validate file extension
     allowed_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp'}
     file_ext = None
     if file.filename:
@@ -84,6 +143,14 @@ async def upload_image(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Filen er for stor. Maks størrelse er 5MB"
+        )
+
+    # Validate file content matches claimed type (prevent malicious files with fake extensions)
+    is_valid, error_message = validate_image_content(content, file_ext)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Ugyldig filinnhold: {error_message}"
         )
 
     # Save the file
