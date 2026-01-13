@@ -18,6 +18,36 @@ interface ZebraPrinter {
   description?: string
 }
 
+// Validate IP address format (strict validation for each octet 0-255)
+function isValidIPv4(ip: string): boolean {
+  const parts = ip.split('.')
+  if (parts.length !== 4) return false
+  return parts.every(part => {
+    const num = parseInt(part, 10)
+    return !isNaN(num) && num >= 0 && num <= 255 && part === num.toString()
+  })
+}
+
+// Validate printer object from localStorage
+function isValidPrinter(printer: unknown): printer is ZebraPrinter {
+  if (!printer || typeof printer !== 'object') return false
+  const p = printer as Record<string, unknown>
+  return (
+    typeof p.id === 'string' &&
+    typeof p.name === 'string' &&
+    typeof p.ipAddress === 'string' &&
+    typeof p.isDefault === 'boolean' &&
+    (p.description === undefined || typeof p.description === 'string') &&
+    isValidIPv4(p.ipAddress)
+  )
+}
+
+// Validate and filter printers array from localStorage
+function validatePrinters(data: unknown): ZebraPrinter[] {
+  if (!Array.isArray(data)) return []
+  return data.filter(isValidPrinter)
+}
+
 export default function PrintersSettingsPage() {
   const [printers, setPrinters] = useState<ZebraPrinter[]>([])
   const [showAddDialog, setShowAddDialog] = useState(false)
@@ -30,7 +60,7 @@ export default function PrintersSettingsPage() {
   const [formDescription, setFormDescription] = useState("")
   const [formIsDefault, setFormIsDefault] = useState(false)
 
-  // Load printers from localStorage (client-side only)
+  // Load printers from localStorage (client-side only) with validation
   useEffect(() => {
     // Only run on client side
     if (typeof window === 'undefined') return
@@ -39,7 +69,12 @@ export default function PrintersSettingsPage() {
       const saved = window.localStorage.getItem('zebraPrinters')
       if (saved) {
         const parsed = JSON.parse(saved)
-        setPrinters(parsed)
+        // Validate all printer data before using
+        const validPrinters = validatePrinters(parsed)
+        if (validPrinters.length !== parsed.length) {
+          console.warn('Some invalid printer entries were filtered out')
+        }
+        setPrinters(validPrinters)
       }
     } catch (e) {
       console.error('Failed to load printers:', e)
@@ -87,10 +122,9 @@ export default function PrintersSettingsPage() {
       return
     }
 
-    // Validate IP format (basic check)
-    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/
-    if (!ipRegex.test(formIp.trim())) {
-      toast.error("Ugyldig IP-adresse format. Bruk format: 192.168.1.100")
+    // Validate IP format (strict validation - each octet must be 0-255)
+    if (!isValidIPv4(formIp.trim())) {
+      toast.error("Ugyldig IP-adresse format. Bruk format: 192.168.1.100 (hvert tall må være 0-255)")
       return
     }
 

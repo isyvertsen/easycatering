@@ -89,15 +89,21 @@ export default function OrdersPage() {
   const [selectedOrders, setSelectedOrders] = useState<number[]>([])
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
 
-  // Load status filter from localStorage on mount
+  // Load status filter from localStorage on mount with validation
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
       try {
-        const statusIds = JSON.parse(stored) as number[]
-        // Only use stored value if it's a valid non-empty array
-        if (Array.isArray(statusIds) && statusIds.length > 0) {
-          setParams(prev => ({ ...prev, status_ids: statusIds }))
+        const parsed = JSON.parse(stored)
+        // Validate: must be a non-empty array of positive integers
+        if (
+          Array.isArray(parsed) &&
+          parsed.length > 0 &&
+          parsed.every((id): id is number =>
+            typeof id === 'number' && Number.isInteger(id) && id > 0
+          )
+        ) {
+          setParams(prev => ({ ...prev, status_ids: parsed }))
         }
         // If empty array or invalid, keep default (show all)
       } catch {
