@@ -119,7 +119,7 @@ async def get_default_delivery_date(
 
 @router.get("/produkter", response_model=WebshopProductListResponse)
 async def list_webshop_products(
-    search: Optional[str] = Query(None, description="Search in product name"),
+    search: Optional[str] = Query(None, max_length=200, description="Search in product name"),
     kategori_id: Optional[int] = Query(None, description="Filter by category"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
@@ -256,7 +256,7 @@ async def list_orders_by_status(
     order_status: int = Query(..., alias="status", description="Order status to filter by"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    search: Optional[str] = Query(None),
+    search: Optional[str] = Query(None, max_length=200),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -284,7 +284,7 @@ async def list_orders_by_status(
 async def list_orders_for_approval(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    search: Optional[str] = Query(None),
+    search: Optional[str] = Query(None, max_length=200),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):

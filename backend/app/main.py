@@ -73,13 +73,13 @@ app = FastAPI(
 # Setup centralized exception handlers
 setup_exception_handlers(app)
 
-# Configure CORS
+# Configure CORS with specific methods and headers
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
 )
 
 # Add activity logging middleware

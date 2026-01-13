@@ -26,7 +26,7 @@ async def get_templates(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     include_global: bool = Query(True, description="Include global templates"),
-    search: Optional[str] = Query(None, description="Search in name and description"),
+    search: Optional[str] = Query(None, max_length=200, description="Search in name and description"),
 ) -> List[LabelTemplate]:
     """Get all label templates accessible to the current user."""
     templates = await label_template_service.get_user_templates(

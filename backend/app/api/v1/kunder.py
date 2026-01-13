@@ -19,7 +19,7 @@ async def get_kunder(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     aktiv: Optional[bool] = Query(True, description="Filter by active status"),
-    search: Optional[str] = Query(None, description="Search in customer name (standard parameter)"),
+    search: Optional[str] = Query(None, max_length=200, description="Search in customer name (standard parameter)"),
     sok: Optional[str] = Query(None, description="Search in customer name (deprecated, use 'search')"),
 ) -> List[Kunder]:
     """Get all customers."""

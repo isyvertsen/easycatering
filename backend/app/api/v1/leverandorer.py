@@ -29,7 +29,7 @@ async def get_leverandorer(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     aktiv: Optional[bool] = Query(True, description="Filter by active status"),
-    search: Optional[str] = Query(None, description="Search by name, email, or phone"),
+    search: Optional[str] = Query(None, max_length=200, description="Search by name, email, or phone"),
     sort_by: Optional[str] = Query(None, description="Field to sort by"),
     sort_order: Literal["asc", "desc"] = Query("asc", description="Sort order"),
 ) -> LeverandorListResponse:

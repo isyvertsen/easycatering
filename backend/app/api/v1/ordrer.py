@@ -25,7 +25,7 @@ async def get_ordrer(
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    search: Optional[str] = Query(None, description="Search by customer name or order ID"),
+    search: Optional[str] = Query(None, max_length=200, description="Search by customer name or order ID"),
     kunde_id: Optional[int] = Query(None, description="Filter by customer ID"),
     fra_dato: Optional[date] = Query(None, description="From date"),
     til_dato: Optional[date] = Query(None, description="To date"),
