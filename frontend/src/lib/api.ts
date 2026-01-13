@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getSession, signOut } from 'next-auth/react'
 
 const isDevelopment = process.env.NODE_ENV === 'development'
 const authBypass = process.env.NEXT_PUBLIC_AUTH_BYPASS === 'true'
@@ -15,8 +16,24 @@ api.interceptors.request.use(async (config) => {
   if (isDevelopment && authBypass) {
     return config
   }
-  
-  // TODO: Implement auth token handling
+
+  // Only run on client side
+  if (typeof window === 'undefined') {
+    return config
+  }
+
+  // Get the session and add the access token to the request
+  const session = await getSession()
+
+  // If session has refresh error, sign out the user
+  if (session?.error === 'RefreshAccessTokenError') {
+    await signOut({ callbackUrl: '/auth/signin?error=SessionExpired' })
+    return Promise.reject(new Error('Session expired, please sign in again'))
+  }
+
+  if (session?.accessToken) {
+    config.headers.Authorization = `Bearer ${session.accessToken}`
+  }
   return config
 })
 
