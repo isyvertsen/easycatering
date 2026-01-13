@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Calendar, FileText, Printer, Settings2 } from "lucide-react"
+import { Plus, Search, MoreHorizontal, Edit, Trash2, Calendar, FileText, Printer, Settings2, ChevronLeft, ChevronRight } from "lucide-react"
 
 export default function MenusPage() {
   const router = useRouter()
@@ -251,6 +251,38 @@ export default function MenusPage() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination */}
+        {data && data.total_pages > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Viser {data.items.length} av {data.total} menyer
+            </p>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setParams(prev => ({ ...prev, skip: Math.max(0, prev.skip - prev.limit) }))}
+                disabled={params.skip === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Forrige
+              </Button>
+              <span className="text-sm">
+                Side {data.page} av {data.total_pages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setParams(prev => ({ ...prev, skip: prev.skip + prev.limit }))}
+                disabled={data.page >= data.total_pages}
+              >
+                Neste
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

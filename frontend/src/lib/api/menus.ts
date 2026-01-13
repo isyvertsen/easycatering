@@ -51,35 +51,23 @@ export interface MenuPrintData {
 export const menusApi = {
   list: async (params?: MenuListParams): Promise<MenuListResponse> => {
     const queryParams = new URLSearchParams()
-    
+
     const skip = params?.skip || 0
     const limit = params?.limit || 20
-    
+
     queryParams.append('skip', skip.toString())
     queryParams.append('limit', limit.toString())
-    
+
     if (params?.menygruppe) {
-      queryParams.append('menygruppe', params.menygruppe.toString())
+      queryParams.append('gruppe_id', params.menygruppe.toString())
     }
-    
+
     if (params?.search) {
-      queryParams.append('sok', params.search)
+      queryParams.append('search', params.search)
     }
-    
+
     const response = await apiClient.get(`/v1/meny/?${queryParams}`)
-    const items = response.data as Menu[]
-    
-    const total = items.length
-    const page = Math.floor(skip / limit) + 1
-    const total_pages = Math.ceil(total / limit)
-    
-    return {
-      items,
-      total,
-      page,
-      page_size: limit,
-      total_pages
-    }
+    return response.data as MenuListResponse
   },
 
   get: async (id: number): Promise<Menu> => {
