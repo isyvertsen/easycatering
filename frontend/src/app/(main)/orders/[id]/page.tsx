@@ -46,7 +46,8 @@ const getOrderStatus = (order: Order) => {
     99: { label: "Kansellert", variant: "destructive" },
   }
 
-  return statusMap[order.ordrestatusid] || { label: "Ukjent", variant: "outline" as const }
+  const statusId = order.ordrestatusid ?? 0
+  return statusMap[statusId] || { label: "Ukjent", variant: "outline" as const }
 }
 
 export default function OrderEditPage({ params }: OrderEditPageProps) {
@@ -202,7 +203,7 @@ export default function OrderEditPage({ params }: OrderEditPageProps) {
   const isCancelled = !!order.kansellertdato
   const isDelivered = !!order.ordrelevert
   // Order lines can only be edited when status < 20 (before "Godkjent")
-  const isApproved = order.ordrestatusid >= 20
+  const isApproved = (order.ordrestatusid ?? 0) >= 20
 
   return (
     <div className="space-y-6">

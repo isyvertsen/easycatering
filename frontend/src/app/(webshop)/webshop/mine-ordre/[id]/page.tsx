@@ -37,7 +37,8 @@ const getOrderStatus = (order: Order) => {
     99: { label: "Kansellert", variant: "destructive" },
   }
 
-  return statusMap[order.ordrestatusid] || { label: "Ukjent", variant: "outline" as const }
+  const statusId = order.ordrestatusid ?? 0
+  return statusMap[statusId] || { label: "Ukjent", variant: "outline" as const }
 }
 
 export default function OrderDetailsPage({
