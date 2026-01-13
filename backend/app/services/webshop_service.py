@@ -30,6 +30,47 @@ from app.schemas.webshop import (
 )
 
 
+def calculate_next_delivery_date(leveringsdag: int) -> datetime:
+    """Calculate the next delivery date based on customer's preferred delivery day.
+
+    The delivery day is always in the NEXT week (not current week).
+    leveringsdag: 1=Monday, 2=Tuesday, ..., 7=Sunday
+
+    Example: If today is Wednesday in week 10, and customer's leveringsdag is 2 (Tuesday),
+    the delivery date will be Tuesday in week 11.
+    """
+    today = datetime.now()
+
+    # Python's weekday(): Monday=0, Sunday=6
+    # Customer's leveringsdag: Monday=1, Sunday=7
+    # Convert leveringsdag to Python weekday (0-6)
+    target_weekday = leveringsdag - 1
+
+    # Calculate days until next week's delivery day
+    current_weekday = today.weekday()
+
+    # Days until the target day in the current week
+    days_to_target = target_weekday - current_weekday
+
+    # Always go to next week, so add 7 days
+    # If the target day hasn't passed this week, we still go to next week
+    days_until_delivery = days_to_target + 7
+
+    # If that would be less than 7 days (same day next week hasn't arrived yet in calculation),
+    # we might already be past the target day this week, so add another week
+    if days_until_delivery <= 0:
+        days_until_delivery += 7
+
+    # Ensure we're always at least in the next week
+    if days_until_delivery < 7:
+        days_until_delivery += 7
+
+    delivery_date = today + timedelta(days=days_until_delivery)
+
+    # Return just the date part (midnight)
+    return datetime(delivery_date.year, delivery_date.month, delivery_date.day)
+
+
 class WebshopService:
     """Service for webshop operations.
 
@@ -806,6 +847,10 @@ class WebshopService:
     ) -> Optional[WebshopOrder]:
         """Submit a draft order (change status from 10 to 15).
 
+        If leveringsdato is not provided, it will be calculated based on
+        the customer's preferred delivery day (leveringsdag).
+        The delivery date is always in the next week.
+
         Returns the updated order or None if not found.
         """
         query = select(Ordrer).where(
@@ -820,6 +865,15 @@ class WebshopService:
 
         if not order:
             return None
+
+        # If no delivery date provided, calculate from customer's leveringsdag
+        if leveringsdato is None:
+            kunde_query = select(Kunder).where(Kunder.kundeid == user.kundeid)
+            kunde_result = await self.db.execute(kunde_query)
+            kunde = kunde_result.scalar_one_or_none()
+
+            if kunde and kunde.leveringsdag:
+                leveringsdato = calculate_next_delivery_date(kunde.leveringsdag)
 
         # Update order
         order.ordrestatusid = 15  # Bestilt

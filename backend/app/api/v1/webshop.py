@@ -50,6 +50,69 @@ async def check_webshop_access(
     return await service.check_webshop_access(current_user)
 
 
+@router.get("/default-leveringsdato")
+async def get_default_delivery_date(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get the default delivery date for the current user's customer.
+
+    Calculates the next delivery date based on the customer's preferred
+    delivery day (leveringsdag). The delivery date is always in the next week.
+
+    Returns:
+    - leveringsdato: The calculated delivery date (ISO format)
+    - leveringsdag: The customer's preferred delivery day (1=Monday, 7=Sunday)
+    - ukedag_navn: The weekday name in Norwegian
+    """
+    from app.services.webshop_service import calculate_next_delivery_date
+    from sqlalchemy import select
+    from app.models.kunder import Kunder
+
+    if not current_user.kundeid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Bruker er ikke knyttet til en kunde"
+        )
+
+    query = select(Kunder).where(Kunder.kundeid == current_user.kundeid)
+    result = await db.execute(query)
+    kunde = result.scalar_one_or_none()
+
+    if not kunde:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Kunde ikke funnet"
+        )
+
+    if not kunde.leveringsdag:
+        return {
+            "leveringsdato": None,
+            "leveringsdag": None,
+            "ukedag_navn": None,
+            "message": "Kunden har ikke registrert foretrukket leveringsdag"
+        }
+
+    ukedag_navn_map = {
+        1: "Mandag",
+        2: "Tirsdag",
+        3: "Onsdag",
+        4: "Torsdag",
+        5: "Fredag",
+        6: "Lørdag",
+        7: "Søndag"
+    }
+
+    leveringsdato = calculate_next_delivery_date(kunde.leveringsdag)
+
+    return {
+        "leveringsdato": leveringsdato.strftime("%Y-%m-%d"),
+        "leveringsdag": kunde.leveringsdag,
+        "ukedag_navn": ukedag_navn_map.get(kunde.leveringsdag, "Ukjent")
+    }
+
+
 # =============================================================================
 # Products
 # =============================================================================

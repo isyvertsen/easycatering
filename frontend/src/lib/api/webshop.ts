@@ -166,6 +166,18 @@ export interface WebshopOrderByTokenResponse {
 }
 
 /**
+ * Default delivery date response
+ *
+ * Backend endpoint: GET /api/v1/webshop/default-leveringsdato
+ */
+export interface DefaultDeliveryDateResponse {
+  leveringsdato: string | null
+  leveringsdag: number | null
+  ukedag_navn: string | null
+  message?: string
+}
+
+/**
  * Draft order line for auto-save
  */
 export interface DraftOrderLine {
@@ -226,6 +238,16 @@ export const webshopApi = {
    */
   checkAccess: async (): Promise<WebshopAccessResponse> => {
     const response = await apiClient.get('/v1/webshop/tilgang')
+    return response.data
+  },
+
+  /**
+   * Hent standard leveringsdato basert på kundens foretrukne leveringsdag
+   *
+   * Backend endpoint: GET /api/v1/webshop/default-leveringsdato
+   */
+  getDefaultDeliveryDate: async (): Promise<DefaultDeliveryDateResponse> => {
+    const response = await apiClient.get('/v1/webshop/default-leveringsdato')
     return response.data
   },
 

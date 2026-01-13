@@ -28,6 +28,17 @@ export function useWebshopAccess() {
   })
 }
 
+/**
+ * Hent standard leveringsdato basert på kundens leveringsdag
+ */
+export function useDefaultDeliveryDate() {
+  return useQuery({
+    queryKey: ['webshop', 'default-delivery-date'],
+    queryFn: () => webshopApi.getDefaultDeliveryDate(),
+    staleTime: 5 * 60 * 1000, // 5 minutter
+  })
+}
+
 // ============================================================================
 // PRODUKTER
 // ============================================================================
