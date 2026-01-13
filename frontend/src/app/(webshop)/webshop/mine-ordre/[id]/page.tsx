@@ -4,6 +4,7 @@ import { use } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useWebshopOrder, useWebshopOrderLines, useReopenWebshopOrder, useCancelMyWebshopOrder } from "@/hooks/useWebshop"
+import { useCart } from "@/contexts/CartContext"
 import { format } from "date-fns"
 import { nb } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
@@ -56,10 +57,13 @@ export default function OrderDetailsPage({
   const { data: orderLines, isLoading: linesLoading } = useWebshopOrderLines(orderId)
   const reopenMutation = useReopenWebshopOrder()
   const cancelMutation = useCancelMyWebshopOrder()
+  const { loadDraftOrder } = useCart()
 
   const handleReopen = async () => {
     try {
       await reopenMutation.mutateAsync(orderId)
+      // Reload cart to show the reopened order
+      await loadDraftOrder()
       // Redirect to webshop to continue editing
       router.push("/webshop")
     } catch (error) {
