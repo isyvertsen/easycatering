@@ -257,3 +257,33 @@ export function useReopenWebshopOrder() {
     },
   })
 }
+
+/**
+ * Cancel own order before approval (sets status to 99)
+ */
+export function useCancelMyWebshopOrder() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: (id: number) => webshopApi.cancelMyOrder(id),
+    onSuccess: (data, variables) => {
+      // Invalidate order query
+      queryClient.invalidateQueries({ queryKey: ['webshop', 'order', variables] })
+      // Invalidate my orders list
+      queryClient.invalidateQueries({ queryKey: ['webshop', 'my-orders'] })
+
+      toast({
+        title: 'Ordre kansellert',
+        description: 'Ordren er kansellert',
+      })
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Feil ved kansellering',
+        description: error.response?.data?.detail || 'Kunne ikke kansellere ordre',
+        variant: 'destructive',
+      })
+    },
+  })
+}

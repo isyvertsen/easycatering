@@ -567,6 +567,57 @@ async def reopen_order(
     return {"message": "Ordre gjenåpnet for redigering", "ordrestatusid": 10}
 
 
+@router.post("/ordre/{order_id}/kanseller-min-ordre")
+async def cancel_my_order(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Cancel own order before it's approved.
+
+    Users can only cancel orders with status 15 (Bestilt).
+    Once an order is approved (status >= 20), it cannot be cancelled by the user.
+    """
+    service = WebshopService(db)
+
+    # Get the order (this checks ownership)
+    order = await service.get_order(order_id, current_user)
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ordre ikke funnet"
+        )
+
+    # Only allow cancellation of orders with status 15 (Bestilt)
+    if order.ordrestatusid != 15:
+        if order.ordrestatusid == 10:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ordren er ikke sendt inn ennå. Du kan slette den i handlekurven."
+            )
+        elif order.ordrestatusid in [98, 99]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ordren er allerede kansellert"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ordren er allerede godkjent og kan ikke kanselleres. Kontakt administrator."
+            )
+
+    # Update status to 99 (Kansellert)
+    success = await service.update_order_status(order_id, 99)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Kunne ikke kansellere ordre"
+        )
+
+    return {"message": "Ordre kansellert", "ordrestatusid": 99}
+
+
 @router.post("/draft-ordre/{order_id}/submit", response_model=WebshopOrderCreateResponse)
 async def submit_draft_order(
     order_id: int,

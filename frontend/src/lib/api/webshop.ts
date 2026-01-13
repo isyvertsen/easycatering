@@ -581,5 +581,16 @@ export const webshopApi = {
   reopenOrder: async (id: number): Promise<{ message: string; ordrestatusid: number }> => {
     const response = await apiClient.post(`/v1/webshop/ordre/${id}/reopen`)
     return response.data
+  },
+
+  /**
+   * Cancel own order before approval
+   *
+   * Backend endpoint: POST /api/v1/webshop/ordre/:id/kanseller-min-ordre
+   * Only works for orders with status 15 (Bestilt)
+   */
+  cancelMyOrder: async (id: number): Promise<{ message: string; ordrestatusid: number }> => {
+    const response = await apiClient.post(`/v1/webshop/ordre/${id}/kanseller-min-ordre`)
+    return response.data
   }
 }
