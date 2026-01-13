@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
 from app.infrastructure.database.session import get_db
+from app.api.deps import get_current_user
+from app.domain.entities.user import User
 from app.services.matinfo_sync import MatinfoSyncService
 import logging
 
@@ -52,7 +54,8 @@ class ProductSearchResponse(BaseModel):
 async def sync_products(
     background_tasks: BackgroundTasks,
     days_back: int = Query(7, description="Number of days to look back for updates"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Trigger synchronization of products from Matinfo API.
@@ -85,7 +88,8 @@ async def sync_products(
 @router.get("/sync/updated-gtins", response_model=GTINListResponse)
 async def get_updated_gtins(
     days_back: int = Query(7, description="Number of days to look back for updates"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Get list of GTINs that have been updated in Matinfo.
@@ -111,7 +115,8 @@ async def get_updated_gtins(
 @router.get("/sync/new-products", response_model=GTINListResponse)
 async def get_new_products(
     days_back: int = Query(30, description="Number of days to look back for updates"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Identify products that exist in Matinfo but not in our database.
@@ -135,7 +140,8 @@ async def get_new_products(
 @router.post("/sync/product/{gtin}")
 async def sync_single_product(
     gtin: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Sync a single product by GTIN.
@@ -163,7 +169,8 @@ async def sync_single_product(
 async def search_by_name(
     name: str = Query(..., description="Product name to search for"),
     limit: int = Query(10, ge=1, le=50, description="Maximum number of results to return"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Search for products by name in matinfo_products table.

@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_, func
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import get_db
+from app.api.deps import get_db, get_current_user
+from app.domain.entities.user import User
 from app.models import (
     Periode, PeriodeMeny, Meny, MenyProdukt, 
     Produkter, Kunder, Menygruppe
@@ -45,7 +46,8 @@ async def get_period_overview(
     from_date: Optional[datetime] = None,
     to_date: Optional[datetime] = None,
     weeks_ahead: int = 4,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """Get overview of menu periods with associated data."""
     if not from_date:
@@ -141,7 +143,8 @@ async def get_period_overview(
 async def get_customer_period_report(
     periode_id: int,
     menu_group_id: Optional[int] = None,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """Generate customer report for a specific period."""
     # Get the period
@@ -233,7 +236,8 @@ async def get_customer_period_report(
 async def assign_menu_to_period(
     periode_id: int,
     meny_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """Assign a menu to a period."""
     # Check if periode exists
@@ -271,7 +275,8 @@ async def assign_menu_to_period(
 async def clone_period_menus(
     source_periode_id: int,
     target_periode_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """Clone all menu assignments from one period to another."""
     # Get source period menus

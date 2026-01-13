@@ -97,7 +97,6 @@ export interface Customer {
   inndato?: string
   avsluttet?: boolean
   eksportkatalog?: string
-  ssma_timestamp?: string
   mobilnummer?: string
   formkost?: boolean
   sykehjemid?: number
@@ -141,7 +140,6 @@ export interface OrderLine {
   antall?: number
   rabatt?: number
   ident?: string
-  ssma_timestamp?: string
   // Relations
   produkt?: Product
 }
@@ -173,7 +171,6 @@ export interface Product {
   visningsnavn?: string
   visningsnavn2?: string
   rett_komponent?: boolean
-  ssma_timestamp?: string
   // Relations
   kategori?: Category
   leverandor?: Supplier
@@ -218,7 +215,6 @@ export interface Employee {
   e_postprivat?: string
   windowsbruker?: string
   defaultprinter?: string
-  ssma_timestamp?: string
 }
 
 // Supplier Types
@@ -235,7 +231,6 @@ export interface Leverandor {
   bestillingsnr?: string
   utgatt?: boolean
   webside?: string
-  ssma_timestamp?: string
 }
 
 // User Types

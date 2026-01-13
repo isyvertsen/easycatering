@@ -31,8 +31,7 @@ class LeverandorerUpdate(LeverandorerBase):
 class Leverandorer(LeverandorerBase):
     """Supplier response schema."""
     leverandorid: int
-    ssma_timestamp: Optional[str] = None
-    
+
     @field_validator('refkundenummer', 'postnummer', 'bestillingsnr', mode='before')
     @classmethod
     def convert_numeric_to_str(cls, v):

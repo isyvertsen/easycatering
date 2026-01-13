@@ -446,6 +446,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(CreateAppLogsTable())
         migration_runner.add_migration(AddPickingStatusToOrders())
         migration_runner.add_migration(AddKundeIdToUsers())
+        migration_runner.add_migration(DropSsmaTimestampColumns())
     return migration_runner
 
 
@@ -955,6 +956,47 @@ class AddKundeIdToUsers(Migration):
             await conn.execute(text("""
                 CREATE INDEX IF NOT EXISTS idx_users_kundeid ON users(kundeid)
             """))
+
+
+class DropSsmaTimestampColumns(Migration):
+    """Remove legacy ssma_timestamp columns from all tables.
+
+    These columns were created by SQL Server Migration Assistant (SSMA)
+    during the SQL Server to PostgreSQL migration and are no longer needed.
+    """
+
+    def __init__(self):
+        super().__init__(
+            version="20260113_001_drop_ssma_timestamp",
+            description="Remove legacy ssma_timestamp columns from all tables"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        tables = [
+            "tblansatte",
+            "tblkategorier",
+            "tblkunder",
+            "tblleverandorer",
+            "tblordredetaljer",
+            "tblordrer",
+            "tblprodukter"
+        ]
+
+        async with engine.begin() as conn:
+            for table in tables:
+                # Check if column exists before dropping
+                await conn.execute(text(f"""
+                    DO $$
+                    BEGIN
+                        IF EXISTS (
+                            SELECT 1 FROM information_schema.columns
+                            WHERE table_name = '{table}'
+                            AND column_name = 'ssma_timestamp'
+                        ) THEN
+                            ALTER TABLE {table} DROP COLUMN ssma_timestamp;
+                        END IF;
+                    END $$
+                """))
 
 
 class AddPickingStatusToOrders(Migration):

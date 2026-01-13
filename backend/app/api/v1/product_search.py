@@ -3,7 +3,8 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db
+from app.api.deps import get_db, get_current_user
+from app.domain.entities.user import User
 from app.services.enhanced_product_search import EnhancedProductSearchService
 from app.schemas.product_search import (
     ProductSearchResponse,
@@ -23,7 +24,8 @@ async def fuzzy_search_products(
     limit: int = Query(20, ge=1, le=100, description="Maks antall resultater"),
     offset: int = Query(0, ge=0, description="Hopp over første N resultater"),
     threshold: float = Query(0.3, ge=0, le=1, description="Minimum likhetsscore (0-1)"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Søk etter produkter med fuzzy matching og rangering.
@@ -56,7 +58,8 @@ async def fuzzy_search_products(
 async def get_search_suggestions(
     q: str = Query(..., description="Delvis søkeord", min_length=2),
     limit: int = Query(10, ge=1, le=20, description="Maks antall forslag"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Få auto-complete forslag for produktsøk.
@@ -82,7 +85,8 @@ async def get_search_suggestions(
 
 @router.get("/products/search/recent", response_model=RecentSearchesResponse)
 async def get_recent_searches(
-    limit: int = Query(20, ge=1, le=50, description="Maks antall søk")
+    limit: int = Query(20, ge=1, le=50, description="Maks antall søk"),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Hent nylige søk.
@@ -103,7 +107,8 @@ async def get_recent_searches(
 async def get_frequent_products(
     recipe_type: Optional[str] = Query(None, description="Filtrer på oppskriftstype"),
     limit: int = Query(20, ge=1, le=50, description="Maks antall produkter"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Hent ofte brukte produkter.
@@ -128,7 +133,8 @@ async def get_frequent_products(
 @router.post("/products/{gtin}/track-use")
 async def track_product_use(
     gtin: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Registrer at et produkt er brukt i en oppskrift.

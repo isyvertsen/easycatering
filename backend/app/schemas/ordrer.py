@@ -39,5 +39,4 @@ class OrdrerUpdate(OrdrerBase):
 class Ordrer(OrdrerBase):
     """Order response schema."""
     ordreid: int
-    ssma_timestamp: Optional[str] = None
     kundegruppenavn: Optional[str] = None

@@ -22,7 +22,6 @@ class Ordrer(Base):
     informasjon = Column(Text)
     ordrestatusid = Column(BigInteger)
     fakturaid = Column(Float)
-    ssma_timestamp = Column(Text)
     kansellertdato = Column(DateTime)
     sentbekreftelse = Column(Boolean)
     sentregnskap = Column(DateTime)

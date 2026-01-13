@@ -16,7 +16,6 @@ class Ordredetaljer(Base):
     pris = Column(Float)
     antall = Column(Float)
     rabatt = Column(Float)
-    ssma_timestamp = Column(Text)
     ident = Column(Text)
 
     # Relationships

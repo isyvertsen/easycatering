@@ -6,7 +6,6 @@ export interface Kategori {
   kategoriid: number
   kategori: string
   beskrivelse: string | null
-  ssma_timestamp: string | null
 }
 
 export interface KategoriListParams extends BaseListParams {

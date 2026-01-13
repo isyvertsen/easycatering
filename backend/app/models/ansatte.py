@@ -25,7 +25,6 @@ class Ansatte(Base):
     resussnr = Column(BigInteger)
     e_postjobb = Column(Text)
     e_postprivat = Column(Text)
-    ssma_timestamp = Column(Text)
     windowsbruker = Column(Text)
     defaultprinter = Column(Text)
 
