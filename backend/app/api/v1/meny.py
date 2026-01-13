@@ -1,8 +1,9 @@
 """Menu API endpoints."""
 from typing import List, Optional
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 
 from app.api.deps import get_db, get_current_user
 from app.domain.entities.user import User
@@ -12,24 +13,61 @@ from app.schemas.meny import Meny, MenyCreate, MenyUpdate
 router = APIRouter()
 
 
-@router.get("/", response_model=List[Meny])
+class MenyListResponse(BaseModel):
+    """Paginated response for meny list."""
+    items: List[Meny]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+@router.get("/", response_model=MenyListResponse)
 async def get_menyer(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
+    limit: int = Query(20, ge=1, le=1000),
     gruppe_id: Optional[int] = Query(None, description="Filter by menu group"),
-) -> List[Meny]:
-    """Get all menus."""
+    search: Optional[str] = Query(None, max_length=200, description="Search in beskrivelse"),
+) -> MenyListResponse:
+    """Get all menus with pagination and search."""
+    # Base query
     query = select(MenyModel)
-    
+    count_query = select(func.count()).select_from(MenyModel)
+
     # Filter by group
     if gruppe_id:
         query = query.where(MenyModel.menygruppe == gruppe_id)
-    
-    query = query.order_by(MenyModel.beskrivelse).offset(skip).limit(limit)
+        count_query = count_query.where(MenyModel.menygruppe == gruppe_id)
+
+    # Search filter
+    if search:
+        search_term = f"%{search}%"
+        search_cond = MenyModel.beskrivelse.ilike(search_term)
+        query = query.where(search_cond)
+        count_query = count_query.where(search_cond)
+
+    # Get total count
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+
+    # Apply pagination
+    query = query.order_by(MenyModel.menyid).offset(skip).limit(limit)
     result = await db.execute(query)
-    return result.scalars().all()
+    items = result.scalars().all()
+
+    # Calculate pagination info
+    page = (skip // limit) + 1 if limit > 0 else 1
+    total_pages = (total + limit - 1) // limit if total > 0 else 1
+
+    return MenyListResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=limit,
+        total_pages=total_pages
+    )
 
 
 @router.get("/{meny_id}", response_model=Meny)

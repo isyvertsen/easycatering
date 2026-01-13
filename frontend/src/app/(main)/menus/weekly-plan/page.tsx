@@ -12,7 +12,20 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select"  // Keep for numberOfWeeks selector
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   Table,
   TableBody,
@@ -24,19 +37,21 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { useCustomersList } from "@/hooks/useCustomers"
 import { useGenerateMenuOrderForm, useCreateOrderFromMenuForm } from "@/hooks/useMenus"
-import { Calendar, Printer, Save, FileText } from "lucide-react"
+import { Calendar, Printer, Save, FileText, ChevronsUpDown, Check } from "lucide-react"
 import { MenuPrintData, MenuOrderItem } from "@/lib/api/menus"
+import { cn } from "@/lib/utils"
 
 export default function WeeklyMenuPlanPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null)
+  const [customerOpen, setCustomerOpen] = useState(false)
   const [startWeek, setStartWeek] = useState(getCurrentWeek())
   const [numberOfWeeks, setNumberOfWeeks] = useState(4)
   const [menuData, setMenuData] = useState<MenuPrintData | null>(null)
   const [editMode, setEditMode] = useState(false)
 
-  const { data: customers } = useCustomersList({ limit: 1000, aktiv: true })
+  const { data: customers } = useCustomersList({ page_size: 1000, aktiv: true })
   const generateMenuMutation = useGenerateMenuOrderForm()
   const createOrderMutation = useCreateOrderFromMenuForm()
 
@@ -139,18 +154,49 @@ export default function WeeklyMenuPlanPage() {
           <div className="grid gap-4 md:grid-cols-4">
             <div className="space-y-2">
               <Label>Kunde</Label>
-              <Select value={selectedCustomer?.toString()} onValueChange={(v) => setSelectedCustomer(parseInt(v))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Velg kunde" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers?.items.map(customer => (
-                    <SelectItem key={customer.kundeid} value={customer.kundeid.toString()}>
-                      {customer.kundenavn}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={customerOpen} onOpenChange={setCustomerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={customerOpen}
+                    className="w-full justify-between"
+                  >
+                    {selectedCustomer
+                      ? customers?.items.find(c => c.kundeid === selectedCustomer)?.kundenavn
+                      : "Velg kunde..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Søk etter kunde..." />
+                    <CommandList>
+                      <CommandEmpty>Ingen kunde funnet.</CommandEmpty>
+                      <CommandGroup>
+                        {customers?.items.map(customer => (
+                          <CommandItem
+                            key={customer.kundeid}
+                            value={customer.kundenavn}
+                            onSelect={() => {
+                              setSelectedCustomer(customer.kundeid)
+                              setCustomerOpen(false)
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedCustomer === customer.kundeid ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {customer.kundenavn}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">
