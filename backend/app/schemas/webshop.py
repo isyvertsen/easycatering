@@ -76,6 +76,7 @@ class WebshopOrderCreate(BaseModel):
 
 class WebshopOrderLine(BaseSchema):
     """Order line in response."""
+    unik: Optional[int] = None
     produktid: int
     produktnavn: Optional[str] = None
     visningsnavn: Optional[str] = None

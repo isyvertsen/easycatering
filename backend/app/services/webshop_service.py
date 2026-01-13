@@ -332,6 +332,7 @@ class WebshopService:
             total_sum += line_total
             ordrelinjer.append(
                 WebshopOrderLine(
+                    unik=detail.unik,
                     produktid=detail.produktid,
                     produktnavn=detail.produkt.produktnavn if detail.produkt else None,
                     visningsnavn=detail.produkt.visningsnavn if detail.produkt else None,
@@ -524,6 +525,7 @@ class WebshopService:
             line_total = (detail.pris or 0) * (detail.antall or 0)
             ordrelinjer.append(
                 WebshopOrderLine(
+                    unik=detail.unik,
                     produktid=detail.produktid,
                     produktnavn=detail.produkt.produktnavn if detail.produkt else None,
                     visningsnavn=detail.produkt.visningsnavn if detail.produkt else None,
@@ -643,6 +645,7 @@ class WebshopService:
             total_sum += line_total
             ordrelinjer.append(
                 WebshopOrderLine(
+                    unik=detail.unik,
                     produktid=detail.produktid,
                     produktnavn=detail.produkt.produktnavn if detail.produkt else None,
                     visningsnavn=detail.produkt.visningsnavn if detail.produkt else None,

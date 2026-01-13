@@ -1,5 +1,5 @@
 """Webshop API endpoints for customer ordering."""
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +15,7 @@ from app.schemas.webshop import (
     WebshopOrderCreateResponse,
     WebshopOrderListResponse,
     WebshopOrderDetail,
+    WebshopOrderLine,
     WebshopOrderStatusUpdate,
     WebshopBatchApproveRequest,
     WebshopBatchApproveResponse,
@@ -200,6 +201,25 @@ async def get_webshop_order(
         )
 
     return order
+
+
+@router.get("/ordre/{order_id}/linjer", response_model=List[WebshopOrderLine])
+async def get_webshop_order_lines(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get order lines for a specific order."""
+    service = WebshopService(db)
+
+    order = await service.get_order(order_id, current_user)
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ordre ikke funnet"
+        )
+
+    return order.ordrelinjer
 
 
 # =============================================================================

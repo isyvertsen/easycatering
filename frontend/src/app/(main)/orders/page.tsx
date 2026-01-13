@@ -30,16 +30,27 @@ const getOrderStatus = (order: Order) => {
   if (order.sentbekreftelse) {
     return { label: "Bekreftet", variant: "secondary" as const }
   }
-  if (order.ordrestatusid === 1) {
-    return { label: "Ny", variant: "outline" as const }
+
+  // Map ordrestatusid til lesbar status
+  const statusMap: Record<number, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+    1: { label: "Ny", variant: "outline" },
+    2: { label: "Fakturert", variant: "default" },
+    3: { label: "Levert", variant: "default" },
+    5: { label: "Ny ordre", variant: "outline" },
+    8: { label: "Ny webshop", variant: "outline" },
+    10: { label: "Startet", variant: "secondary" },
+    15: { label: "Bestilt", variant: "outline" },
+    20: { label: "Godkjent", variant: "default" },
+    25: { label: "Plukkliste", variant: "secondary" },
+    30: { label: "Plukket", variant: "secondary" },
+    35: { label: "Pakkliste", variant: "secondary" },
+    80: { label: "Godkjent mottaker", variant: "default" },
+    85: { label: "Fakturert", variant: "default" },
+    90: { label: "Sendt regnskap", variant: "default" },
+    99: { label: "Kansellert", variant: "destructive" },
   }
-  if (order.ordrestatusid === 2) {
-    return { label: "Under behandling", variant: "secondary" as const }
-  }
-  if (order.ordrestatusid === 3) {
-    return { label: "Godkjent", variant: "default" as const }
-  }
-  return { label: "Ukjent", variant: "outline" as const }
+
+  return statusMap[order.ordrestatusid] || { label: "Ukjent", variant: "outline" as const }
 }
 
 export default function OrdersPage() {
