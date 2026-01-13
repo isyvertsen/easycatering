@@ -1,6 +1,7 @@
 """Health check endpoints."""
 import tomllib
 from pathlib import Path
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +9,7 @@ from sqlalchemy import text
 
 from app.infrastructure.database.session import get_db
 from app.core.redis import get_redis
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -22,6 +24,16 @@ def _get_version() -> str:
         return "unknown"
 
 BACKEND_VERSION = _get_version()
+
+
+def _get_database_name() -> str:
+    """Extract database name from DATABASE_URL."""
+    try:
+        parsed = urlparse(settings.DATABASE_URL)
+        # Path is like /database_name, so strip leading slash
+        return parsed.path.lstrip("/") if parsed.path else "unknown"
+    except Exception:
+        return "unknown"
 
 
 @router.get("/")
@@ -63,5 +75,6 @@ async def readiness(db: AsyncSession = Depends(get_db)):
     return {
         "status": "ready" if all_ready else "not ready",
         "version": BACKEND_VERSION,
+        "database": _get_database_name(),
         "checks": checks
     }
