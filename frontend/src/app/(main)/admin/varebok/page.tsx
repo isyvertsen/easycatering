@@ -574,16 +574,16 @@ export default function VarebokMatchingPage() {
       </Tabs>
 
       {/* Product match dialog */}
-      <Dialog open={!!selectedProduct} onOpenChange={(open) => !open && setSelectedProduct(null)}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Matchforslag</DialogTitle>
-            <DialogDescription>
-              Velg en match for a oppdatere produktet.
-            </DialogDescription>
-          </DialogHeader>
+      {selectedProduct && (
+        <Dialog open={true} onOpenChange={(open) => !open && setSelectedProduct(null)}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Matchforslag</DialogTitle>
+              <DialogDescription>
+                Velg en match for a oppdatere produktet.
+              </DialogDescription>
+            </DialogHeader>
 
-          {selectedProduct && (
             <div className="space-y-4">
               {/* Current product info */}
               <Card>
@@ -685,84 +685,88 @@ export default function VarebokMatchingPage() {
                 </div>
               )}
             </div>
-          )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedProduct(null)}>
-              Lukk
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSelectedProduct(null)}>
+                Lukk
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Delete confirmation */}
-      <AlertDialog open={!!deleteSupplier} onOpenChange={(open) => !open && setDeleteSupplier(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Slett leverandorfil?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Er du sikker pa at du vil slette leverandorfilen fra <strong>{deleteSupplier}</strong>?
-              Dette vil fjerne alle produktene fra denne leverandoren fra matchingsystemet.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteSupplier && deleteSupplierMutation.mutate(deleteSupplier)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Slett
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {deleteSupplier && (
+        <AlertDialog open={true} onOpenChange={(open) => !open && setDeleteSupplier(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Slett leverandorfil?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Er du sikker pa at du vil slette leverandorfilen fra <strong>{deleteSupplier}</strong>?
+                Dette vil fjerne alle produktene fra denne leverandoren fra matchingsystemet.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Avbryt</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteSupplierMutation.mutate(deleteSupplier)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Slett
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
       {/* Match confirmation dialog */}
-      <AlertDialog open={!!pendingMatch} onOpenChange={(open) => {
-        if (!open) {
-          setPendingMatch(null)
-          setDontShowAgainChecked(false)
-        }
-      }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Bekreft valg</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3">
-                <p>
-                  Er du sikker pa at du vil oppdatere <strong>{pendingMatch?.productName}</strong> med
-                  data fra <strong>{pendingMatch?.matchName}</strong>?
-                </p>
-                <p className="text-sm">
-                  Dette vil overskrive EAN-kode, produktnavn og leverandorproduktnummer.
-                </p>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex items-center space-x-2 py-2">
-            <Checkbox
-              id="dontShowAgain"
-              checked={dontShowAgainChecked}
-              onCheckedChange={(checked) => setDontShowAgainChecked(checked === true)}
-            />
-            <Label htmlFor="dontShowAgain" className="text-sm text-muted-foreground cursor-pointer">
-              Ikke vis denne meldingen igjen i denne okten
-            </Label>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmApplyMatch}
-              disabled={applyMatchMutation.isPending}
-            >
-              {applyMatchMutation.isPending ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : null}
-              Bekreft
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {pendingMatch && (
+        <AlertDialog open={true} onOpenChange={(open) => {
+          if (!open) {
+            setPendingMatch(null)
+            setDontShowAgainChecked(false)
+          }
+        }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Bekreft valg</AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-3">
+                  <p>
+                    Er du sikker pa at du vil oppdatere <strong>{pendingMatch.productName}</strong> med
+                    data fra <strong>{pendingMatch.matchName}</strong>?
+                  </p>
+                  <p className="text-sm">
+                    Dette vil overskrive EAN-kode, produktnavn og leverandorproduktnummer.
+                  </p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="flex items-center space-x-2 py-2">
+              <Checkbox
+                id="dontShowAgain"
+                checked={dontShowAgainChecked}
+                onCheckedChange={(checked) => setDontShowAgainChecked(checked === true)}
+              />
+              <Label htmlFor="dontShowAgain" className="text-sm text-muted-foreground cursor-pointer">
+                Ikke vis denne meldingen igjen i denne okten
+              </Label>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Avbryt</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmApplyMatch}
+                disabled={applyMatchMutation.isPending}
+              >
+                {applyMatchMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : null}
+                Bekreft
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   )
 }
