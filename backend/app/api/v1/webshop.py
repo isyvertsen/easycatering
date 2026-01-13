@@ -543,18 +543,17 @@ async def reopen_order(
             detail="Ordre ikke funnet"
         )
 
-    # Check if order is cancelled
+    # Check if order is cancelled or already delivered/invoiced (status >= 80)
     if order.ordrestatusid in [98, 99]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Kansellerte ordrer kan ikke gjenåpnes"
         )
 
-    # Check if order is delivered
-    if order.ordrelevert:
+    if order.ordrestatusid and order.ordrestatusid >= 80:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Leverte ordrer kan ikke gjenåpnes"
+            detail="Ordrer som er levert eller fakturert kan ikke gjenåpnes"
         )
 
     # Update status to 10 (Startet)
