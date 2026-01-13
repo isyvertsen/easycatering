@@ -49,7 +49,7 @@ export default function MenuDetailPage() {
 
   const fetchMenuGroups = async () => {
     try {
-      const response = await api.get("/v1/menygruppe")
+      const response = await api.get("/v1/menygruppe?page_size=100")
       // API returns { items: [...] }, not a direct array
       const groups = response.data.items || response.data
       setMenuGroups(Array.isArray(groups) ? groups : [])
@@ -164,10 +164,10 @@ export default function MenuDetailPage() {
                   <SelectItem value="none">Ingen</SelectItem>
                   {menuGroups.map((group) => (
                     <SelectItem
-                      key={group.menygruppeid}
-                      value={group.menygruppeid.toString()}
+                      key={group.gruppeid}
+                      value={group.gruppeid?.toString() || ""}
                     >
-                      {group.beskrivelse || `Gruppe ${group.menygruppeid}`}
+                      {group.beskrivelse || `Gruppe ${group.gruppeid}`}
                     </SelectItem>
                   ))}
                 </SelectContent>

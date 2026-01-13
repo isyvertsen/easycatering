@@ -13,10 +13,5 @@ class Menygruppe(Base):
     beskrivelse = Column(Text)
     kode = Column(Text)
 
-    # Alias for backward compatibility
-    @property
-    def gruppeid(self):
-        return self.menygruppeid
-
     # Relationships
     menyer = relationship("Meny", back_populates="gruppe")
