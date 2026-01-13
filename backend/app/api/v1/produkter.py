@@ -336,7 +336,7 @@ async def search_matinfo_products(
     products_result = await db.execute(
         select(MatinfoProduct)
         .options(selectinload(MatinfoProduct.allergens), selectinload(MatinfoProduct.nutrients))
-        .where(MatinfoMatinfoProduct.id.in_(product_ids))
+        .where(MatinfoProduct.id.in_(product_ids))
     )
     products = products_result.scalars().all()
 
@@ -407,7 +407,7 @@ async def update_produkt_gtin(
     matinfo_match = None
     if clean_gtin:
         matinfo_result = await db.execute(
-            select(MatinfoProduct).where(MatinfoMatinfoProduct.gtin == clean_gtin)
+            select(MatinfoProduct).where(MatinfoProduct.gtin == clean_gtin)
         )
         matinfo_match = matinfo_result.scalar_one_or_none()
 
@@ -485,7 +485,7 @@ async def bulk_update_gtin(
             matinfo_match = None
             if clean_gtin:
                 matinfo_result = await db.execute(
-                    select(MatinfoProduct).where(MatinfoMatinfoProduct.gtin == clean_gtin)
+                    select(MatinfoProduct).where(MatinfoProduct.gtin == clean_gtin)
                 )
                 matinfo_match = matinfo_result.scalar_one_or_none()
                 if matinfo_match:
@@ -579,7 +579,7 @@ async def get_matinfo_suggestions(
     products_result = await db.execute(
         select(MatinfoProduct)
         .options(selectinload(MatinfoProduct.allergens), selectinload(MatinfoProduct.nutrients))
-        .where(MatinfoMatinfoProduct.id.in_(product_ids))
+        .where(MatinfoProduct.id.in_(product_ids))
     )
     products = products_result.scalars().all()
 
