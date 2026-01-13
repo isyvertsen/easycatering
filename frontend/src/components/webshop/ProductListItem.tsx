@@ -15,11 +15,15 @@ export function ProductListItem({ product }: ProductListItemProps) {
   const { toast } = useToast()
 
   const handleAddToCart = () => {
+    const priceExMva = product.pris || 0
+    const mvaRate = product.mvaverdi || 0
+    const priceWithMva = priceExMva * (1 + mvaRate / 100)
+
     addItem({
       produktid: product.produktid,
       produktnavn: product.produktnavn,
       visningsnavn: product.visningsnavn,
-      pris: product.pris || 0,
+      pris: priceWithMva,
       bilde: undefined,
     })
 
@@ -29,8 +33,15 @@ export function ProductListItem({ product }: ProductListItemProps) {
     })
   }
 
-  const displayName = product.visningsnavn || product.produktnavn
-  const price = product.pris || 0
+  const displayName = product.produktnavn
+  const priceExMva = product.pris || 0
+  const mvaRate = product.mvaverdi || 0
+  const priceWithMva = priceExMva * (1 + mvaRate / 100)
+
+  // Capitalize helper: "01-ASPARGESSUPPE" -> "01-Aspargessuppe"
+  const capitalize = (str: string) => {
+    return str.toLowerCase().replace(/(?:^|[\s-])(\w)/g, (match) => match.toUpperCase())
+  }
 
   return (
     <div className="flex items-center gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors">
@@ -42,7 +53,7 @@ export function ProductListItem({ product }: ProductListItemProps) {
       {/* Product Info */}
       <div className="flex-1 min-w-0">
         <h3 className="font-semibold text-base truncate" title={displayName}>
-          {displayName}
+          {capitalize(displayName)}
         </h3>
         {product.leverandor?.navn && (
           <p className="text-xs text-muted-foreground">
@@ -59,7 +70,7 @@ export function ProductListItem({ product }: ProductListItemProps) {
       {/* Price and Add Button */}
       <div className="flex items-center gap-4 flex-shrink-0">
         <span className="text-lg font-bold whitespace-nowrap">
-          {price.toFixed(2)} kr
+          {priceWithMva.toFixed(2)} kr
         </span>
         <Button onClick={handleAddToCart} size="sm">
           <ShoppingCart className="mr-2 h-4 w-4" />

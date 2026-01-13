@@ -95,6 +95,8 @@ class WebshopOrder(BaseSchema):
     informasjon: Optional[str] = None
     ordrestatusid: Optional[int] = None
     ordrestatus_navn: Optional[str] = None
+    bestilt_av: Optional[int] = None
+    bestilt_av_navn: Optional[str] = None
 
 
 class WebshopOrderDetail(WebshopOrder):

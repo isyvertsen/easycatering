@@ -253,7 +253,8 @@ class WebshopService:
             sendestil=order_data.leveringsadresse,
             ordrestatusid=15,  # Bestilt
             lagerok=False,
-            sentbekreftelse=False
+            sentbekreftelse=False,
+            bestilt_av=user.id  # Track who placed the order
         )
 
         self.db.add(new_order)
@@ -401,8 +402,16 @@ class WebshopService:
         page_size: int = 20,
         search: Optional[str] = None
     ) -> WebshopOrderListResponse:
-        """Get orders waiting for approval (admin only)."""
-        query = select(Ordrer).where(Ordrer.ordrestatusid == 15)  # Bestilt
+        """Get orders waiting for approval (admin only).
+
+        Returns orders with status 10-19 (Startet og Bestilt - ikke godkjent ennå).
+        """
+        query = select(Ordrer).where(
+            and_(
+                Ordrer.ordrestatusid >= 10,
+                Ordrer.ordrestatusid < 20
+            )
+        )
 
         if search:
             search_filter = f"%{search}%"
@@ -434,7 +443,9 @@ class WebshopService:
                 ordredato=o.ordredato,
                 leveringsdato=o.leveringsdato,
                 informasjon=o.informasjon,
-                ordrestatusid=o.ordrestatusid
+                ordrestatusid=o.ordrestatusid,
+                bestilt_av=o.bestilt_av,
+                bestilt_av_navn=o.bestiller.full_name if o.bestiller else None
             )
             for o in orders
         ]
@@ -742,7 +753,8 @@ class WebshopService:
                 ordredato=datetime.utcnow(),
                 ordrestatusid=10,  # Startet
                 lagerok=False,
-                sentbekreftelse=False
+                sentbekreftelse=False,
+                bestilt_av=user.id  # Track who started the order
             )
             self.db.add(order)
             await self.db.flush()

@@ -34,8 +34,12 @@ class Ordrer(Base):
     plukket_av = Column(Integer, ForeignKey("users.id"))
     pakkseddel_skrevet = Column(DateTime)
 
+    # Webshop order tracking
+    bestilt_av = Column(Integer, ForeignKey("users.id"), nullable=True)
+
     # Relationships
     kunde = relationship("Kunder", foreign_keys=[kundeid], lazy="joined")
     ansatt = relationship("Ansatte", foreign_keys=[ansattid], lazy="joined")
     detaljer = relationship("Ordredetaljer", foreign_keys="Ordredetaljer.ordreid", lazy="select")
     plukker = relationship("User", foreign_keys=[plukket_av], lazy="joined")
+    bestiller = relationship("User", foreign_keys=[bestilt_av], lazy="joined")

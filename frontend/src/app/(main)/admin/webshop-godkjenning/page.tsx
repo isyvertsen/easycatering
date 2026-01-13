@@ -33,6 +33,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
+// Helper to get status label
+function getStatusLabel(statusId: number | undefined): { label: string; variant: "default" | "secondary" | "destructive" | "outline" } {
+  switch (statusId) {
+    case 10:
+      return { label: "Startet", variant: "outline" }
+    case 15:
+      return { label: "Bestilt", variant: "secondary" }
+    default:
+      return { label: `Status ${statusId}`, variant: "outline" }
+  }
+}
+
 export default function WebshopApprovalPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedOrders, setSelectedOrders] = useState<number[]>([])
@@ -78,9 +90,9 @@ export default function WebshopApprovalPage() {
   return (
     <div className="container mx-auto py-6 px-4">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Webshop - Godkjenning</h1>
+        <h1 className="text-3xl font-bold mb-2">Webshop - Ubehandlede ordrer</h1>
         <p className="text-muted-foreground">
-          Godkjenn bestillinger fra webbutikken
+          Ordrer som er startet eller bestilt (status 10-19)
         </p>
       </div>
 
@@ -188,12 +200,17 @@ export default function WebshopApprovalPage() {
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-3">
                         <h3 className="font-semibold">Ordre #{order.ordreid}</h3>
-                        <Badge variant="outline">Venter på godkjenning</Badge>
+                        <Badge variant={getStatusLabel(order.ordrestatusid).variant}>
+                          {getStatusLabel(order.ordrestatusid).label}
+                        </Badge>
                       </div>
 
                       <div className="text-sm text-muted-foreground space-y-1">
-                        {order.kunde && (
-                          <p>Kunde: {order.kunde.kundenavn}</p>
+                        {order.kundenavn && (
+                          <p><strong>Kunde:</strong> {order.kundenavn}</p>
+                        )}
+                        {order.bestilt_av_navn && (
+                          <p><strong>Bestiller:</strong> {order.bestilt_av_navn}</p>
                         )}
                         {order.ordredato && (
                           <p>

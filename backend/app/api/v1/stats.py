@@ -121,39 +121,45 @@ async def get_dashboard_stats(
     )
     total_recipes = recipes_result.scalar() or 0
 
-    # Orders today
+    # Orders today (excluding cancelled: status 98, 99)
     orders_today_result = await db.execute(
         select(func.count()).select_from(Ordrer).where(
-            func.date(Ordrer.ordredato) == today
+            and_(
+                func.date(Ordrer.ordredato) == today,
+                Ordrer.ordrestatusid.notin_([98, 99])
+            )
         )
     )
     orders_today = orders_today_result.scalar() or 0
 
-    # Orders this week
+    # Orders this week (excluding cancelled)
     orders_week_result = await db.execute(
         select(func.count()).select_from(Ordrer).where(
-            func.date(Ordrer.ordredato) >= week_start
+            and_(
+                func.date(Ordrer.ordredato) >= week_start,
+                Ordrer.ordrestatusid.notin_([98, 99])
+            )
         )
     )
     orders_this_week = orders_week_result.scalar() or 0
 
-    # Orders this month
+    # Orders this month (excluding cancelled)
     orders_month_result = await db.execute(
         select(func.count()).select_from(Ordrer).where(
-            func.date(Ordrer.ordredato) >= month_start
+            and_(
+                func.date(Ordrer.ordredato) >= month_start,
+                Ordrer.ordrestatusid.notin_([98, 99])
+            )
         )
     )
     orders_this_month = orders_month_result.scalar() or 0
 
-    # Pending orders (not cancelled, not delivered)
+    # Pending orders (status 10-19: startet og bestilt, ikke godkjent ennå)
     pending_orders_result = await db.execute(
         select(func.count()).select_from(Ordrer).where(
             and_(
-                Ordrer.kansellertdato.is_(None),
-                or_(
-                    Ordrer.ordrelevert.is_(None),
-                    Ordrer.ordrelevert == ''
-                )
+                Ordrer.ordrestatusid >= 10,
+                Ordrer.ordrestatusid < 20
             )
         )
     )

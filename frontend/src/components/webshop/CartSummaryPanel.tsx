@@ -6,14 +6,39 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ShoppingBag, Trash2, ArrowRight } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useRef, useEffect, useState } from "react"
 
 /**
  * Compact cart summary panel that shows on the right side of the webshop page
  * Like a "shopping list" that displays items as they're added
+ * - Single line per item
+ * - Newest items at the top
+ * - Animation when items are added
  */
 export function CartSummaryPanel() {
   const { items, removeItem, getTotalPrice, getTotalItems } = useCart()
   const router = useRouter()
+
+  // Track previously seen item IDs to detect new additions
+  const [newItemIds, setNewItemIds] = useState<Set<number>>(new Set())
+  const prevItemsRef = useRef<number[]>([])
+
+  useEffect(() => {
+    const currentIds = items.map(item => item.produktid)
+    const prevIds = new Set(prevItemsRef.current)
+
+    // Find new items that weren't in the previous list
+    const newIds = currentIds.filter(id => !prevIds.has(id))
+
+    if (newIds.length > 0) {
+      setNewItemIds(new Set(newIds))
+      // Clear animation after it completes
+      const timer = setTimeout(() => setNewItemIds(new Set()), 500)
+      return () => clearTimeout(timer)
+    }
+
+    prevItemsRef.current = currentIds
+  }, [items])
 
   if (items.length === 0) {
     return (
@@ -33,6 +58,9 @@ export function CartSummaryPanel() {
     )
   }
 
+  // Reverse items so newest is at top
+  const reversedItems = [...items].reverse()
+
   return (
     <Card className="sticky top-4">
       <CardHeader className="pb-3">
@@ -47,45 +75,47 @@ export function CartSummaryPanel() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Compact item list */}
-        <ScrollArea className="max-h-[400px]">
-          <div className="space-y-2 pr-2">
-            {items.map((item) => (
-              <div
-                key={item.produktid}
-                className="flex items-center justify-between gap-2 text-sm py-1 border-b last:border-0"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">
-                    {item.visningsnavn || item.produktnavn}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {item.antall} × {item.pris.toFixed(0)} kr
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold whitespace-nowrap">
-                    {(item.pris * item.antall).toFixed(0)} kr
+        {/* Single-line item list with line totals */}
+        <ScrollArea className="max-h-[500px]">
+          <div className="space-y-0.5 pr-2">
+            {reversedItems.map((item) => {
+              const isNew = newItemIds.has(item.produktid)
+              const lineTotal = item.pris * item.antall
+              return (
+                <div
+                  key={item.produktid}
+                  className={`flex items-center gap-2 text-sm py-2 border-b last:border-0 transition-all duration-300 ${
+                    isNew ? "animate-in slide-in-from-top-2 fade-in bg-primary/5" : ""
+                  }`}
+                >
+                  <span className="text-muted-foreground shrink-0 w-6 text-right">
+                    {item.antall}×
+                  </span>
+                  <span className="flex-1 min-w-0 truncate capitalize" title={item.produktnavn}>
+                    {item.produktnavn.toLowerCase()}
+                  </span>
+                  <span className="font-semibold whitespace-nowrap tabular-nums">
+                    {lineTotal.toFixed(0)} kr
                   </span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 shrink-0"
+                    className="h-6 w-6 shrink-0 -mr-1"
                     onClick={() => removeItem(item.produktid)}
                   >
                     <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                   </Button>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </ScrollArea>
 
         {/* Total */}
-        <div className="pt-2 border-t">
-          <div className="flex items-center justify-between font-semibold">
+        <div className="pt-3 border-t">
+          <div className="flex items-center justify-between font-semibold text-base">
             <span>Totalt:</span>
-            <span>{getTotalPrice().toFixed(2)} kr</span>
+            <span className="tabular-nums">{getTotalPrice().toFixed(0)} kr</span>
           </div>
         </div>
 

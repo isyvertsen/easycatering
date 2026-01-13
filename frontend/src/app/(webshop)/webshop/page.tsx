@@ -229,7 +229,7 @@ export default function WebshopPage() {
         </div>
 
         {/* Cart Summary Panel - visible on larger screens */}
-        <div className="hidden lg:block w-72 shrink-0">
+        <div className="hidden lg:block w-96 shrink-0">
           <CartSummaryPanel />
         </div>
       </div>

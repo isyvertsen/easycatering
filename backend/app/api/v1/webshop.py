@@ -247,46 +247,8 @@ async def list_my_orders(
     )
 
 
-@router.get("/ordre/{order_id}", response_model=WebshopOrderDetail)
-async def get_webshop_order(
-    order_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Get a single order with details."""
-    service = WebshopService(db)
-
-    order = await service.get_order(order_id, current_user)
-    if not order:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ordre ikke funnet"
-        )
-
-    return order
-
-
-@router.get("/ordre/{order_id}/linjer", response_model=List[WebshopOrderLine])
-async def get_webshop_order_lines(
-    order_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Get order lines for a specific order."""
-    service = WebshopService(db)
-
-    order = await service.get_order(order_id, current_user)
-    if not order:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ordre ikke funnet"
-        )
-
-    return order.ordrelinjer
-
-
 # =============================================================================
-# Admin - Order management
+# Admin - Order management (static routes MUST come before {order_id} routes)
 # =============================================================================
 
 @router.get("/ordre/status", response_model=WebshopOrderListResponse)
@@ -403,6 +365,7 @@ async def batch_approve_orders(
 
 # =============================================================================
 # Token-based order access (no authentication required)
+# These routes use /ordre/token/{token} - must come before /ordre/{order_id}
 # =============================================================================
 
 @router.get("/ordre/token/{token}", response_model=WebshopOrderByTokenResponse)
@@ -454,6 +417,48 @@ async def confirm_receipt_by_token(
         )
 
     return {"message": "Mottak bekreftet"}
+
+
+# =============================================================================
+# Order detail routes (dynamic {order_id} routes - MUST come LAST)
+# =============================================================================
+
+@router.get("/ordre/{order_id}", response_model=WebshopOrderDetail)
+async def get_webshop_order(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get a single order with details."""
+    service = WebshopService(db)
+
+    order = await service.get_order(order_id, current_user)
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ordre ikke funnet"
+        )
+
+    return order
+
+
+@router.get("/ordre/{order_id}/linjer", response_model=List[WebshopOrderLine])
+async def get_webshop_order_lines(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get order lines for a specific order."""
+    service = WebshopService(db)
+
+    order = await service.get_order(order_id, current_user)
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ordre ikke funnet"
+        )
+
+    return order.ordrelinjer
 
 
 # =============================================================================

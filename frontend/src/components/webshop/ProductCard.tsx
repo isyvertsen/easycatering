@@ -16,12 +16,16 @@ export function ProductCard({ product }: ProductCardProps) {
   const { toast } = useToast()
 
   const handleAddToCart = () => {
+    const priceExMva = product.pris || 0
+    const mvaRate = product.mvaverdi || 0
+    const priceWithMva = priceExMva * (1 + mvaRate / 100)
+
     addItem({
       produktid: product.produktid,
       produktnavn: product.produktnavn,
       visningsnavn: product.visningsnavn,
-      pris: product.pris || 0,
-      bilde: undefined, // TODO: Add image support when backend provides it
+      pris: priceWithMva,
+      bilde: undefined,
     })
 
     toast({
@@ -30,8 +34,15 @@ export function ProductCard({ product }: ProductCardProps) {
     })
   }
 
-  const displayName = product.visningsnavn || product.produktnavn
-  const price = product.pris || 0
+  const displayName = product.produktnavn
+  const priceExMva = product.pris || 0
+  const mvaRate = product.mvaverdi || 0
+  const priceWithMva = priceExMva * (1 + mvaRate / 100)
+
+  // Capitalize helper: "01-ASPARGESSUPPE" -> "01-Aspargessuppe"
+  const capitalize = (str: string) => {
+    return str.toLowerCase().replace(/(?:^|[\s-])(\w)/g, (match) => match.toUpperCase())
+  }
 
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow">
@@ -41,7 +52,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <Package className="h-12 w-12 text-muted-foreground" />
         </div>
         <h3 className="font-semibold text-lg line-clamp-2" title={displayName}>
-          {displayName}
+          {capitalize(displayName)}
         </h3>
       </CardHeader>
 
@@ -56,7 +67,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardFooter className="flex items-center justify-between pt-3 border-t">
         <div className="flex flex-col">
           <span className="text-2xl font-bold">
-            {price.toFixed(2)} kr
+            {priceWithMva.toFixed(2)} kr
           </span>
         </div>
         <Button onClick={handleAddToCart} size="sm">

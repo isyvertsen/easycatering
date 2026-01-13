@@ -173,24 +173,30 @@ export default function CheckoutPage() {
               <CardTitle>Ordresammendrag</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {items.map((item) => (
-                <div
-                  key={item.produktid}
-                  className="flex justify-between items-start pb-3 border-b last:border-b-0"
-                >
-                  <div className="flex-1">
+              {items.map((item) => {
+                // Capitalize helper
+                const capitalize = (str: string) =>
+                  str.toLowerCase().replace(/(?:^|[\s-])(\w)/g, (m) => m.toUpperCase())
+
+                return (
+                  <div
+                    key={item.produktid}
+                    className="flex justify-between items-start pb-3 border-b last:border-b-0"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium">
+                        {capitalize(item.produktnavn)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.pris.toFixed(2)} kr × {item.antall}
+                      </p>
+                    </div>
                     <p className="font-medium">
-                      {item.visningsnavn || item.produktnavn}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {item.pris.toFixed(2)} kr × {item.antall}
+                      {(item.pris * item.antall).toFixed(2)} kr
                     </p>
                   </div>
-                  <p className="font-medium">
-                    {(item.pris * item.antall).toFixed(2)} kr
-                  </p>
-                </div>
-              ))}
+                )
+              })}
 
               <div className="pt-4 border-t">
                 <div className="flex justify-between items-center text-lg font-bold">
