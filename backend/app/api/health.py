@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
 from app.infrastructure.database.session import get_db
+from app.core.redis import get_redis
 
 router = APIRouter()
 
@@ -35,22 +36,32 @@ async def health():
 
 @router.get("/ready")
 async def readiness(db: AsyncSession = Depends(get_db)):
-    """Readiness check including database connectivity."""
+    """Readiness check including database and Redis connectivity."""
+    checks = {}
+    all_ready = True
+
+    # Test database connection
     try:
-        # Test database connection
         await db.execute(text("SELECT 1"))
-        return {
-            "status": "ready",
-            "version": BACKEND_VERSION,
-            "checks": {
-                "database": "connected",
-            }
-        }
-    except Exception as e:
-        return {
-            "status": "not ready",
-            "version": BACKEND_VERSION,
-            "checks": {
-                "database": "error",
-            }
-        }
+        checks["database"] = "connected"
+    except Exception:
+        checks["database"] = "error"
+        all_ready = False
+
+    # Test Redis connection
+    try:
+        redis_client = await get_redis()
+        if redis_client:
+            await redis_client.ping()
+            checks["redis"] = "connected"
+        else:
+            checks["redis"] = "not configured"
+    except Exception:
+        checks["redis"] = "error"
+        # Redis is optional, don't fail readiness
+
+    return {
+        "status": "ready" if all_ready else "not ready",
+        "version": BACKEND_VERSION,
+        "checks": checks
+    }
