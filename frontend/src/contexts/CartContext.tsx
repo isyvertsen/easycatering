@@ -46,6 +46,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingSaveRef = useRef(false)
+  const isClearingRef = useRef(false) // Prevents auto-reload after intentional clear
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -157,12 +158,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Load draft order when user logs in
   useEffect(() => {
+    // Skip loading if cart was intentionally cleared (prevents race condition)
+    if (isClearingRef.current) {
+      return
+    }
     if (isLoggedIn && isHydrated && items.length === 0) {
       loadDraftOrder()
     }
   }, [isLoggedIn, isHydrated, items.length, loadDraftOrder])
 
   const addItem = (item: Omit<CartItem, 'antall'> & { antall?: number }) => {
+    // Reset clearing flag when adding items (cart is active again)
+    isClearingRef.current = false
+
     setItems((prev) => {
       const existing = prev.find((i) => i.produktid === item.produktid)
       let newItems: CartItem[]
@@ -227,6 +235,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }
 
   const clearCart = () => {
+    // Prevent auto-reload of draft order after clearing
+    isClearingRef.current = true
+
     // Cancel any pending save
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
