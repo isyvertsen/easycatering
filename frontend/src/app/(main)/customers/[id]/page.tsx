@@ -2,7 +2,9 @@
 
 import { useParams, useRouter } from "next/navigation"
 import { useState } from "react"
+import Link from "next/link"
 import { useCustomer, useUpdateCustomer } from "@/hooks/useCustomers"
+import { useOrdersList } from "@/hooks/useOrders"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,9 +14,35 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft, Save, Phone, Mail, MapPin, Building, Hash, AlertCircle } from "lucide-react"
-import { Customer } from "@/types/models"
+import { ArrowLeft, Save, Phone, Mail, MapPin, Building, Hash, AlertCircle, ShoppingCart } from "lucide-react"
+import { Customer, Order } from "@/types/models"
 import { cn } from "@/lib/utils"
+import { format } from "date-fns"
+
+const getOrderStatus = (order: Order) => {
+  if (order.kansellertdato) {
+    return { label: "Kansellert", variant: "destructive" as const }
+  }
+  if (order.ordrelevert) {
+    return { label: "Levert", variant: "default" as const }
+  }
+  const statusMap: Record<number, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+    10: { label: "Startet", variant: "outline" },
+    15: { label: "Bestilt", variant: "outline" },
+    20: { label: "Godkjent", variant: "default" },
+    25: { label: "Plukkliste", variant: "secondary" },
+    30: { label: "Plukket", variant: "secondary" },
+    35: { label: "Pakkliste", variant: "secondary" },
+    80: { label: "Godkjent mottaker", variant: "default" },
+    85: { label: "Fakturert", variant: "default" },
+    90: { label: "Sendt regnskap", variant: "default" },
+    95: { label: "Kreditert", variant: "secondary" },
+    98: { label: "For sen kansellering", variant: "destructive" },
+    99: { label: "Kansellert", variant: "destructive" },
+  }
+  const statusId = order.ordrestatusid ?? 0
+  return statusMap[statusId] || { label: `Status ${statusId}`, variant: "outline" as const }
+}
 
 export default function CustomerEditPage() {
   const params = useParams()
@@ -25,6 +53,12 @@ export default function CustomerEditPage() {
   const customerId = Number(params.id)
   const { data: customer, isLoading, error } = useCustomer(customerId)
   const updateMutation = useUpdateCustomer()
+  const { data: ordersData, isLoading: ordersLoading } = useOrdersList({
+    kunde_id: customerId,
+    limit: 50,
+    sort_by: 'ordredato',
+    sort_order: 'desc'
+  })
 
   const [formData, setFormData] = useState<Partial<Customer>>(customer || {})
 
@@ -143,6 +177,12 @@ export default function CustomerEditPage() {
             <TabsTrigger value="contact">Kontakt</TabsTrigger>
             <TabsTrigger value="delivery">Levering</TabsTrigger>
             <TabsTrigger value="notes">Notater</TabsTrigger>
+            <TabsTrigger value="orders">
+              Ordrer
+              {ordersData?.total ? (
+                <Badge variant="secondary" className="ml-2">{ordersData.total}</Badge>
+              ) : null}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-4">
@@ -393,6 +433,78 @@ export default function CustomerEditPage() {
                     onChange={(e) => handleChange('lopenr', e.target.value)}
                   />
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="orders" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" />
+                  Ordrer for denne kunden
+                </CardTitle>
+                <CardDescription>
+                  Oversikt over alle ordrer registrert på denne kunden
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {ordersLoading ? (
+                  <div className="space-y-2">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-12 bg-gray-100 rounded animate-pulse" />
+                    ))}
+                  </div>
+                ) : ordersData?.items && ordersData.items.length > 0 ? (
+                  <div className="rounded-md border">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="p-3 text-left font-medium">Ordrenr</th>
+                          <th className="p-3 text-left font-medium">Ordredato</th>
+                          <th className="p-3 text-left font-medium">Levering</th>
+                          <th className="p-3 text-left font-medium">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ordersData.items.map((order) => {
+                          const status = getOrderStatus(order)
+                          return (
+                            <tr
+                              key={order.ordreid}
+                              className="border-b hover:bg-muted/50 cursor-pointer"
+                              onClick={() => router.push(`/orders/${order.ordreid}`)}
+                            >
+                              <td className="p-3 font-medium">{order.ordreid}</td>
+                              <td className="p-3">
+                                {order.ordredato ? format(new Date(order.ordredato), 'dd.MM.yyyy') : '-'}
+                              </td>
+                              <td className="p-3">
+                                {order.leveringsdato ? format(new Date(order.leveringsdato), 'dd.MM.yyyy') : '-'}
+                              </td>
+                              <td className="p-3">
+                                <Badge variant={status.variant}>{status.label}</Badge>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Ingen ordrer funnet for denne kunden
+                  </div>
+                )}
+                {ordersData && ordersData.total > 50 && (
+                  <div className="mt-4 text-center">
+                    <Button variant="outline" asChild>
+                      <Link href={`/orders?kunde_id=${customerId}`}>
+                        Vis alle {ordersData.total} ordrer
+                      </Link>
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
