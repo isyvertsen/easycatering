@@ -20,12 +20,12 @@ class FeedbackAIService:
         context = """
 EKSISTERENDE FUNKSJONER I SYSTEMET:
 
-Backend (isyvertsen/LKCserver-backend):
+Backend (backend/):
 """
         for feature in features["backend"]:
             context += f"- {feature}\n"
 
-        context += "\nFrontend (isyvertsen/LKCserver-frontend):\n"
+        context += "\nFrontend (frontend/):\n"
         for feature in features["frontend"]:
             context += f"- {feature}\n"
 
