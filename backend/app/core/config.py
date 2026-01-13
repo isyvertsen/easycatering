@@ -70,8 +70,8 @@ class Settings(BaseSettings):
 
     # GitHub Integration for Feedback System
     GITHUB_TOKEN: str = Field(default="", env="GITHUB_TOKEN")
-    GITHUB_REPO_BACKEND: str = Field(default="isyvertsen/LKCserver-backend", env="GITHUB_REPO_BACKEND")
-    GITHUB_REPO_FRONTEND: str = Field(default="isyvertsen/LKCserver-frontend", env="GITHUB_REPO_FRONTEND")
+    GITHUB_REPO_BACKEND: str = Field(default="isyvertsen/easycatering", env="GITHUB_REPO_BACKEND")
+    GITHUB_REPO_FRONTEND: str = Field(default="isyvertsen/easycatering", env="GITHUB_REPO_FRONTEND")
 
     # Matinfo API Configuration
     MATINFO_API_KEY: str = Field(default="", env="MATINFO_API_KEY")

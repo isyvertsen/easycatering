@@ -40,10 +40,9 @@ export function GitHubIntegration() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // GitHub repositories (kan konfigureres via environment variables)
+  // GitHub repository (kan konfigureres via environment variables)
   const GITHUB_REPOS = [
-    'isyvertsen/LKCserver-frontend',
-    'isyvertsen/LKCserver-backend'
+    'isyvertsen/easycatering'
   ]
   const GITHUB_API = 'https://api.github.com'
 
@@ -140,10 +139,10 @@ export function GitHubIntegration() {
   }
 
   const getRepoName = (repositoryUrl: string) => {
-    // Extract repo name from URL like "https://api.github.com/repos/isyvertsen/LKCserver-frontend"
+    // Extract repo name from URL like "https://api.github.com/repos/isyvertsen/easycatering"
     const parts = repositoryUrl.split('/')
     const repoName = parts[parts.length - 1]
-    return repoName.replace('LKCserver-', '')
+    return repoName
   }
 
   const getStateIcon = (state: string, draft?: boolean) => {

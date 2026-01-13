@@ -2,7 +2,7 @@
 
 SYSTEM_MAP = {
     "backend": {
-        "repo": "isyvertsen/LKCserver-backend",
+        "repo": "isyvertsen/easycatering",
         "description": "FastAPI backend - REST API, database, business logic",
         "technologies": [
             "Python 3.11+",
@@ -63,7 +63,7 @@ SYSTEM_MAP = {
         }
     },
     "frontend": {
-        "repo": "isyvertsen/LKCserver-frontend",
+        "repo": "isyvertsen/easycatering",
         "description": "Next.js 15 frontend - UI, forms, user interaction",
         "technologies": [
             "Next.js 15 (App Router)",
@@ -163,7 +163,7 @@ def get_system_context() -> str:
     """
     context = """# SYSTEM ARKITEKTUR
 
-## Backend Repository: isyvertsen/LKCserver-backend
+## Backend (backend/): isyvertsen/easycatering
 **Teknologier:** FastAPI, Python, PostgreSQL, SQLAlchemy, Redis, OpenAI API
 
 **Ansvar:**
@@ -185,7 +185,7 @@ def get_system_context() -> str:
 
 ---
 
-## Frontend Repository: isyvertsen/LKCserver-frontend
+## Frontend (frontend/): isyvertsen/easycatering
 **Teknologier:** Next.js 15, React 19, TypeScript, Tailwind CSS, shadcn/ui
 
 **Ansvar:**
