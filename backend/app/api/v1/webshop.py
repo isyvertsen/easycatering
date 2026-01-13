@@ -521,6 +521,53 @@ async def delete_draft_order(
     return {"message": "Draft-ordre slettet"}
 
 
+@router.post("/ordre/{order_id}/reopen")
+async def reopen_order(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Reopen an order for editing.
+
+    Sets order status back to 10 (Startet) so the user can add/remove items.
+    Only works for orders belonging to the user that are not cancelled.
+    """
+    service = WebshopService(db)
+
+    # Get the order (this checks ownership)
+    order = await service.get_order(order_id, current_user)
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ordre ikke funnet"
+        )
+
+    # Check if order is cancelled
+    if order.ordrestatusid in [98, 99]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Kansellerte ordrer kan ikke gjenåpnes"
+        )
+
+    # Check if order is delivered
+    if order.ordrelevert:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Leverte ordrer kan ikke gjenåpnes"
+        )
+
+    # Update status to 10 (Startet)
+    success = await service.update_order_status(order_id, 10)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Kunne ikke gjenåpne ordre"
+        )
+
+    return {"message": "Ordre gjenåpnet for redigering", "ordrestatusid": 10}
+
+
 @router.post("/draft-ordre/{order_id}/submit", response_model=WebshopOrderCreateResponse)
 async def submit_draft_order(
     order_id: int,

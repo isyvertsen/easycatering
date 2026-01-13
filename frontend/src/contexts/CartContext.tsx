@@ -136,10 +136,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const draft = await webshopApi.getDraftOrder()
       if (draft && draft.ordrelinjer.length > 0) {
         // Convert backend order lines to cart items
+        // Backend returns produktnavn/visningsnavn directly on line
         const cartItems: CartItem[] = draft.ordrelinjer.map(line => ({
           produktid: line.produktid,
-          produktnavn: line.produkt?.produktnavn || '',
-          visningsnavn: line.produkt?.visningsnavn,
+          produktnavn: line.produktnavn || '',
+          visningsnavn: line.visningsnavn,
           pris: line.pris ?? 0,
           antall: line.antall ?? 1
         }))
@@ -235,6 +236,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (isLoggedIn && draftOrderId) {
       webshopApi.deleteDraftOrder(draftOrderId).catch(console.error)
     }
+
+    // Clear localStorage explicitly
+    localStorage.removeItem(CART_STORAGE_KEY)
+    localStorage.removeItem(DRAFT_ORDER_ID_KEY)
 
     setItems([])
     setDraftOrderId(null)

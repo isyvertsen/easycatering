@@ -140,6 +140,10 @@ export interface OrderLine {
   antall?: number
   rabatt?: number
   ident?: string
+  // Direct product info (from webshop API)
+  produktnavn?: string
+  visningsnavn?: string
+  total?: number
   // Relations
   produkt?: Product
 }

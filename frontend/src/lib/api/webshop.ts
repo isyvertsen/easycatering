@@ -570,5 +570,16 @@ export const webshopApi = {
 
     const response = await apiClient.post(url)
     return response.data
+  },
+
+  /**
+   * Reopen an order for editing
+   *
+   * Backend endpoint: POST /api/v1/webshop/ordre/:id/reopen
+   * Sets order status back to 10 (Startet) so user can add/remove items
+   */
+  reopenOrder: async (id: number): Promise<{ message: string; ordrestatusid: number }> => {
+    const response = await apiClient.post(`/v1/webshop/ordre/${id}/reopen`)
+    return response.data
   }
 }
