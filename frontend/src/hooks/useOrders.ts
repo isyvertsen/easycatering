@@ -5,7 +5,7 @@ import { Order, OrderLine } from '@/types/models'
 // Order hooks
 export function useOrdersList(
   params?: OrderListParams,
-  options?: UseQueryOptions<OrderListResponse>
+  options?: Omit<UseQueryOptions<OrderListResponse>, 'queryKey' | 'queryFn'>
 ) {
   return useQuery<OrderListResponse>({
     queryKey: ['orders', 'list', params],
