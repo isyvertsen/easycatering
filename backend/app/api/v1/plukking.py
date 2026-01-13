@@ -12,8 +12,11 @@ from pydantic import BaseModel
 from app.api.deps import get_db, get_current_active_user
 from app.domain.entities.user import User
 from app.models.ordrer import Ordrer
+from app.models.ordredetaljer import Ordredetaljer
 from app.models.kunder import Kunder
 from app.models.kunde_gruppe import Kundegruppe
+from app.schemas.ordredetaljer import RegisterPickRequest
+from app.services.pick_list_scanner_service import get_pick_list_scanner_service
 
 router = APIRouter(prefix="/plukking", tags=["Plukking"])
 
@@ -370,3 +373,197 @@ async def bulk_update_plukkstatus(
         "message": f"{updated_count} ordrer oppdatert til {plukkstatus.value}",
         "updated_count": updated_count,
     }
+
+
+class PickDetailLine(BaseModel):
+    """Order line details for pick registration."""
+    produktid: int
+    unik: int
+    produktnavn: Optional[str]
+    antall: float
+    plukket_antall: Optional[float]
+    enhet: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class PickDetailsResponse(BaseModel):
+    """Response with order details for pick registration."""
+    ordreid: int
+    kundenavn: Optional[str]
+    leveringsdato: Optional[datetime]
+    plukkstatus: Optional[str]
+    lines: List[PickDetailLine]
+
+
+@router.get("/{ordre_id}/plukkdetaljer", response_model=PickDetailsResponse)
+async def get_pick_details(
+    ordre_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Get order details for pick registration.
+
+    Returns the order with all order lines, including ordered and picked quantities.
+    """
+    result = await db.execute(
+        select(Ordrer)
+        .options(joinedload(Ordrer.detaljer).joinedload(Ordredetaljer.produkt))
+        .where(Ordrer.ordreid == ordre_id)
+    )
+    ordre = result.unique().scalar_one_or_none()
+
+    if not ordre:
+        raise HTTPException(status_code=404, detail="Ordre ikke funnet")
+
+    lines = []
+    for detalj in ordre.detaljer or []:
+        lines.append(PickDetailLine(
+            produktid=detalj.produktid,
+            unik=detalj.unik,
+            produktnavn=detalj.produkt.produktnavn if detalj.produkt else None,
+            antall=detalj.antall or 0,
+            plukket_antall=detalj.plukket_antall,
+            enhet=detalj.produkt.pakningstype if detalj.produkt else "stk",
+        ))
+
+    return PickDetailsResponse(
+        ordreid=ordre.ordreid,
+        kundenavn=ordre.kundenavn,
+        leveringsdato=ordre.leveringsdato,
+        plukkstatus=ordre.plukkstatus,
+        lines=lines,
+    )
+
+
+@router.post("/{ordre_id}/registrer-plukk")
+async def register_pick_quantities(
+    ordre_id: int,
+    request: RegisterPickRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Register picked quantities for order lines.
+
+    Updates the plukket_antall field for each order line and sets
+    the order status to PLUKKET.
+    """
+    # Verify order exists
+    ordre_result = await db.execute(
+        select(Ordrer).where(Ordrer.ordreid == ordre_id)
+    )
+    ordre = ordre_result.scalar_one_or_none()
+
+    if not ordre:
+        raise HTTPException(status_code=404, detail="Ordre ikke funnet")
+
+    if ordre.kansellertdato:
+        raise HTTPException(status_code=400, detail="Kan ikke registrere plukk på kansellert ordre")
+
+    # Update each line
+    updated_count = 0
+    for line_input in request.lines:
+        result = await db.execute(
+            select(Ordredetaljer).where(
+                and_(
+                    Ordredetaljer.ordreid == ordre_id,
+                    Ordredetaljer.produktid == line_input.produktid,
+                    Ordredetaljer.unik == line_input.unik,
+                )
+            )
+        )
+        detalj = result.scalar_one_or_none()
+
+        if detalj:
+            detalj.plukket_antall = line_input.plukket_antall
+            updated_count += 1
+
+    # Update order status to PLUKKET
+    ordre.plukkstatus = PlukkStatus.PLUKKET.value
+    ordre.plukket_dato = datetime.utcnow()
+    ordre.plukket_av = current_user.id
+    # Also update ordrestatusid to 30 (Plukket)
+    ordre.ordrestatusid = 30
+
+    await db.commit()
+
+    return {
+        "message": f"Plukk registrert for {updated_count} linjer",
+        "updated_count": updated_count,
+        "ordreid": ordre_id,
+        "plukkstatus": ordre.plukkstatus,
+    }
+
+
+class ScanPickListRequest(BaseModel):
+    """Request body for scanning a pick list image."""
+    image_base64: str
+
+
+class ScannedLine(BaseModel):
+    """A scanned line result."""
+    produktid: int
+    unik: int
+    plukket_antall: float
+
+
+class ScanPickListResponse(BaseModel):
+    """Response from scanning a pick list."""
+    success: bool
+    lines: List[ScannedLine]
+    confidence: float
+    notes: str
+    error: Optional[str] = None
+
+
+@router.post("/{ordre_id}/scan-plukkliste", response_model=ScanPickListResponse)
+async def scan_pick_list(
+    ordre_id: int,
+    request: ScanPickListRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Scan a pick list image and extract picked quantities using AI Vision.
+
+    The image should be a base64 encoded JPEG/PNG of a filled-out pick list.
+    The AI will attempt to read handwritten quantities and match them to order lines.
+    """
+    # Get order details
+    result = await db.execute(
+        select(Ordrer)
+        .options(joinedload(Ordrer.detaljer).joinedload(Ordredetaljer.produkt))
+        .where(Ordrer.ordreid == ordre_id)
+    )
+    ordre = result.unique().scalar_one_or_none()
+
+    if not ordre:
+        raise HTTPException(status_code=404, detail="Ordre ikke funnet")
+
+    # Prepare order lines for the scanner
+    order_lines = []
+    for detalj in ordre.detaljer or []:
+        order_lines.append({
+            "produktid": detalj.produktid,
+            "unik": detalj.unik,
+            "produktnavn": detalj.produkt.produktnavn if detalj.produkt else f"Produkt {detalj.produktid}",
+            "antall": detalj.antall or 0
+        })
+
+    # Scan the image
+    scanner = get_pick_list_scanner_service()
+    scan_result = await scanner.analyze_pick_list_image(
+        image_base64=request.image_base64,
+        order_lines=order_lines
+    )
+
+    return ScanPickListResponse(
+        success=scan_result["success"],
+        lines=[ScannedLine(**line) for line in scan_result.get("lines", [])],
+        confidence=scan_result.get("confidence", 0.0),
+        notes=scan_result.get("notes", ""),
+        error=scan_result.get("error")
+    )

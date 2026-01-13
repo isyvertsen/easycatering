@@ -113,4 +113,37 @@ export const reportsApi = {
       throw error
     }
   },
+
+  /**
+   * Download batch pick list PDF for multiple orders
+   *
+   * @param orderIds - Array of order IDs
+   */
+  downloadBatchPickList: async (orderIds: number[]): Promise<void> => {
+    try {
+      const response = await api.post(
+        '/v1/report-generator/plukkliste-batch',
+        { order_ids: orderIds },
+        { responseType: 'blob' }
+      )
+
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+
+      // Create filename based on order IDs
+      const idsStr = orderIds.slice(0, 5).join('_')
+      const suffix = orderIds.length > 5 ? `_og_${orderIds.length - 5}_flere` : ''
+      link.setAttribute('download', `plukkliste_${idsStr}${suffix}.pdf`)
+
+      document.body.appendChild(link)
+      link.click()
+
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Failed to download batch pick list:', error)
+      throw error
+    }
+  },
 }

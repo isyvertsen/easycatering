@@ -18,5 +18,8 @@ class Ordredetaljer(Base):
     rabatt = Column(Float)
     ident = Column(Text)
 
+    # Pick registration
+    plukket_antall = Column(Float, nullable=True)
+
     # Relationships
     produkt = relationship("Produkter", foreign_keys=[produktid], lazy="joined")

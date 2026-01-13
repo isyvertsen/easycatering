@@ -9,6 +9,7 @@ export interface OrderListParams {
   fra_dato?: string
   til_dato?: string
   kundegruppe_ids?: number[]
+  status_ids?: number[]
   sort_by?: 'leveringsdato' | 'ordredato'
   sort_order?: 'asc' | 'desc'
 }
@@ -53,6 +54,9 @@ export const ordersApi = {
     if (params?.til_dato) queryParams.append('til_dato', params.til_dato)
     if (params?.kundegruppe_ids?.length) {
       params.kundegruppe_ids.forEach(id => queryParams.append('kundegruppe_ids', id.toString()))
+    }
+    if (params?.status_ids?.length) {
+      params.status_ids.forEach(id => queryParams.append('status_ids', id.toString()))
     }
     if (params?.sort_by) queryParams.append('sort_by', params.sort_by)
     if (params?.sort_order) queryParams.append('sort_order', params.sort_order)

@@ -30,6 +30,7 @@ async def get_ordrer(
     fra_dato: Optional[date] = Query(None, description="From date"),
     til_dato: Optional[date] = Query(None, description="To date"),
     kundegruppe_ids: Optional[List[int]] = Query(None, description="Filter by customer group IDs"),
+    status_ids: Optional[List[int]] = Query(None, description="Filter by order status IDs"),
     sort_by: Optional[str] = Query("leveringsdato", description="Sort field (leveringsdato or ordredato)"),
     sort_order: Optional[str] = Query("asc", description="Sort order (asc or desc)"),
 ) -> PaginatedResponse[Ordrer]:
@@ -84,10 +85,15 @@ async def get_ordrer(
         from app.models.kunder import Kunder as KunderModel
         count_query = count_query.join(KunderModel, OrdrerModel.kundeid == KunderModel.kundeid)
         count_query = count_query.where(KunderModel.kundegruppe.in_(kundegruppe_ids))
-        
+
         query = query.join(KunderModel, OrdrerModel.kundeid == KunderModel.kundeid)
         query = query.where(KunderModel.kundegruppe.in_(kundegruppe_ids))
-    
+
+    # Filter by order status IDs if specified
+    if status_ids:
+        count_query = count_query.where(OrdrerModel.ordrestatusid.in_(status_ids))
+        query = query.where(OrdrerModel.ordrestatusid.in_(status_ids))
+
     # Get total count
     total_result = await db.execute(count_query)
     total = total_result.scalar()
@@ -166,9 +172,11 @@ async def get_ordre_detaljer(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> List[Ordredetaljer]:
-    """Get order details."""
+    """Get order details with product info."""
     result = await db.execute(
-        select(OrdredetaljerModel).where(OrdredetaljerModel.ordreid == ordre_id)
+        select(OrdredetaljerModel)
+        .options(joinedload(OrdredetaljerModel.produkt))
+        .where(OrdredetaljerModel.ordreid == ordre_id)
     )
     return result.scalars().all()
 
@@ -219,8 +227,79 @@ async def add_ordre_detalj(
     )
     db.add(detalj)
     await db.commit()
-    await db.refresh(detalj)
-    return detalj
+
+    # Re-fetch with product relationship loaded
+    result = await db.execute(
+        select(OrdredetaljerModel)
+        .options(joinedload(OrdredetaljerModel.produkt))
+        .where(
+            OrdredetaljerModel.ordreid == ordre_id,
+            OrdredetaljerModel.unik == detalj.unik
+        )
+    )
+    return result.scalar_one()
+
+
+@router.put("/{ordre_id}/detaljer/{unik}", response_model=Ordredetaljer)
+async def update_ordre_detalj(
+    ordre_id: int,
+    unik: int,
+    detalj_data: OrdredetaljerCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> Ordredetaljer:
+    """Update an order detail."""
+    result = await db.execute(
+        select(OrdredetaljerModel).where(
+            OrdredetaljerModel.ordreid == ordre_id,
+            OrdredetaljerModel.unik == unik
+        )
+    )
+    detalj = result.scalar_one_or_none()
+
+    if not detalj:
+        raise HTTPException(status_code=404, detail="Ordrelinje ikke funnet")
+
+    update_data = detalj_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(detalj, field, value)
+
+    await db.commit()
+
+    # Re-fetch with product relationship
+    result = await db.execute(
+        select(OrdredetaljerModel)
+        .options(joinedload(OrdredetaljerModel.produkt))
+        .where(
+            OrdredetaljerModel.ordreid == ordre_id,
+            OrdredetaljerModel.unik == unik
+        )
+    )
+    return result.scalar_one()
+
+
+@router.delete("/{ordre_id}/detaljer/{unik}")
+async def delete_ordre_detalj(
+    ordre_id: int,
+    unik: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Delete an order detail."""
+    result = await db.execute(
+        select(OrdredetaljerModel).where(
+            OrdredetaljerModel.ordreid == ordre_id,
+            OrdredetaljerModel.unik == unik
+        )
+    )
+    detalj = result.scalar_one_or_none()
+
+    if not detalj:
+        raise HTTPException(status_code=404, detail="Ordrelinje ikke funnet")
+
+    await db.delete(detalj)
+    await db.commit()
+    return {"message": "Ordrelinje slettet"}
 
 
 @router.put("/{ordre_id}", response_model=Ordrer)

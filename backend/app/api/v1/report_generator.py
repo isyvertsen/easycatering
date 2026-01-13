@@ -2,11 +2,17 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
+from pydantic import BaseModel
 
 from app.api.deps import get_db, get_current_user
 from app.domain.entities.user import User
 from app.services.report_service import ReportService
 from app.graphql.resolvers import get_ordre, get_kunder
+
+
+class BatchPickListRequest(BaseModel):
+    """Request body for batch pick list generation."""
+    order_ids: list[int]
 
 router = APIRouter()
 
@@ -183,6 +189,71 @@ async def generate_pick_list_pdf(
         media_type="application/pdf",
         headers={
             "Content-Disposition": f"attachment; filename=plukkliste_{ordre_id}.pdf"
+        }
+    )
+
+
+@router.post("/plukkliste-batch")
+async def generate_batch_pick_list_pdf(
+    request: BatchPickListRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Generate combined pick list PDF for multiple orders.
+
+    Args:
+        request: Request with list of order IDs
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        Combined PDF file download
+    """
+    if not request.order_ids:
+        raise HTTPException(status_code=400, detail="Ingen ordre-IDer oppgitt")
+
+    orders_data = []
+    for ordre_id in request.order_ids:
+        ordre = await get_ordre(ordre_id, db)
+
+        if not ordre:
+            raise HTTPException(status_code=404, detail=f"Ordre {ordre_id} ikke funnet")
+
+        # Prepare data for pick list
+        data = {
+            "ordrenummer": ordre.ordreid,
+            "leveringsdato": ordre.leveringsdato.strftime("%d.%m.%Y") if ordre.leveringsdato else "",
+            "kunde": {
+                "navn": ordre.kunde.kundenavn if ordre.kunde else "",
+            },
+            "produkter": [
+                {
+                    "produktid": p.produktid,
+                    "navn": p.produktnavn,
+                    "antall": p.antall,
+                    "enhet": p.enhet or "stk",
+                }
+                for p in ordre.produkter
+            ],
+            "generert_dato": datetime.now().strftime("%d.%m.%Y %H:%M")
+        }
+        orders_data.append(data)
+
+    # Generate combined PDF
+    report_service = ReportService()
+    pdf_bytes = await report_service.generate_batch_pick_list_pdf(orders_data)
+
+    # Filename with order IDs
+    order_ids_str = "_".join(str(oid) for oid in request.order_ids[:5])
+    if len(request.order_ids) > 5:
+        order_ids_str += f"_og_{len(request.order_ids) - 5}_flere"
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=plukkliste_{order_ids_str}.pdf"
         }
     )
 
