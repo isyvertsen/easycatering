@@ -19,6 +19,13 @@ class ChatMessage(BaseModel):
     timestamp: Optional[datetime] = None
 
 
+class ActionLink(BaseModel):
+    """A clickable action link for navigation."""
+    label: str
+    url: str
+    icon: Optional[str] = None  # icon name for frontend
+
+
 class WorkflowStep(BaseModel):
     """A single step in a workflow execution."""
     tool_name: str
@@ -28,6 +35,7 @@ class WorkflowStep(BaseModel):
     result: Optional[Any] = None
     error: Optional[str] = None
     executed_at: Optional[datetime] = None
+    action_links: Optional[List[ActionLink]] = None  # Links to view results
 
 
 class ConfirmationRequest(BaseModel):
@@ -56,6 +64,8 @@ class WorkflowChatResponse(BaseModel):
     requires_confirmation: bool = False
     confirmation_request: Optional[ConfirmationRequest] = None
     executed_steps: Optional[List[WorkflowStep]] = None
+    action_links: Optional[List[ActionLink]] = None  # Quick action links
+    ai_analysis: Optional[str] = None  # AI analysis of results
     error: Optional[str] = None
 
 

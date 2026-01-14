@@ -47,13 +47,25 @@ TOOLS: List[Tool] = [
     # =========================================================================
     Tool(
         name="search_customers",
-        description="Søk etter kunder basert på navn, e-post eller telefon. Returnerer liste over matchende kunder.",
+        description="Søk etter kunder. Kan filtrere på navn/e-post/telefon OG/ELLER kundegruppe (f.eks. sykehjem, barnehage).",
         category="kunder",
         endpoint="/kunder",
         method="GET",
         parameters=[
-            ToolParameter(name="search", type="string", description="Søkeord (navn, e-post eller telefon)", required=True),
-            ToolParameter(name="page_size", type="integer", description="Antall resultater", default=10),
+            ToolParameter(name="search", type="string", description="Søkeord (navn, e-post eller telefon)"),
+            ToolParameter(name="kundegruppe", type="string", description="Filtrer på kundegruppe-navn (f.eks. 'sykehjem', 'barnehage', 'skole')"),
+            ToolParameter(name="page_size", type="integer", description="Antall resultater", default=50),
+        ],
+        safety_level=SafetyLevel.READ,
+    ),
+    Tool(
+        name="list_customer_groups",
+        description="List alle kundegrupper i systemet (f.eks. sykehjem, barnehage, skole, etc.).",
+        category="kunder",
+        endpoint="/kunde-gruppe",
+        method="GET",
+        parameters=[
+            ToolParameter(name="page_size", type="integer", description="Antall resultater", default=50),
         ],
         safety_level=SafetyLevel.READ,
     ),

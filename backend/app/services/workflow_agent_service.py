@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.ai_client import get_default_ai_client, ChatCompletionResult, ToolCall
 from app.services.tool_registry import get_tool_registry, Tool, SafetyLevel
 from app.schemas.workflow import (
+    ActionLink,
     ChatMessage,
     WorkflowStep,
     ConfirmationRequest,
@@ -39,6 +40,8 @@ VIKTIGE REGLER:
 EKSEMPLER PÅ OPPGAVER:
 - "Hvor mange ordrer har vi i dag?" → Bruk get_todays_orders eller search_orders
 - "Finn kunde Larvik Sykehjem" → Bruk search_customers
+- "List alle kundegrupper" → Bruk list_customer_groups
+- "Vis kunder i kundegruppe sykehjem" → Bruk search_customers med kundegruppe="sykehjem"
 - "Opprett ordre for kunde 42" → Bruk create_order (krever bekreftelse)
 - "Vis statistikk for denne måneden" → Bruk get_quick_stats med period="month"
 
@@ -237,15 +240,25 @@ class WorkflowAgentService:
     ) -> WorkflowChatResponse:
         """Execute workflow steps and return results."""
         from app.services.tool_executor import ToolExecutor
+        import json
 
         executor = ToolExecutor(self.db)
         executed_steps: List[WorkflowStep] = []
         results = []
+        all_action_links: List[ActionLink] = []
 
         for step in steps:
             step.status = "executing"
             try:
                 result = await executor.execute(step.tool_name, step.parameters)
+
+                # Extract action links from result
+                action_links_data = result.pop("_action_links", [])
+                step.action_links = [
+                    ActionLink(**link) for link in action_links_data
+                ]
+                all_action_links.extend(step.action_links)
+
                 step.result = result
                 step.status = "completed"
                 step.executed_at = datetime.utcnow()
@@ -261,10 +274,17 @@ class WorkflowAgentService:
         success = all(s.status == "completed" for s in executed_steps)
         message = self._build_result_message(executed_steps, results)
 
+        # Generate AI analysis of results
+        ai_analysis = None
+        if success and results:
+            ai_analysis = await self._generate_ai_analysis(executed_steps, results)
+
         return WorkflowChatResponse(
             success=success,
             message=message,
             executed_steps=executed_steps,
+            action_links=all_action_links if all_action_links else None,
+            ai_analysis=ai_analysis,
         )
 
     def _build_result_message(
@@ -303,6 +323,69 @@ class WorkflowAgentService:
                 return f"Fant {len(result)} resultater."
 
         return f"Utførte {len(steps)} handling(er) vellykket."
+
+    async def _generate_ai_analysis(
+        self,
+        steps: List[WorkflowStep],
+        results: List[Any]
+    ) -> Optional[str]:
+        """Generate AI analysis of the results."""
+        import json
+
+        # Skip analysis for very small results
+        if not results:
+            return None
+
+        # Prepare a summary of results for AI
+        result_summary = []
+        for i, (step, result) in enumerate(zip(steps, results)):
+            summary = {
+                "verktøy": step.tool_name,
+                "beskrivelse": step.tool_description,
+            }
+
+            # Summarize result based on type
+            if isinstance(result, dict):
+                if "items" in result and "total" in result:
+                    summary["antall_resultater"] = result["total"]
+                    # Include first few items for context
+                    items = result.get("items", [])[:5]
+                    if items:
+                        summary["eksempler"] = items
+                else:
+                    summary["resultat"] = result
+            elif isinstance(result, list):
+                summary["antall_resultater"] = len(result)
+                if result:
+                    summary["eksempler"] = result[:5]
+
+            result_summary.append(summary)
+
+        # Create prompt for AI analysis
+        analysis_prompt = f"""Analyser følgende resultater fra LKC-systemet og gi en kort, nyttig oppsummering på norsk.
+Fokuser på:
+- Hva betyr dette for brukeren?
+- Er det noe interessant eller viktig å bemerke?
+- Gi konkrete tall når relevant
+
+Resultater:
+{json.dumps(result_summary, ensure_ascii=False, indent=2)}
+
+Svar kort og konsist (2-4 setninger). Ikke gjenta hva jeg allerede har sagt."""
+
+        try:
+            analysis = await self.ai_client.chat_completion(
+                messages=[
+                    {"role": "system", "content": "Du er en hjelpsom assistent som analyserer data fra et catering-system."},
+                    {"role": "user", "content": analysis_prompt}
+                ],
+                max_tokens=300,
+                temperature=0.5,
+            )
+            return analysis.strip() if analysis else None
+        except Exception as e:
+            logger.warning(f"Failed to generate AI analysis: {e}")
+            return None
 
 
 # Singleton helper

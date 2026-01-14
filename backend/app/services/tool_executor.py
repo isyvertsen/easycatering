@@ -5,13 +5,15 @@ This avoids HTTP overhead by directly invoking service methods.
 """
 import logging
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
+from urllib.parse import urlencode
 
 from sqlalchemy import select, func, or_
 from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.kunder import Kunder as KunderModel
+from app.models.kunde_gruppe import Kundegruppe as KundegruppeModel
 from app.models.ordrer import Ordrer as OrdrerModel
 from app.models.ordredetaljer import Ordredetaljer as OrdredetaljerModel
 from app.models.produkter import Produkter as ProdukterModel
@@ -48,6 +50,7 @@ class ToolExecutor:
         executors = {
             # Kunder
             "search_customers": self._search_customers,
+            "list_customer_groups": self._list_customer_groups,
             "get_customer": self._get_customer,
             "create_customer": self._create_customer,
             # Ordrer
@@ -85,20 +88,209 @@ class ToolExecutor:
 
         logger.info(f"Executing tool: {tool_name} with params: {parameters}")
         result = await executor(parameters)
+
+        # Add action links to result
+        action_links = self._generate_action_links(tool_name, parameters, result)
+        if action_links:
+            result["_action_links"] = action_links
+
         logger.info(f"Tool {tool_name} executed successfully")
         return result
+
+    def _generate_action_links(
+        self,
+        tool_name: str,
+        parameters: Dict[str, Any],
+        result: Dict[str, Any]
+    ) -> List[Dict[str, str]]:
+        """Generate action links based on tool and result."""
+        links = []
+
+        if tool_name == "search_customers":
+            search = parameters.get("search", "")
+            kundegruppe = parameters.get("kundegruppe", "")
+            params = {}
+            if search:
+                params["search"] = search
+            if kundegruppe:
+                # Find group ID from result if available
+                kundegruppe_filter = result.get("kundegruppe_filter")
+                if kundegruppe_filter:
+                    params["gruppe"] = kundegruppe_filter
+            url = "/customers"
+            if params:
+                url += "?" + urlencode(params)
+            links.append({
+                "label": f"Se kunder{' (' + kundegruppe + ')' if kundegruppe else ''}",
+                "url": url,
+                "icon": "Users"
+            })
+
+        elif tool_name == "list_customer_groups":
+            links.append({
+                "label": "Se kundegrupper",
+                "url": "/kundegrupper",
+                "icon": "FolderTree"
+            })
+
+        elif tool_name == "get_customer":
+            kundeid = parameters.get("kundeid")
+            if kundeid:
+                links.append({
+                    "label": "Åpne kunde",
+                    "url": f"/customers/{kundeid}",
+                    "icon": "User"
+                })
+
+        elif tool_name in ["search_orders", "get_todays_orders"]:
+            params = {}
+            if parameters.get("kundeid"):
+                params["kunde_id"] = parameters["kundeid"]
+            if parameters.get("fra_dato"):
+                params["fra_dato"] = parameters["fra_dato"]
+            if parameters.get("til_dato"):
+                params["til_dato"] = parameters["til_dato"]
+
+            url = "/orders"
+            if params:
+                url += "?" + urlencode(params)
+            links.append({
+                "label": "Se ordrer",
+                "url": url,
+                "icon": "ShoppingCart"
+            })
+
+        elif tool_name == "get_order":
+            ordreid = parameters.get("ordreid")
+            if ordreid:
+                links.append({
+                    "label": "Åpne ordre",
+                    "url": f"/orders/{ordreid}",
+                    "icon": "ShoppingCart"
+                })
+
+        elif tool_name == "create_order":
+            ordreid = result.get("ordreid")
+            if ordreid:
+                links.append({
+                    "label": "Åpne ny ordre",
+                    "url": f"/orders/{ordreid}",
+                    "icon": "ShoppingCart"
+                })
+
+        elif tool_name == "search_products":
+            search = parameters.get("search", "")
+            params = {}
+            if search:
+                params["search"] = search
+            if parameters.get("kategoriid"):
+                params["kategori"] = parameters["kategoriid"]
+
+            url = "/produkter"
+            if params:
+                url += "?" + urlencode(params)
+            links.append({
+                "label": "Se produkter",
+                "url": url,
+                "icon": "Package"
+            })
+
+        elif tool_name == "get_product":
+            produktid = parameters.get("produktid")
+            if produktid:
+                links.append({
+                    "label": "Åpne produkt",
+                    "url": f"/produkter/{produktid}",
+                    "icon": "Package"
+                })
+
+        elif tool_name == "list_categories":
+            links.append({
+                "label": "Se kategorier",
+                "url": "/kategorier",
+                "icon": "FolderTree"
+            })
+
+        elif tool_name in ["list_menus", "get_menu"]:
+            menyid = parameters.get("menyid")
+            if menyid:
+                links.append({
+                    "label": "Åpne meny",
+                    "url": f"/menus/{menyid}",
+                    "icon": "Menu"
+                })
+            else:
+                links.append({
+                    "label": "Se menyer",
+                    "url": "/menus",
+                    "icon": "Menu"
+                })
+
+        elif tool_name in ["search_recipes", "get_recipe"]:
+            oppskriftid = parameters.get("oppskriftid")
+            if oppskriftid:
+                links.append({
+                    "label": "Åpne oppskrift",
+                    "url": f"/kalkyler/{oppskriftid}",
+                    "icon": "ChefHat"
+                })
+            else:
+                links.append({
+                    "label": "Se oppskrifter",
+                    "url": "/kalkyler",
+                    "icon": "ChefHat"
+                })
+
+        elif tool_name in ["get_quick_stats", "get_sales_report"]:
+            links.append({
+                "label": "Se rapporter",
+                "url": "/reports",
+                "icon": "BarChart"
+            })
+
+        elif tool_name == "list_suppliers":
+            links.append({
+                "label": "Se leverandører",
+                "url": "/leverandorer",
+                "icon": "Truck"
+            })
+
+        return links
 
     # =========================================================================
     # KUNDER (Customers)
     # =========================================================================
 
     async def _search_customers(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Search for customers."""
+        """Search for customers, optionally filtered by customer group."""
         search = params.get("search", "")
-        page_size = params.get("page_size", 10)
+        kundegruppe_name = params.get("kundegruppe", "")
+        page_size = params.get("page_size", 50)
 
-        query = select(KunderModel)
+        query = select(KunderModel).options(joinedload(KunderModel.gruppe))
 
+        # Filter by customer group name if provided
+        if kundegruppe_name:
+            # First find the group ID(s) matching the name
+            group_result = await self.db.execute(
+                select(KundegruppeModel.gruppeid).where(
+                    KundegruppeModel.gruppe.ilike(f"%{kundegruppe_name}%")
+                )
+            )
+            group_ids = [r for r in group_result.scalars().all()]
+
+            if group_ids:
+                query = query.where(KunderModel.kundegruppe.in_(group_ids))
+            else:
+                # No matching groups found
+                return {
+                    "items": [],
+                    "total": 0,
+                    "kundegruppe_filter": kundegruppe_name,
+                    "message": f"Ingen kundegruppe funnet som matcher '{kundegruppe_name}'"
+                }
+
+        # Filter by search term if provided
         if search:
             search_term = f"%{search}%"
             query = query.where(
@@ -117,7 +309,7 @@ class ToolExecutor:
 
         query = query.order_by(KunderModel.kundenavn).limit(page_size)
         result = await self.db.execute(query)
-        customers = result.scalars().all()
+        customers = result.unique().scalars().all()
 
         return {
             "items": [
@@ -129,10 +321,33 @@ class ToolExecutor:
                     "sted": c.sted,
                     "telefonnummer": c.telefonnummer,
                     "e_post": c.e_post,
+                    "kundegruppe": c.gruppe.gruppe if c.gruppe else None,
                 }
                 for c in customers
             ],
             "total": len(customers),
+            "kundegruppe_filter": kundegruppe_name if kundegruppe_name else None,
+        }
+
+    async def _list_customer_groups(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """List all customer groups."""
+        page_size = params.get("page_size", 50)
+
+        result = await self.db.execute(
+            select(KundegruppeModel).order_by(KundegruppeModel.gruppe).limit(page_size)
+        )
+        groups = result.scalars().all()
+
+        return {
+            "items": [
+                {
+                    "gruppeid": g.gruppeid,
+                    "gruppe": g.gruppe,
+                    "webshop": g.webshop,
+                }
+                for g in groups
+            ],
+            "total": len(groups),
         }
 
     async def _get_customer(self, params: Dict[str, Any]) -> Dict[str, Any]:

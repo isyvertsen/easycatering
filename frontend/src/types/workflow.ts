@@ -10,6 +10,12 @@ export interface WorkflowChatMessage {
   timestamp?: Date
 }
 
+export interface ActionLink {
+  label: string
+  url: string
+  icon?: string
+}
+
 export interface WorkflowStep {
   tool_name: string
   tool_description: string
@@ -18,6 +24,7 @@ export interface WorkflowStep {
   result?: unknown
   error?: string
   executed_at?: string
+  action_links?: ActionLink[]
 }
 
 export interface ConfirmationRequest {
@@ -40,6 +47,8 @@ export interface WorkflowChatResponse {
   requires_confirmation?: boolean
   confirmation_request?: ConfirmationRequest
   executed_steps?: WorkflowStep[]
+  action_links?: ActionLink[]
+  ai_analysis?: string
   error?: string
 }
 
@@ -88,4 +97,6 @@ export interface WorkflowState {
   isLoading: boolean
   error: string | null
   pendingConfirmation: ConfirmationRequest | null
+  lastActionLinks: ActionLink[] | null
+  lastAiAnalysis: string | null
 }

@@ -7,6 +7,7 @@ import type {
   WorkflowState,
   ConfirmationRequest,
   WorkflowStep,
+  ActionLink,
 } from '@/types/workflow'
 
 const WELCOME_MESSAGE: WorkflowChatMessage = {
@@ -22,6 +23,8 @@ export function useWorkflowChat() {
     isLoading: false,
     error: null,
     pendingConfirmation: null,
+    lastActionLinks: null,
+    lastAiAnalysis: null,
   })
 
   const toggleChat = useCallback(() => {
@@ -77,6 +80,11 @@ export function useWorkflowChat() {
           }
         }
 
+        // Add AI analysis if available
+        if (response.ai_analysis) {
+          assistantContent += '\n\n💡 ' + response.ai_analysis
+        }
+
         const assistantMessage: WorkflowChatMessage = {
           role: 'assistant',
           content: assistantContent,
@@ -90,6 +98,8 @@ export function useWorkflowChat() {
           pendingConfirmation: response.requires_confirmation
             ? response.confirmation_request || null
             : null,
+          lastActionLinks: response.action_links || null,
+          lastAiAnalysis: response.ai_analysis || null,
         }))
       } else {
         setState(prev => ({
@@ -200,6 +210,8 @@ export function useWorkflowChat() {
     isLoading: state.isLoading,
     error: state.error,
     pendingConfirmation: state.pendingConfirmation,
+    lastActionLinks: state.lastActionLinks,
+    lastAiAnalysis: state.lastAiAnalysis,
     toggleChat,
     openChat,
     closeChat,
