@@ -175,7 +175,7 @@ async def get_plukking_list(
             pakkseddel_skrevet=ordre.pakkseddel_skrevet,
             antall_produkter=len(ordre.detaljer) if ordre.detaljer else 0,
             ordrestatusid=ordre.ordrestatusid,
-            ordrestatus_navn=ordre.status.statusnavn if ordre.status else None,
+            ordrestatus_navn=ordre.status.status if ordre.status else None,
         )
         items.append(item)
 

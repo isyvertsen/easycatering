@@ -450,7 +450,6 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(AddBestiltAvToOrders())
         migration_runner.add_migration(AddPlukketAntallToOrderDetails())
         migration_runner.add_migration(AddPerformanceIndexes())
-        migration_runner.add_migration(CreateOrdrestatusTable())
     return migration_runner
 
 
@@ -1163,45 +1162,6 @@ class AddPerformanceIndexes(Migration):
             await conn.execute(text("""
                 CREATE INDEX IF NOT EXISTS idx_kunder_kundenavn_trgm
                 ON tblkunder USING gin(kundenavn gin_trgm_ops)
-            """))
-
-
-class CreateOrdrestatusTable(Migration):
-    """Create tblordrestatus lookup table for order status."""
-
-    def __init__(self):
-        super().__init__(
-            version="20260114_002_ordrestatus_table",
-            description="Create tblordrestatus lookup table for order status"
-        )
-
-    async def up(self, engine: AsyncEngine):
-        async with engine.begin() as conn:
-            # Create tblordrestatus table
-            await conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS tblordrestatus (
-                    statusid BIGINT PRIMARY KEY,
-                    statusnavn TEXT NOT NULL,
-                    beskrivelse TEXT
-                )
-            """))
-
-            # Seed with standard statuses
-            await conn.execute(text("""
-                INSERT INTO tblordrestatus (statusid, statusnavn, beskrivelse)
-                VALUES
-                    (10, 'Ny', 'Ny ordre opprettet'),
-                    (20, 'Bekreftet', 'Ordre bekreftet'),
-                    (30, 'Plukket', 'Ordre plukket fra lager'),
-                    (40, 'Levert', 'Ordre levert til kunde'),
-                    (50, 'Fakturert', 'Ordre fakturert'),
-                    (99, 'Kansellert', 'Ordre kansellert')
-                ON CONFLICT (statusid) DO NOTHING
-            """))
-
-            # Create index on statusnavn
-            await conn.execute(text("""
-                CREATE INDEX IF NOT EXISTS idx_ordrestatus_statusnavn ON tblordrestatus(statusnavn)
             """))
 
 
