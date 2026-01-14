@@ -202,7 +202,7 @@ export function useBulkUpdateGtin(
       queryClient.invalidateQueries({ queryKey: ['produkter', 'list-with-meta'] })
       // Invalidate individual products that were updated
       variables.forEach(update => {
-        queryClient.invalidateQueries({ queryKey: ['produkter', update.produkt_id] })
+        queryClient.invalidateQueries({ queryKey: ['produkter', update.produktid] })
       })
 
       const message = `Oppdatert: ${data.success} av ${data.total} produkter${data.failed > 0 ? `. Feilet: ${data.failed}` : ''}${data.matinfo_matches > 0 ? `. Matinfo-match: ${data.matinfo_matches}` : ''}`
