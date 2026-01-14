@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { WorkflowMessage } from './WorkflowMessage'
 import { ConfirmationPanel } from './ConfirmationPanel'
-import { X, Send, Loader2, Trash2, AlertCircle, Sparkles } from 'lucide-react'
+import { X, Send, Loader2, Trash2, AlertCircle, Sparkles, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { useWorkflowChat } from '@/hooks/useWorkflowChat'
 
@@ -18,6 +19,7 @@ export function WorkflowCopilot() {
     isLoading,
     error,
     pendingConfirmation,
+    lastActionLinks,
     toggleChat,
     closeChat,
     sendMessage,
@@ -36,7 +38,7 @@ export function WorkflowCopilot() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages, pendingConfirmation])
+  }, [messages, pendingConfirmation, lastActionLinks])
 
   // Focus input when window opens
   useEffect(() => {
@@ -133,6 +135,26 @@ export function WorkflowCopilot() {
               <div className="flex items-center gap-2 text-muted-foreground p-3">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="text-sm">Utfører handling...</span>
+              </div>
+            )}
+
+            {/* Action links */}
+            {lastActionLinks && lastActionLinks.length > 0 && !isLoading && !pendingConfirmation && (
+              <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
+                {lastActionLinks.map((link, index) => (
+                  <Link
+                    key={index}
+                    href={link.url}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm',
+                      'bg-gradient-to-br from-purple-500 to-indigo-600 text-white',
+                      'hover:from-purple-600 hover:to-indigo-700 transition-colors'
+                    )}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    {link.label}
+                  </Link>
+                ))}
               </div>
             )}
           </div>
