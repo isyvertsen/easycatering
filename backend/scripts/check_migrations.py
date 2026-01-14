@@ -7,7 +7,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.infrastructure.database.session import engine
+from app.infrastructure.database.session import get_engine, dispose_engine
 from app.core.migrations import get_migration_runner
 from sqlalchemy import text
 import logging
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 async def main():
     """Check migration status."""
+    engine = get_engine()
     try:
         runner = get_migration_runner(engine)
         
@@ -61,7 +62,7 @@ async def main():
         logger.error(f"Failed to check migrations: {str(e)}")
         sys.exit(1)
     finally:
-        await engine.dispose()
+        await dispose_engine()
 
 
 if __name__ == "__main__":
