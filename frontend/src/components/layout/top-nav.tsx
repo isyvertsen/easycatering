@@ -22,7 +22,6 @@ import {
   BookOpen,
   FolderTree,
   Factory,
-  Clock,
   ChevronDown,
   MessageSquare,
   User,
@@ -75,7 +74,6 @@ const navigationGroups: NavGroup[] = [
     icon: CalendarDays,
     items: [
       { name: "Menyer", href: "/menus", icon: CalendarDays },
-      { name: "Perioder", href: "/perioder", icon: Clock },
       { name: "Periodevisning", href: "/perioder/view", icon: TreePine },
       { name: "Oppskrifter", href: "/recipes", icon: ChefHat },
       { name: "Retter", href: "/dishes", icon: UtensilsCrossed },
