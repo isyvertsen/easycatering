@@ -9,13 +9,29 @@ Configuration via environment variables:
 - AI_PROVIDER: openai | azure | anthropic
 - Provider-specific settings (see config.py)
 """
+import json
 import logging
 from typing import Optional, Dict, Any, List
 from abc import ABC, abstractmethod
 
+from pydantic import BaseModel
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+class ToolCall(BaseModel):
+    """Represents a tool call from the AI."""
+    id: str
+    name: str
+    arguments: Dict[str, Any]
+
+
+class ChatCompletionResult(BaseModel):
+    """Result from a chat completion that may include tool calls."""
+    content: Optional[str] = None
+    tool_calls: Optional[List[ToolCall]] = None
+    finish_reason: str = "stop"
 
 
 class AIClient(ABC):
@@ -31,6 +47,20 @@ class AIClient(ABC):
         **kwargs
     ) -> str:
         """Send a chat completion request and return the response text."""
+        pass
+
+    @abstractmethod
+    async def chat_completion_with_tools(
+        self,
+        messages: List[Dict[str, Any]],
+        tools: List[Dict[str, Any]],
+        model: Optional[str] = None,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        tool_choice: str = "auto",
+        **kwargs
+    ) -> ChatCompletionResult:
+        """Send a chat completion with function calling support."""
         pass
 
     @abstractmethod
@@ -74,6 +104,45 @@ class OpenAIClient(AIClient):
         )
         return response.choices[0].message.content or ""
 
+    async def chat_completion_with_tools(
+        self,
+        messages: List[Dict[str, Any]],
+        tools: List[Dict[str, Any]],
+        model: Optional[str] = None,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        tool_choice: str = "auto",
+        **kwargs
+    ) -> ChatCompletionResult:
+        response = await self.client.chat.completions.create(
+            model=model or self.default_model,
+            messages=messages,
+            tools=tools,
+            tool_choice=tool_choice,
+            max_tokens=max_tokens or self.default_max_tokens,
+            temperature=temperature if temperature is not None else self.default_temperature,
+            **kwargs
+        )
+
+        message = response.choices[0].message
+        tool_calls = None
+
+        if message.tool_calls:
+            tool_calls = [
+                ToolCall(
+                    id=tc.id,
+                    name=tc.function.name,
+                    arguments=json.loads(tc.function.arguments)
+                )
+                for tc in message.tool_calls
+            ]
+
+        return ChatCompletionResult(
+            content=message.content,
+            tool_calls=tool_calls,
+            finish_reason=response.choices[0].finish_reason or "stop"
+        )
+
     def is_configured(self) -> bool:
         return bool(settings.OPENAI_API_KEY)
 
@@ -109,6 +178,45 @@ class AzureOpenAIClient(AIClient):
             **kwargs
         )
         return response.choices[0].message.content or ""
+
+    async def chat_completion_with_tools(
+        self,
+        messages: List[Dict[str, Any]],
+        tools: List[Dict[str, Any]],
+        model: Optional[str] = None,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        tool_choice: str = "auto",
+        **kwargs
+    ) -> ChatCompletionResult:
+        response = await self.client.chat.completions.create(
+            model=model or self.deployment,
+            messages=messages,
+            tools=tools,
+            tool_choice=tool_choice,
+            max_tokens=max_tokens or self.default_max_tokens,
+            temperature=temperature if temperature is not None else self.default_temperature,
+            **kwargs
+        )
+
+        message = response.choices[0].message
+        tool_calls = None
+
+        if message.tool_calls:
+            tool_calls = [
+                ToolCall(
+                    id=tc.id,
+                    name=tc.function.name,
+                    arguments=json.loads(tc.function.arguments)
+                )
+                for tc in message.tool_calls
+            ]
+
+        return ChatCompletionResult(
+            content=message.content,
+            tool_calls=tool_calls,
+            finish_reason=response.choices[0].finish_reason or "stop"
+        )
 
     def is_configured(self) -> bool:
         return bool(
@@ -166,6 +274,74 @@ class AnthropicClient(AIClient):
             **kwargs
         )
         return response.content[0].text
+
+    async def chat_completion_with_tools(
+        self,
+        messages: List[Dict[str, Any]],
+        tools: List[Dict[str, Any]],
+        model: Optional[str] = None,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        tool_choice: str = "auto",
+        **kwargs
+    ) -> ChatCompletionResult:
+        """Anthropic tool calling - converts to Anthropic format."""
+        if not self._available or not self.client:
+            raise RuntimeError("Anthropic client not available. Install anthropic package.")
+
+        # Convert OpenAI tools format to Anthropic tools format
+        anthropic_tools = []
+        for tool in tools:
+            if tool.get("type") == "function":
+                func = tool["function"]
+                anthropic_tools.append({
+                    "name": func["name"],
+                    "description": func["description"],
+                    "input_schema": func["parameters"]
+                })
+
+        # Convert messages
+        system_message = None
+        anthropic_messages = []
+        for msg in messages:
+            if msg["role"] == "system":
+                system_message = msg["content"]
+            else:
+                anthropic_messages.append({
+                    "role": msg["role"],
+                    "content": msg["content"]
+                })
+
+        response = await self.client.messages.create(
+            model=model or self.default_model,
+            max_tokens=max_tokens or self.default_max_tokens,
+            system=system_message,
+            messages=anthropic_messages,
+            tools=anthropic_tools if anthropic_tools else None,
+            **kwargs
+        )
+
+        # Convert Anthropic response to common format
+        tool_calls = None
+        content = None
+
+        for block in response.content:
+            if block.type == "text":
+                content = block.text
+            elif block.type == "tool_use":
+                if tool_calls is None:
+                    tool_calls = []
+                tool_calls.append(ToolCall(
+                    id=block.id,
+                    name=block.name,
+                    arguments=block.input
+                ))
+
+        return ChatCompletionResult(
+            content=content,
+            tool_calls=tool_calls,
+            finish_reason="tool_use" if tool_calls else "stop"
+        )
 
     def is_configured(self) -> bool:
         return self._available and bool(settings.ANTHROPIC_API_KEY)
