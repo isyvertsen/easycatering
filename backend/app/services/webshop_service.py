@@ -1,9 +1,11 @@
 """Webshop service for customer ordering."""
+import json
+import logging
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict
 
-from sqlalchemy import select, func, and_, String
+from sqlalchemy import select, func, and_, String, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -14,6 +16,8 @@ from app.models.ordrer import Ordrer
 from app.models.ordredetaljer import Ordredetaljer
 from app.domain.entities.user import User
 from app.services.order_status_service import OrderStatusService, OrderStatusError
+from app.services.system_settings_service import SystemSettingsService
+from app.core.cache import cache_get, cache_set, cache_delete, CACHE_TTL_MEDIUM
 from app.schemas.webshop import (
     WebshopProduct,
     WebshopProductListResponse,
@@ -28,6 +32,8 @@ from app.schemas.webshop import (
     WebshopDraftOrder,
     WebshopDraftOrderLineUpdate,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_next_delivery_date(leveringsdag: int) -> datetime:
@@ -135,9 +141,35 @@ class WebshopService:
         page: int = 1,
         page_size: int = 20,
         sort_by: str = "produktnavn",
-        sort_order: str = "asc"
+        sort_order: str = "asc",
+        customer_id: Optional[int] = None,
+        smart_sort: bool = False
     ) -> WebshopProductListResponse:
-        """Get products available in webshop."""
+        """Get products available in webshop.
+
+        Args:
+            search: Search term for product name
+            kategori_id: Filter by category ID
+            page: Page number
+            page_size: Items per page
+            sort_by: Field to sort by (produktnavn, pris, visningsnavn)
+            sort_order: Sort direction (asc, desc)
+            customer_id: Customer ID for smart sorting (order frequency)
+            smart_sort: Enable smart sorting by order frequency and category order
+
+        Returns:
+            Paginated list of webshop products
+        """
+        # Use smart sorting if enabled and customer_id is provided
+        if smart_sort and customer_id:
+            return await self._get_products_smart_sorted(
+                customer_id=customer_id,
+                search=search,
+                kategori_id=kategori_id,
+                page=page,
+                page_size=page_size
+            )
+
         # Base query - only webshop products that are not discontinued
         query = select(Produkter).where(
             and_(
@@ -227,6 +259,163 @@ class WebshopService:
             pakningsstorrelse=product.pakningsstorrelse,
             kategoriid=product.kategoriid,
             ean_kode=product.ean_kode
+        )
+
+    async def _get_products_smart_sorted(
+        self,
+        customer_id: int,
+        search: Optional[str] = None,
+        kategori_id: Optional[int] = None,
+        page: int = 1,
+        page_size: int = 20
+    ) -> WebshopProductListResponse:
+        """Get products with smart sorting based on customer order history.
+
+        Sorting priority:
+        1. Products most frequently ordered by this customer in the last 4 weeks
+        2. Products in the configured category order
+        3. Alphabetically by product name
+
+        Args:
+            customer_id: Customer ID for order frequency calculation
+            search: Search term for product name
+            kategori_id: Filter by category ID
+            page: Page number
+            page_size: Items per page
+
+        Returns:
+            Paginated list of webshop products with smart sorting
+        """
+        # Get category order from system settings
+        settings_service = SystemSettingsService(self.db)
+        category_order = await settings_service.get_webshop_category_order()
+
+        # Calculate date 4 weeks ago
+        four_weeks_ago = datetime.utcnow() - timedelta(weeks=4)
+
+        # Build search filter
+        search_filter = ""
+        if search:
+            search_filter = "AND (p.produktnavn ILIKE :search OR p.visningsnavn ILIKE :search)"
+
+        # Build category filter
+        category_filter = ""
+        if kategori_id:
+            category_filter = "AND p.kategoriid = :kategori_id"
+
+        # Build category rank CTE - create a ranking based on position in the list
+        # Categories not in the list get rank 999
+        category_rank_cte = ""
+        if category_order:
+            # Build CASE statement for category ranking
+            category_cases = " ".join([
+                f"WHEN {cat_id} THEN {idx + 1}"
+                for idx, cat_id in enumerate(category_order)
+            ])
+            category_rank_cte = f"""
+            ,category_rank AS (
+                SELECT kategoriid,
+                       CASE kategoriid {category_cases} ELSE 999 END as rank
+                FROM (SELECT DISTINCT kategoriid FROM tblprodukter WHERE kategoriid IS NOT NULL) k
+            )
+            """
+
+        # Build the main query with CTEs
+        query_sql = f"""
+        WITH order_frequency AS (
+            SELECT
+                od.produktid,
+                COALESCE(SUM(od.antall), 0) as total_ordered
+            FROM tblordredetaljer od
+            JOIN tblordrer o ON od.ordreid = o.ordreid
+            WHERE o.kundeid = :customer_id
+              AND o.ordredato >= :four_weeks_ago
+              AND o.ordrestatusid NOT IN (98, 99)
+            GROUP BY od.produktid
+        ){category_rank_cte}
+        SELECT
+            p.produktid,
+            p.produktnavn,
+            p.visningsnavn,
+            p.pris,
+            p.pakningstype,
+            p.pakningsstorrelse,
+            p.kategoriid,
+            p.ean_kode,
+            COALESCE(of.total_ordered, 0) as order_freq
+            {', COALESCE(cr.rank, 999) as cat_rank' if category_order else ', 999 as cat_rank'}
+        FROM tblprodukter p
+        LEFT JOIN order_frequency of ON p.produktid = of.produktid
+        {'LEFT JOIN category_rank cr ON p.kategoriid = cr.kategoriid' if category_order else ''}
+        WHERE p.webshop = true
+          AND (p.utgatt IS NULL OR p.utgatt = false)
+          {search_filter}
+          {category_filter}
+        ORDER BY
+            of.total_ordered DESC NULLS LAST,
+            {'cr.rank' if category_order else '999'} ASC NULLS LAST,
+            p.produktnavn ASC
+        LIMIT :limit OFFSET :offset
+        """
+
+        # Build count query
+        count_sql = f"""
+        SELECT COUNT(*)
+        FROM tblprodukter p
+        WHERE p.webshop = true
+          AND (p.utgatt IS NULL OR p.utgatt = false)
+          {search_filter}
+          {category_filter}
+        """
+
+        # Prepare parameters
+        params: Dict[str, any] = {
+            "customer_id": customer_id,
+            "four_weeks_ago": four_weeks_ago,
+            "limit": page_size,
+            "offset": (page - 1) * page_size
+        }
+        if search:
+            params["search"] = f"%{search}%"
+        if kategori_id:
+            params["kategori_id"] = kategori_id
+
+        # Execute count query
+        count_result = await self.db.execute(text(count_sql), params)
+        total = count_result.scalar() or 0
+
+        # Execute main query
+        result = await self.db.execute(text(query_sql), params)
+        rows = result.fetchall()
+
+        # Convert to WebshopProduct objects
+        items = [
+            WebshopProduct(
+                produktid=row.produktid,
+                produktnavn=row.produktnavn,
+                visningsnavn=row.visningsnavn,
+                pris=row.pris,
+                pakningstype=row.pakningstype,
+                pakningsstorrelse=row.pakningsstorrelse,
+                kategoriid=row.kategoriid,
+                ean_kode=row.ean_kode
+            )
+            for row in rows
+        ]
+
+        total_pages = (total + page_size - 1) // page_size if total > 0 else 1
+
+        logger.debug(
+            f"Smart sort for customer {customer_id}: "
+            f"{len(items)} products, category_order={category_order}"
+        )
+
+        return WebshopProductListResponse(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages
         )
 
     async def create_order(

@@ -125,6 +125,7 @@ async def list_webshop_products(
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     sort_by: str = Query("produktnavn", description="Sort field"),
     sort_order: str = Query("asc", description="Sort order (asc/desc)"),
+    smart_sort: bool = Query(True, description="Enable smart sorting by order frequency and category order"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -132,6 +133,11 @@ async def list_webshop_products(
     List products available in webshop.
 
     Only returns products where webshop=true and utgatt=false.
+
+    When smart_sort is enabled (default), products are sorted by:
+    1. Order frequency - products the customer ordered most in the last 4 weeks
+    2. Category order - configured in system settings
+    3. Alphabetically by product name
     """
     # Check webshop access
     service = WebshopService(db)
@@ -149,7 +155,9 @@ async def list_webshop_products(
         page=page,
         page_size=page_size,
         sort_by=sort_by,
-        sort_order=sort_order
+        sort_order=sort_order,
+        customer_id=current_user.kundeid,
+        smart_sort=smart_sort
     )
 
 
