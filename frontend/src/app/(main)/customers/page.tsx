@@ -68,6 +68,7 @@ type CustomerListParams = {
   page_size: number
   search: string
   aktiv: boolean
+  kundegruppe: string
   sort_by?: string
   sort_order?: "asc" | "desc"
 }
@@ -77,6 +78,7 @@ const defaultParams: CustomerListParams = {
   page_size: 20,
   search: "",
   aktiv: true,
+  kundegruppe: "",
 }
 
 function CustomersPageContent() {
@@ -93,6 +95,7 @@ function CustomersPageContent() {
     limit: params.page_size || 20,
     search: params.search || undefined,
     aktiv: params.aktiv,
+    kundegruppe: params.kundegruppe || undefined,
     sort_by: params.sort_by,
     sort_order: params.sort_order,
   }
@@ -177,6 +180,19 @@ function CustomersPageContent() {
           />
           <Label htmlFor="aktiv-filter">Kun aktive kunder</Label>
         </div>
+        {params.kundegruppe && (
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="flex items-center gap-1">
+              Kundegruppe: {params.kundegruppe}
+              <button
+                onClick={() => setParams({ kundegruppe: "", page: 1 })}
+                className="ml-1 hover:text-destructive"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-between">

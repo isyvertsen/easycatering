@@ -113,10 +113,7 @@ class ToolExecutor:
             if search:
                 params["search"] = search
             if kundegruppe:
-                # Find group ID from result if available
-                kundegruppe_filter = result.get("kundegruppe_filter")
-                if kundegruppe_filter:
-                    params["gruppe"] = kundegruppe_filter
+                params["kundegruppe"] = kundegruppe
             url = "/customers"
             if params:
                 url += "?" + urlencode(params)
