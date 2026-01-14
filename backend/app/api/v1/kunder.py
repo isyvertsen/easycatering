@@ -22,8 +22,13 @@ async def get_kunder(
     aktiv: Optional[bool] = Query(True, description="Filter by active status"),
     search: Optional[str] = Query(None, max_length=200, description="Search in customer name (standard parameter)"),
     sok: Optional[str] = Query(None, description="Search in customer name (deprecated, use 'search')"),
+    kundegruppe: Optional[str] = Query(None, description="Filter by customer group name"),
+    sort_by: Optional[str] = Query(None, description="Sort by field (kundenavn, kundeid)"),
+    sort_order: Optional[str] = Query("asc", description="Sort order (asc, desc)"),
 ) -> PaginatedResponse[Kunder]:
     """Get all customers with pagination info."""
+    from app.models.kunde_gruppe import Kundegruppe as KundegruppeModel
+
     # Support both 'search' and 'sok' for backward compatibility
     search_term_input = search or sok
 
@@ -40,6 +45,16 @@ async def get_kunder(
         count_query = count_query.where(filter_condition)
         query = query.where(filter_condition)
 
+    # Filter by customer group name
+    if kundegruppe:
+        # Find group IDs matching the name
+        group_subquery = select(KundegruppeModel.gruppeid).where(
+            KundegruppeModel.gruppe.ilike(f"%{kundegruppe}%")
+        )
+        group_condition = KunderModel.kundegruppe.in_(group_subquery)
+        count_query = count_query.where(group_condition)
+        query = query.where(group_condition)
+
     # Search by name
     if search_term_input:
         search_term = f"%{search_term_input}%"
@@ -55,8 +70,18 @@ async def get_kunder(
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0
 
+    # Apply sorting
+    sort_column = KunderModel.kundenavn  # default
+    if sort_by == "kundeid":
+        sort_column = KunderModel.kundeid
+    elif sort_by == "kundenavn":
+        sort_column = KunderModel.kundenavn
+
+    if sort_order == "desc":
+        sort_column = sort_column.desc()
+
     # Get paginated data
-    query = query.order_by(KunderModel.kundenavn).offset(skip).limit(limit)
+    query = query.order_by(sort_column).offset(skip).limit(limit)
     result = await db.execute(query)
     items = result.scalars().all()
 

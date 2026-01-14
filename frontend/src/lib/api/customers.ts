@@ -4,6 +4,9 @@ import { createCrudApi, BaseListParams, BaseListResponse } from './base'
 export interface CustomerListParams extends BaseListParams {
   aktiv?: boolean
   search?: string
+  kundegruppe?: string
+  sort_by?: string
+  sort_order?: "asc" | "desc"
 }
 
 export type CustomerListResponse = BaseListResponse<Customer>
@@ -13,17 +16,11 @@ const baseApi = createCrudApi<Customer, Omit<Customer, 'kundeid'>, CustomerListP
   endpoint: '/v1/kunder'
 })
 
-// Utvid med custom list funksjon for å mappe 'search' -> 'sok'
+// Utvid med custom list funksjon
 export const customersApi = {
   ...baseApi,
   list: async (params?: CustomerListParams): Promise<CustomerListResponse> => {
-    // Mapper 'search' til 'sok' for backend
-    const mappedParams = params ? {
-      ...params,
-      sok: params.search,
-      search: undefined
-    } : undefined
-
-    return baseApi.list(mappedParams as any)
+    // Backend supports 'search' directly now, no need to map to 'sok'
+    return baseApi.list(params)
   }
 }
