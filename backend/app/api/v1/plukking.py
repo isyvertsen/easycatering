@@ -165,7 +165,7 @@ async def get_plukking_list(
             leveringsdato=ordre.leveringsdato,
             ordredato=ordre.ordredato,
             plukket_dato=ordre.plukket_dato,
-            plukket_av_navn=ordre.plukker.name if ordre.plukker else None,
+            plukket_av_navn=ordre.plukker.full_name if ordre.plukker else None,
             pakkseddel_skrevet=ordre.pakkseddel_skrevet,
             antall_produkter=len(ordre.detaljer) if ordre.detaljer else 0,
             ordrestatusid=ordre.ordrestatusid,
@@ -301,7 +301,7 @@ async def update_ordrestatus(
         ordrestatusid=ordre.ordrestatusid,
         ordrestatus_navn=status.status if status else None,
         plukket_dato=ordre.plukket_dato,
-        plukket_av_navn=current_user.name if ordre.plukket_av else None,
+        plukket_av_navn=current_user.full_name if ordre.plukket_av else None,
         message=f"Ordrestatus oppdatert til {status.status if status else request.ordrestatusid}",
     )
 
