@@ -1,11 +1,12 @@
-"""AI-powered report generation service using GPT-4."""
+"""AI-powered report generation service using configurable AI providers."""
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, desc
-import openai
+import logging
 
 from app.core.config import settings
+from app.services.ai_client import get_default_ai_client, AIClient
 from app.models.ordrer import Ordrer as OrdrerModel
 from app.models.ordredetaljer import Ordredetaljer as OrdredetaljerModel
 from app.models.kunder import Kunder as KunderModel
@@ -13,16 +14,22 @@ from app.models.produkter import Produkter as ProdukterModel
 from app.models.kategorier import Kategorier as KategorierModel
 from app.models.leverandorer import Leverandorer as LeverandorerModel
 
+logger = logging.getLogger(__name__)
+
 
 class AIReportService:
     """Service for AI-powered report generation with HTML output."""
 
-    def __init__(self):
-        """Initialize OpenAI client."""
-        self.client = openai.OpenAI(
-            api_key=settings.OPENAI_API_KEY
-        )
-        self.model = settings.OPENAI_MODEL
+    def __init__(self, ai_client: Optional[AIClient] = None):
+        """Initialize with optional AI client."""
+        self._ai_client = ai_client
+
+    @property
+    def ai_client(self) -> AIClient:
+        """Lazy-load AI client."""
+        if self._ai_client is None:
+            self._ai_client = get_default_ai_client()
+        return self._ai_client
 
     def _get_period_dates(self, period: str) -> tuple[datetime, datetime]:
         """Calculate start and end dates for a given period."""
@@ -290,9 +297,21 @@ Generer en profesjonell HTML-rapport med:
 Svar BARE med HTML-koden, ingen ekstra forklaring."""
 
         try:
-            # Call GPT-4
-            response = self.client.chat.completions.create(
-                model=self.model,
+            # Check if AI is configured
+            if not self.ai_client.is_configured():
+                fallback_html = self._generate_fallback_html(data)
+                return {
+                    "html": fallback_html,
+                    "insights": "AI ikke konfigurert. Viser enkel rapport.",
+                    "data_summary": {
+                        "period": f"{data['period_start']} - {data['period_end']}",
+                        "total_orders": data['total_orders'],
+                        "total_revenue": data['total_revenue']
+                    }
+                }
+
+            # Call AI for HTML report
+            html_content = await self.ai_client.chat_completion(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
@@ -301,7 +320,7 @@ Svar BARE med HTML-koden, ingen ekstra forklaring."""
                 max_tokens=4000
             )
 
-            html_content = response.choices[0].message.content.strip()
+            html_content = html_content.strip()
 
             # Generate insights separately
             insights_prompt = f"""Basert på dataene fra Larvik Kommune Catering ({data['period_start']} til {data['period_end']}),
@@ -314,8 +333,7 @@ Data:
 - Topp produkt: {data['top_products'][0]['name'] if data['top_products'] else 'N/A'}
 - Topp kunde: {data['top_customers'][0]['name'] if data['top_customers'] else 'N/A'}"""
 
-            insights_response = self.client.chat.completions.create(
-                model=self.model,
+            insights = await self.ai_client.chat_completion(
                 messages=[
                     {"role": "system", "content": "Du er en business analyst for catering-bransjen."},
                     {"role": "user", "content": insights_prompt}
@@ -324,11 +342,9 @@ Data:
                 max_tokens=500
             )
 
-            insights = insights_response.choices[0].message.content.strip()
-
             return {
                 "html": html_content,
-                "insights": insights,
+                "insights": insights.strip(),
                 "data_summary": {
                     "period": f"{data['period_start']} - {data['period_end']}",
                     "total_orders": data['total_orders'],
@@ -337,6 +353,7 @@ Data:
             }
 
         except Exception as e:
+            logger.error(f"Error generating AI report: {e}")
             # Fallback HTML if AI fails
             fallback_html = self._generate_fallback_html(data)
             return {

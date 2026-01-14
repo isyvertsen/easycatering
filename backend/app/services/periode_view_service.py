@@ -64,15 +64,15 @@ class PeriodeViewService:
     ) -> tuple[List[PeriodeMedKomplettMeny], int]:
         """
         Hent liste over perioder med komplett menystruktur.
+        NOTE: For list view, we only load menu counts, not all products.
+        Use get_periode_med_komplett_meny for full product details.
         """
+        # For list view, only load menu structure without all products
+        # This avoids cartesian product / memory issues with large datasets
         query = select(Periode).options(
             selectinload(Periode.periode_menyer)
             .selectinload(PeriodeMeny.meny)
-            .options(
-                selectinload(Meny.gruppe),
-                selectinload(Meny.meny_produkter)
-                .selectinload(MenyProdukt.produkt)
-            )
+            .selectinload(Meny.gruppe)
         )
 
         count_query = select(func.count()).select_from(Periode)
@@ -94,7 +94,8 @@ class PeriodeViewService:
         total_result = await db.execute(count_query)
         total = total_result.scalar() or 0
 
-        return [self._transform_periode_to_view(p) for p in perioder], total
+        # For list view, don't include full product details (memory optimization)
+        return [self._transform_periode_to_view(p, include_products=False) for p in perioder], total
 
     async def kopier_periode_med_menyer(
         self,
@@ -195,7 +196,7 @@ class PeriodeViewService:
 
         return [self._transform_meny(m) for m in menyer]
 
-    def _transform_periode_to_view(self, periode: Periode) -> PeriodeMedKomplettMeny:
+    def _transform_periode_to_view(self, periode: Periode, include_products: bool = True) -> PeriodeMedKomplettMeny:
         """Transformer en Periode-modell til view-schema med grupperte menyer."""
         grupper_map: Dict[int, MenygruppeMedMenyer] = {}
         total_produkter = 0
@@ -211,7 +212,7 @@ class PeriodeViewService:
                     menyer=[]
                 )
 
-            meny_view = self._transform_meny(meny)
+            meny_view = self._transform_meny(meny, include_products)
             grupper_map[gruppe_id].menyer.append(meny_view)
             total_produkter += meny_view.produkt_antall
 
@@ -225,18 +226,25 @@ class PeriodeViewService:
             total_produkter=total_produkter
         )
 
-    def _transform_meny(self, meny: Meny) -> MenyMedProdukter:
+    def _transform_meny(self, meny: Meny, include_products: bool = True) -> MenyMedProdukter:
         """Transformer en Meny-modell til view-schema."""
-        produkter = [
-            ProduktInMeny(
-                produktid=mp.produkt.produktid,
-                produktnavn=mp.produkt.produktnavn,
-                pris=mp.produkt.pris,
-                pakningstype=mp.produkt.pakningstype,
-                visningsnavn=mp.produkt.visningsnavn
-            )
-            for mp in meny.meny_produkter
-        ]
+        # Only include full product list if requested (avoids memory issues in list views)
+        if include_products and hasattr(meny, 'meny_produkter') and meny.meny_produkter:
+            produkter = [
+                ProduktInMeny(
+                    produktid=mp.produkt.produktid,
+                    produktnavn=mp.produkt.produktnavn,
+                    pris=mp.produkt.pris,
+                    pakningstype=mp.produkt.pakningstype,
+                    visningsnavn=mp.produkt.visningsnavn
+                )
+                for mp in meny.meny_produkter
+            ]
+            produkt_antall = len(produkter)
+        else:
+            produkter = []
+            # Try to get count without loading all products
+            produkt_antall = len(meny.meny_produkter) if hasattr(meny, 'meny_produkter') and meny.meny_produkter else 0
 
         return MenyMedProdukter(
             menyid=meny.menyid,
@@ -244,7 +252,7 @@ class PeriodeViewService:
             menygruppe=meny.menygruppe,
             menygruppe_beskrivelse=meny.gruppe.beskrivelse if meny.gruppe else None,
             produkter=produkter,
-            produkt_antall=len(produkter)
+            produkt_antall=produkt_antall
         )
 
 

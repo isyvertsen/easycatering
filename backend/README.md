@@ -101,6 +101,35 @@ Nyttige scripts i `scripts/` mappen:
 
 Se `.env.example` for påkrevde environment variables.
 
+### AI Provider Konfigurasjon
+
+Systemet støtter flere AI-leverandører for funksjoner som produktnavnrensing, rapportgenerering og chat-assistanse.
+
+```bash
+# Velg AI-leverandør (openai, azure, anthropic)
+AI_PROVIDER=openai
+
+# OpenAI
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4-turbo
+OPENAI_MAX_TOKENS=4096
+OPENAI_TEMPERATURE=0.7
+
+# Azure OpenAI
+AZURE_OPENAI_API_KEY=
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_DEPLOYMENT=your-deployment
+
+# Anthropic (Claude)
+ANTHROPIC_API_KEY=
+ANTHROPIC_MODEL=claude-3-sonnet-20240229
+```
+
+For Anthropic-støtte, installer valgfri avhengighet:
+```bash
+uv pip install .[anthropic]
+```
+
 ## Dokumentasjon
 
 Ytterligere dokumentasjon finnes i `docs/` mappen:

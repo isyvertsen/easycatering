@@ -1,8 +1,10 @@
 """Service for cleaning product names using AI to improve search results."""
+import json
 import logging
 from typing import List, Optional
-import openai
+
 from app.core.config import settings
+from app.services.ai_client import get_default_ai_client, AIClient
 
 logger = logging.getLogger(__name__)
 
@@ -10,9 +12,16 @@ logger = logging.getLogger(__name__)
 class ProductNameCleaner:
     """Clean product names using AI to extract core product name."""
 
-    def __init__(self):
-        self.client = openai.AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-        self.model = settings.OPENAI_MODEL or "gpt-4-turbo"
+    def __init__(self, ai_client: Optional[AIClient] = None):
+        """Initialize with optional AI client (uses default if not provided)."""
+        self._ai_client = ai_client
+
+    @property
+    def ai_client(self) -> AIClient:
+        """Lazy-load AI client."""
+        if self._ai_client is None:
+            self._ai_client = get_default_ai_client()
+        return self._ai_client
 
     async def clean_product_name(self, product_name: str) -> List[str]:
         """
@@ -29,8 +38,13 @@ class ProductNameCleaner:
             "EGG FIRST PRICE 12STK" -> ["EGG FIRST PRICE 12STK", "EGG FIRST PRICE", "EGG"]
             "LAKSELOINS FR U SB BRB" -> ["LAKSELOINS FR U SB BRB", "LAKSELOINS", "LAKS"]
         """
-        if not settings.OPENAI_API_KEY:
-            logger.warning("OpenAI API key not configured, returning original name only")
+        # Check if AI is configured
+        try:
+            if not self.ai_client.is_configured():
+                logger.warning("AI provider not configured, returning original name only")
+                return [product_name]
+        except ValueError as e:
+            logger.warning(f"AI provider error: {e}, returning original name only")
             return [product_name]
 
         try:
@@ -54,8 +68,7 @@ Eksempler:
 "LAKSELOINS FR U SB BRB" -> ["LAKSELOINS FR U SB BRB", "LAKSELOINS", "LAKS"]
 """
 
-            response = await self.client.chat.completions.create(
-                model=self.model,
+            content = await self.ai_client.chat_completion(
                 messages=[
                     {"role": "system", "content": "Du er en ekspert på norske matvareprodukt. Returner BARE JSON, ingen forklaring."},
                     {"role": "user", "content": prompt}
@@ -63,8 +76,6 @@ Eksempler:
                 temperature=0.3,
                 max_tokens=200
             )
-
-            content = response.choices[0].message.content
             if not content:
                 logger.warning(f"Empty response from OpenAI for product: {product_name}")
                 return [product_name]

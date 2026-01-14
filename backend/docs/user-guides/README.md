@@ -29,17 +29,37 @@ LKC-systemet er en komplett løsning for catering-virksomhet som inkluderer:
 
 ### Navigasjon i systemet
 
-Hovedmenyen ligger på venstre side av skjermen og inneholder:
+Hovedmenyen ligger øverst på skjermen og er organisert i kategorier:
 
+**Menyplanlegging:**
 | Menyvalg | Beskrivelse |
 |----------|-------------|
-| **Hjem** | Dashboard med oversikt og hurtigstatistikk |
-| **Kunder** | Kundeadministrasjon og kundeinformasjon |
-| **Ordrer** | Ordrehåndtering og ordrehistorikk |
 | **Menyer** | Ukemenyer og menyplanlegging |
+| **Periodevisning** | Administrer perioder og se ukeoversikt |
 | **Oppskrifter** | Oppskriftsbibliotek og oppskriftsadministrasjon |
-| **Produkter** | Produktkatalog og Matinfo-søk |
+| **Retter** | Sammensatte retter |
+
+**Produktstyring:**
+| Menyvalg | Beskrivelse |
+|----------|-------------|
+| **Produkter** | Produktkatalog og GTIN-administrasjon |
+| **Kategorier** | Produktkategorier |
+| **Leverandører** | Leverandøradministrasjon |
+| **Matinfo** | Matinfo-integrasjon og søk |
+
+**Salg & Ordre:**
+| Menyvalg | Beskrivelse |
+|----------|-------------|
+| **Ordrer** | Ordrehåndtering og ordrehistorikk |
+| **Plukking** | Plukklistestyring |
+| **Kunder** | Kundeadministrasjon |
+| **Kundegrupper** | Gruppering av kunder |
+| **Leveranser** | Leveranseplanlegging |
 | **Etiketter** | Etikettdesign og utskrift |
+
+**System:**
+| Menyvalg | Beskrivelse |
+|----------|-------------|
 | **Rapporter** | Statistikk og rapporter |
 | **Innstillinger** | Systeminnstillinger og konfigurasjon |
 
@@ -90,10 +110,14 @@ Hvis AI-assistenten ikke kan hjelpe deg, kontakt:
 
 Denne dokumentasjonen oppdateres jevnlig. Sjekk her for nye funksjoner og endringer:
 
-- **Januar 2026**: Oppdatert dokumentasjon for LightRAG-integrasjon
+- **Januar 2026 (v2.6.0)**:
+  - Konfigurerbar AI-støtte (OpenAI, Azure, Claude)
+  - Ytelsesoptimaliseringer i hele systemet
+  - Forbedret navigasjon (fjernet overflødig Perioder-meny)
+- **Januar 2026 (v2.5.11)**: Oppdatert dokumentasjon for LightRAG-integrasjon
 - **Desember 2025**: Lagt til Matinfo-synkronisering
 - **November 2025**: Nye etikettfunksjoner og Zebra-skriverstøtte
 
 ---
 
-**Versjon**: 2.0 | **Sist oppdatert**: Januar 2026
+**Versjon**: 2.6.0 | **Sist oppdatert**: Januar 2026

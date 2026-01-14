@@ -163,40 +163,46 @@ class MatinfoSyncService:
         logger.info(f"Searching matinfo_products with {len(name_variations)} variations for '{name}'")
 
         all_matches = []
-        seen_gtins = set()
+        seen_gtins: Set[str] = set()
 
-        # Search with each variation
+        # Build a single query with all variations (more efficient than N queries)
+        conditions = []
         for variation in name_variations:
-            # Search in database - case insensitive LIKE search
-            stmt = select(MatinfoProduct).where(
-                or_(
-                    MatinfoProduct.name.ilike(f"%{variation}%"),
-                    MatinfoProduct.brandname.ilike(f"%{variation}%")
-                )
-            ).limit(limit * 2)  # Get more to filter and rank
+            conditions.append(MatinfoProduct.name.ilike(f"%{variation}%"))
+            conditions.append(MatinfoProduct.brandname.ilike(f"%{variation}%"))
 
-            result = await self.db.execute(stmt)
-            products = result.scalars().all()
+        # Single query with OR of all conditions
+        stmt = select(MatinfoProduct).where(or_(*conditions)).limit(limit * len(name_variations))
 
-            # Calculate similarity scores
-            for product in products:
-                if product.gtin in seen_gtins:
-                    continue
+        result = await self.db.execute(stmt)
+        products = result.scalars().all()
 
-                seen_gtins.add(product.gtin)
+        # Calculate similarity scores for each product against all variations
+        for product in products:
+            if product.gtin in seen_gtins:
+                continue
 
+            seen_gtins.add(product.gtin)
+
+            # Find best matching variation
+            best_similarity = 0.0
+            best_variation = name_variations[0]
+
+            for variation in name_variations:
                 # Calculate similarity with product name
                 name_similarity = self._calculate_similarity(variation, product.name or "")
                 brand_similarity = self._calculate_similarity(variation, product.brandname or "") * 0.8
-
-                # Use highest similarity
                 similarity = max(name_similarity, brand_similarity)
 
-                all_matches.append({
-                    "product": product,
-                    "similarity": similarity,
-                    "matched_variation": variation
-                })
+                if similarity > best_similarity:
+                    best_similarity = similarity
+                    best_variation = variation
+
+            all_matches.append({
+                "product": product,
+                "similarity": best_similarity,
+                "matched_variation": best_variation
+            })
 
         # Sort by similarity score (highest first)
         all_matches.sort(key=lambda x: x["similarity"], reverse=True)

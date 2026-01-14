@@ -1,9 +1,9 @@
 """API endpoints for managing preparation instructions."""
 from typing import Optional
+import logging
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, HTTPException
-import openai
 
 from app.api.deps import get_db, get_current_user
 from app.domain.entities.user import User
@@ -16,7 +16,9 @@ from app.schemas.preparation_instruction import (
     EnhanceInstructionRequest,
     EnhanceInstructionResponse,
 )
-from app.core.config import settings
+from app.services.ai_client import get_default_ai_client
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -163,15 +165,20 @@ async def enhance_instruction(
 
     AI vil vurdere instruksjonen og gjøre den klarere, mer presis og lettere å forstå.
     """
-    if not settings.OPENAI_API_KEY:
+    try:
+        ai_client = get_default_ai_client()
+        if not ai_client.is_configured():
+            raise HTTPException(
+                status_code=503,
+                detail="AI ikke konfigurert. Kan ikke bruke AI-funksjonen."
+            )
+    except ValueError as e:
         raise HTTPException(
             status_code=503,
-            detail="OpenAI API key ikke konfigurert. Kan ikke bruke AI-funksjonen."
+            detail=f"AI konfigurasjonsfeil: {str(e)}"
         )
 
     try:
-        client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
-
         system_prompt = """Du er en ekspert på matvaresikkerhet og tilberedning av mat i storkjøkken.
 
 KONTEKST: Dette er tilberedningsinstruksjoner som skal skrives på matvareetiketter i et cateringsystem.
@@ -203,16 +210,13 @@ Gi svaret på følgende format:
 FORBEDRET TEKST: [den forbedrede instruksjonen - maks 1-2 setninger]
 BEGRUNNELSE: [kort forklaring på hva som ble endret og hvorfor]"""
 
-        response = client.chat.completions.create(
-            model="gpt-4",
+        ai_response = await ai_client.chat_completion(
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
             temperature=0.7,
         )
-
-        ai_response = response.choices[0].message.content
 
         # Parse the response
         enhanced_text = request.text
@@ -232,7 +236,10 @@ BEGRUNNELSE: [kort forklaring på hva som ble endret og hvorfor]"""
             reasoning=reasoning,
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Error enhancing instruction: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Kunne ikke bruke AI: {str(e)}"

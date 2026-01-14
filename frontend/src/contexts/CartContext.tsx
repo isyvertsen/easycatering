@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode, useMemo } from 'react'
 import { CartItem } from '@/lib/api/webshop'
 import { webshopApi, DraftOrder } from '@/lib/api/webshop'
 import { useSession } from 'next-auth/react'
@@ -290,31 +290,45 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLastSaved(null)
   }
 
-  const getTotalItems = () => {
+  const getTotalItems = useCallback(() => {
     return items.reduce((sum, item) => sum + item.antall, 0)
-  }
+  }, [items])
 
-  const getTotalPrice = () => {
+  const getTotalPrice = useCallback(() => {
     return items.reduce((sum, item) => sum + item.pris * item.antall, 0)
-  }
+  }, [items])
+
+  // Memoize context value to prevent unnecessary re-renders of consumers
+  const contextValue = useMemo(() => ({
+    items,
+    draftOrderId,
+    isSaving,
+    isSynced,
+    lastSaved,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    getTotalItems,
+    getTotalPrice,
+    loadDraftOrder,
+  }), [
+    items,
+    draftOrderId,
+    isSaving,
+    isSynced,
+    lastSaved,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    getTotalItems,
+    getTotalPrice,
+    loadDraftOrder,
+  ])
 
   return (
-    <CartContext.Provider
-      value={{
-        items,
-        draftOrderId,
-        isSaving,
-        isSynced,
-        lastSaved,
-        addItem,
-        removeItem,
-        updateQuantity,
-        clearCart,
-        getTotalItems,
-        getTotalPrice,
-        loadDraftOrder,
-      }}
-    >
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   )
