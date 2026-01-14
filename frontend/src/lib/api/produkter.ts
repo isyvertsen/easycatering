@@ -37,6 +37,13 @@ export interface ProduktListParams {
   has_gtin?: boolean  // Filter for GTIN-status: true=has GTIN, false=missing GTIN
   sort_by?: string    // Sort by field (produktid, produktnavn, pris, ean_kode)
   sort_order?: 'asc' | 'desc'  // Sort order
+  include_stats?: boolean  // Include GTIN statistics (avoids N+1 queries for stats)
+}
+
+export interface ProduktStats {
+  total: number
+  with_gtin: number
+  without_gtin: number
 }
 
 export interface ProduktListResponse {
@@ -45,6 +52,7 @@ export interface ProduktListResponse {
   page: number
   page_size: number
   total_pages: number
+  stats?: ProduktStats  // Optional stats when include_stats=true
 }
 
 export interface MatinfoAllergenInfo {
@@ -136,6 +144,14 @@ export const produkterApi = {
    * List produkter with pagination and filtering
    */
   async list(params?: ProduktListParams): Promise<Produkt[]> {
+    const response = await this.listWithMeta(params)
+    return response.items || []
+  },
+
+  /**
+   * List produkter with pagination and filtering, returning full response with metadata
+   */
+  async listWithMeta(params?: ProduktListParams): Promise<ProduktListResponse> {
     const queryParams = new URLSearchParams()
 
     if (params?.skip !== undefined) queryParams.append('skip', params.skip.toString())
@@ -146,9 +162,10 @@ export const produkterApi = {
     if (params?.has_gtin !== undefined) queryParams.append('has_gtin', params.has_gtin.toString())
     if (params?.sort_by) queryParams.append('sort_by', params.sort_by)
     if (params?.sort_order) queryParams.append('sort_order', params.sort_order)
+    if (params?.include_stats) queryParams.append('include_stats', 'true')
 
     const response = await apiClient.get<ProduktListResponse>(`/v1/produkter/?${queryParams.toString()}`)
-    return response.data.items || []
+    return response.data
   },
 
   /**

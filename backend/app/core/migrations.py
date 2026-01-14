@@ -449,6 +449,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(DropSsmaTimestampColumns())
         migration_runner.add_migration(AddBestiltAvToOrders())
         migration_runner.add_migration(AddPlukketAntallToOrderDetails())
+        migration_runner.add_migration(AddPerformanceIndexes())
     return migration_runner
 
 
@@ -1081,6 +1082,86 @@ class AddPlukketAntallToOrderDetails(Migration):
             await conn.execute(text("""
                 ALTER TABLE tblordredetaljer
                 ADD COLUMN IF NOT EXISTS plukket_antall FLOAT DEFAULT NULL
+            """))
+
+
+class AddPerformanceIndexes(Migration):
+    """Add indexes for search and foreign key columns to improve query performance."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260114_001_performance_indexes",
+            description="Add indexes for product search (trigram) and foreign key columns"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Enable pg_trgm extension for fuzzy/ILIKE search
+            await conn.execute(text("""
+                CREATE EXTENSION IF NOT EXISTS pg_trgm
+            """))
+
+            # Product search indexes (for ILIKE queries)
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_produkter_produktnavn
+                ON tblprodukter(produktnavn)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_produkter_ean_kode
+                ON tblprodukter(ean_kode)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_produkter_leverandorsproduktnr
+                ON tblprodukter(leverandorsproduktnr)
+            """))
+            # Trigram index for fuzzy search on product name
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_produkter_produktnavn_trgm
+                ON tblprodukter USING gin(produktnavn gin_trgm_ops)
+            """))
+
+            # Orders FK indexes
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_ordrer_kundeid
+                ON tblordrer(kundeid)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_ordrer_dato
+                ON tblordrer(ordredato)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_ordrer_leveringsdato
+                ON tblordrer(leveringsdato)
+            """))
+
+            # Order details FK indexes
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_ordredetaljer_ordreid
+                ON tblordredetaljer(ordreid)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_ordredetaljer_produktid
+                ON tblordredetaljer(produktid)
+            """))
+
+            # Periode-meny FK indexes
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_periode_meny_periodeid
+                ON periode_meny(periodeid)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_periode_meny_menyid
+                ON periode_meny(menyid)
+            """))
+
+            # Customer search index
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_kunder_kundenavn
+                ON tblkunder(kundenavn)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_kunder_kundenavn_trgm
+                ON tblkunder USING gin(kundenavn gin_trgm_ops)
             """))
 
 

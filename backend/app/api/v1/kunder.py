@@ -1,6 +1,6 @@
 """Customer API endpoints."""
 from typing import List, Optional
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -8,11 +8,12 @@ from app.api.deps import get_db, get_current_user
 from app.domain.entities.user import User
 from app.models.kunder import Kunder as KunderModel
 from app.schemas.kunder import Kunder, KunderCreate, KunderUpdate
+from app.schemas.pagination import PaginatedResponse
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[Kunder])
+@router.get("/", response_model=PaginatedResponse[Kunder])
 async def get_kunder(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -21,36 +22,55 @@ async def get_kunder(
     aktiv: Optional[bool] = Query(True, description="Filter by active status"),
     search: Optional[str] = Query(None, max_length=200, description="Search in customer name (standard parameter)"),
     sok: Optional[str] = Query(None, description="Search in customer name (deprecated, use 'search')"),
-) -> List[Kunder]:
-    """Get all customers."""
+) -> PaginatedResponse[Kunder]:
+    """Get all customers with pagination info."""
     # Support both 'search' and 'sok' for backward compatibility
     search_term_input = search or sok
 
+    # Base query for counting
+    count_query = select(func.count()).select_from(KunderModel)
     query = select(KunderModel)
 
     # Filter by active status
     if aktiv is not None:
         if aktiv:
-            query = query.where(
-                or_(KunderModel.kundeinaktiv == False, KunderModel.kundeinaktiv == None)
-            )
+            filter_condition = or_(KunderModel.kundeinaktiv == False, KunderModel.kundeinaktiv == None)
         else:
-            query = query.where(KunderModel.kundeinaktiv == True)
+            filter_condition = KunderModel.kundeinaktiv == True
+        count_query = count_query.where(filter_condition)
+        query = query.where(filter_condition)
 
     # Search by name
     if search_term_input:
         search_term = f"%{search_term_input}%"
-        query = query.where(
-            or_(
-                KunderModel.kundenavn.ilike(search_term),
-                KunderModel.adresse.ilike(search_term),
-                KunderModel.sted.ilike(search_term)
-            )
+        search_condition = or_(
+            KunderModel.kundenavn.ilike(search_term),
+            KunderModel.adresse.ilike(search_term),
+            KunderModel.sted.ilike(search_term)
         )
-    
+        count_query = count_query.where(search_condition)
+        query = query.where(search_condition)
+
+    # Get total count
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+
+    # Get paginated data
     query = query.order_by(KunderModel.kundenavn).offset(skip).limit(limit)
     result = await db.execute(query)
-    return result.scalars().all()
+    items = result.scalars().all()
+
+    # Calculate pagination info
+    page = (skip // limit) + 1
+    total_pages = (total + limit - 1) // limit if total > 0 else 0
+
+    return PaginatedResponse[Kunder](
+        items=items,
+        total=total,
+        page=page,
+        page_size=limit,
+        total_pages=total_pages
+    )
 
 
 @router.get("/{kunde_id}", response_model=Kunder)

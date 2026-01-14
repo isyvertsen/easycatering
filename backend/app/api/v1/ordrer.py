@@ -40,8 +40,10 @@ async def get_ordrer(
     # Base query for counting
     count_query = select(func.count()).select_from(OrdrerModel)
 
-    # Data query with customer join
-    query = select(OrdrerModel).options(joinedload(OrdrerModel.kunde))
+    # Data query with customer join (including nested gruppe to avoid N+1)
+    query = select(OrdrerModel).options(
+        joinedload(OrdrerModel.kunde).joinedload(KunderModel.gruppe)
+    )
 
     # Search filter - search by customer name or order ID
     if search:
@@ -147,7 +149,7 @@ async def get_ordre(
     """Get an order by ID."""
     result = await db.execute(
         select(OrdrerModel)
-        .options(joinedload(OrdrerModel.kunde))
+        .options(joinedload(OrdrerModel.kunde).joinedload(KunderModel.gruppe))
         .where(OrdrerModel.ordreid == ordre_id)
     )
     ordre = result.scalar_one_or_none()

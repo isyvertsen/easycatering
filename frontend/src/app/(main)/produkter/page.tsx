@@ -10,7 +10,8 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Search, CheckCircle, XCircle, Plus, Upload, Pencil } from "lucide-react"
 import { MatinfoSearchDialog } from "@/components/produkter/matinfo-search-dialog"
 import { BulkGtinUpdateDialog } from "@/components/produkter/bulk-gtin-update-dialog"
-import { useProdukterList } from "@/hooks/useProdukter"
+import { useProdukterListWithMeta } from "@/hooks/useProdukter"
+import { useDebounce } from "@/hooks/useDebounce"
 import { Produkt } from "@/lib/api/produkter"
 import { formatGtin } from "@/lib/utils/gtin"
 
@@ -72,38 +73,38 @@ export default function ProdukterPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
 
+  // Debounce search to avoid excessive API calls while typing
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+
   // Build query parameters for backend
   const queryParams = {
     skip: (currentPage - 1) * pageSize,
     limit: pageSize,
     aktiv: true,
-    sok: searchTerm || undefined,
+    sok: debouncedSearchTerm || undefined,
     has_gtin: gtinFilter === "all" ? undefined : gtinFilter === "with",
     sort_by: sortBy,
     sort_order: sortOrder,
+    include_stats: true, // Get stats from backend to avoid fetching all 10000 products
   }
 
-  // Fetch produkter from backend with server-side filtering, search, and sorting
-  const { data: produkter = [], isLoading, refetch } = useProdukterList(queryParams)
+  // Fetch produkter from backend with server-side filtering, search, sorting, and stats
+  const { data: response, isLoading, refetch } = useProdukterListWithMeta(queryParams)
 
-  // Fetch stats separately (all products without pagination)
-  const { data: allProdukter = [] } = useProdukterList({
-    skip: 0,
-    limit: 10000,
-    aktiv: true,
-  })
+  // Extract data from response
+  const produkter = response?.items || []
 
-  // Calculate stats from all products
+  // Get stats from backend response (avoids N+1 query for all products)
   const stats = {
-    total: allProdukter.length,
-    withGtin: allProdukter.filter((p) => !!p.ean_kode).length,
-    withoutGtin: allProdukter.filter((p) => !p.ean_kode).length,
+    total: response?.stats?.total || 0,
+    withGtin: response?.stats?.with_gtin || 0,
+    withoutGtin: response?.stats?.without_gtin || 0,
   }
 
-  // Reset to page 1 when filter or search changes
+  // Reset to page 1 when filter or debounced search changes
   useEffect(() => {
     setCurrentPage(1)
-  }, [gtinFilter, searchTerm])
+  }, [gtinFilter, debouncedSearchTerm])
 
   const handleParamsChange = (newParams: {
     search?: string;

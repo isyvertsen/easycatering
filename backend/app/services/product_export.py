@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import List, Dict, Any
 from pathlib import Path
 import asyncio
+import aiofiles
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.models.matinfo_products import MatinfoProduct
@@ -152,10 +153,10 @@ class ProductExporter:
                 for product in products:
                     all_products.append(self.format_product_for_rag(product))
                 
-                # Write single JSON file
+                # Write single JSON file (async to not block event loop)
                 json_filename = export_subdir / "products.json"
-                with open(json_filename, 'w', encoding='utf-8') as f:
-                    json.dump(all_products, f, ensure_ascii=False, indent=2)
+                async with aiofiles.open(json_filename, 'w', encoding='utf-8') as f:
+                    await f.write(json.dumps(all_products, ensure_ascii=False, indent=2))
                 
                 files_created = 1
                 products_exported = len(products)
@@ -176,9 +177,9 @@ class ProductExporter:
                     # Use GTIN as filename, or index if GTIN not available
                     filename = f"{product.gtin or f'product_{idx:06d}'}.md"
                     md_filename = export_subdir / filename
-                    
-                    with open(md_filename, 'w', encoding='utf-8') as f:
-                        f.write(md_content)
+
+                    async with aiofiles.open(md_filename, 'w', encoding='utf-8') as f:
+                        await f.write(md_content)
                     
                     files_created += 1
                     products_exported += 1
@@ -210,10 +211,10 @@ class ProductExporter:
                     # Create file number with padding for proper sorting
                     file_num = (offset // self.products_per_file) + 1
                     
-                    # Export JSONL format for RAG processing
+                    # Export JSONL format for RAG processing (async)
                     jsonl_filename = export_subdir / f"products_{file_num:04d}.jsonl"
-                    with open(jsonl_filename, 'w', encoding='utf-8') as f:
-                        f.write(self.create_jsonl_format(formatted_products))
+                    async with aiofiles.open(jsonl_filename, 'w', encoding='utf-8') as f:
+                        await f.write(self.create_jsonl_format(formatted_products))
                     
                     files_created += 1
                     products_exported += len(products)
@@ -243,8 +244,8 @@ class ProductExporter:
             }
             
             metadata_file = export_subdir / "export_metadata.json"
-            with open(metadata_file, 'w', encoding='utf-8') as f:
-                json.dump(metadata, f, ensure_ascii=False, indent=2)
+            async with aiofiles.open(metadata_file, 'w', encoding='utf-8') as f:
+                await f.write(json.dumps(metadata, ensure_ascii=False, indent=2))
             
             # Create a README for the export
             format_description = {
@@ -296,11 +297,11 @@ for improved search accuracy in Norwegian language.
 """
             
             readme_file = export_subdir / "README.md"
-            with open(readme_file, 'w', encoding='utf-8') as f:
-                f.write(readme_content)
+            async with aiofiles.open(readme_file, 'w', encoding='utf-8') as f:
+                await f.write(readme_content)
             
-            # Create RAG context files
-            self._create_rag_context_files(export_subdir, format, total_count)
+            # Create RAG context files (async)
+            await self._create_rag_context_files(export_subdir, format, total_count)
             
             return {
                 "success": True,
@@ -382,9 +383,9 @@ for improved search accuracy in Norwegian language.
         
         return exports
     
-    def _create_rag_context_files(self, export_dir: Path, format: str, total_products: int):
-        """Create context files for RAG system prompts.
-        
+    async def _create_rag_context_files(self, export_dir: Path, format: str, total_products: int):
+        """Create context files for RAG system prompts (async).
+
         Args:
             export_dir: Directory where files will be created
             format: Export format used
@@ -429,8 +430,8 @@ Når et produkt vises i søkeresultatene, kan du klikke på GTIN-koden for å se
 """
         
         user_context_file = export_dir / "rag_context_user.txt"
-        with open(user_context_file, 'w', encoding='utf-8') as f:
-            f.write(user_context)
+        async with aiofiles.open(user_context_file, 'w', encoding='utf-8') as f:
+            await f.write(user_context)
         
         # Create admin context file
         admin_context = f"""# Larvik Kommune Catering - Produktkatalog Admin Kontekst
@@ -488,8 +489,8 @@ Dette gir bedre treff ved fritekstsøk.
 """
         
         admin_context_file = export_dir / "rag_context_admin.txt"
-        with open(admin_context_file, 'w', encoding='utf-8') as f:
-            f.write(admin_context)
+        async with aiofiles.open(admin_context_file, 'w', encoding='utf-8') as f:
+            await f.write(admin_context)
         
         # Create data context file
         data_context = f"""# Produktkatalog - Data Kontekst
@@ -545,5 +546,5 @@ For et produkt med GTIN "7035620030437":
 """
         
         data_context_file = export_dir / "rag_context_data.txt"
-        with open(data_context_file, 'w', encoding='utf-8') as f:
-            f.write(data_context)
+        async with aiofiles.open(data_context_file, 'w', encoding='utf-8') as f:
+            await f.write(data_context)

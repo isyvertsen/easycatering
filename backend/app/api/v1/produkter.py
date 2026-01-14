@@ -15,6 +15,13 @@ from sqlalchemy.orm import selectinload
 router = APIRouter()
 
 
+class ProdukterStats(BaseModel):
+    """Product statistics."""
+    total: int
+    with_gtin: int
+    without_gtin: int
+
+
 class ProdukterListResponse(BaseModel):
     """Paginated response for products list."""
     items: List[Produkter]
@@ -22,6 +29,7 @@ class ProdukterListResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+    stats: Optional[ProdukterStats] = None
 
 
 @router.get("/", response_model=ProdukterListResponse)
@@ -39,6 +47,7 @@ async def get_produkter(
     leverandor_ids: Optional[str] = Query(None, description="Comma-separated list of leverandor IDs to filter by"),
     sort_by: Optional[str] = Query(None, description="Sort by field (produktid, produktnavn, pris, ean_kode)"),
     sort_order: Optional[str] = Query("asc", description="Sort order: asc or desc"),
+    include_stats: bool = Query(False, description="Include GTIN statistics in response"),
 ) -> ProdukterListResponse:
     """Get all products with pagination."""
     # Build base query
@@ -130,12 +139,35 @@ async def get_produkter(
     page = (skip // limit) + 1 if limit > 0 else 1
     total_pages = (total + limit - 1) // limit if limit > 0 else 0
 
+    # Calculate GTIN stats if requested (avoids N+1 in frontend)
+    stats = None
+    if include_stats:
+        # Count products with GTIN
+        with_gtin_query = select(func.count()).select_from(ProdukterModel).where(
+            ProdukterModel.ean_kode != None,
+            ProdukterModel.ean_kode != ""
+        )
+        with_gtin_result = await db.execute(with_gtin_query)
+        with_gtin = with_gtin_result.scalar() or 0
+
+        # Total active products
+        total_query = select(func.count()).select_from(ProdukterModel)
+        total_result_all = await db.execute(total_query)
+        total_all = total_result_all.scalar() or 0
+
+        stats = ProdukterStats(
+            total=total_all,
+            with_gtin=with_gtin,
+            without_gtin=total_all - with_gtin
+        )
+
     return ProdukterListResponse(
         items=produkter,
         total=total,
         page=page,
         page_size=limit,
-        total_pages=total_pages
+        total_pages=total_pages,
+        stats=stats
     )
 
 

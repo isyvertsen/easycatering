@@ -3,6 +3,7 @@ import {
   produkterApi,
   Produkt,
   ProduktListParams,
+  ProduktListResponse,
   ProduktCreateData,
   MatinfoSearchResult,
   GtinUpdateResponse,
@@ -21,6 +22,21 @@ export function useProdukterList(
   return useQuery<Produkt[]>({
     queryKey: ['produkter', 'list', params],
     queryFn: () => produkterApi.list(params),
+    ...options,
+  })
+}
+
+/**
+ * Hook for å hente liste over produkter med metadata (pagination, stats)
+ * Bruk dette når du trenger total count, pagination info, eller GTIN stats
+ */
+export function useProdukterListWithMeta(
+  params?: ProduktListParams,
+  options?: UseQueryOptions<ProduktListResponse>
+) {
+  return useQuery<ProduktListResponse>({
+    queryKey: ['produkter', 'list-with-meta', params],
+    queryFn: () => produkterApi.listWithMeta(params),
     ...options,
   })
 }

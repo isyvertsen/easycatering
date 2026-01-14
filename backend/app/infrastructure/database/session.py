@@ -6,13 +6,14 @@ from sqlalchemy.orm import declarative_base
 
 from app.core.config import settings
 
-# Create async engine
+# Create async engine with optimized pool settings
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DATABASE_ECHO,
     pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
+    pool_size=20,        # Increased from 5 for better concurrency
+    max_overflow=40,     # Increased from 10 for peak load handling
+    pool_recycle=3600,   # Recycle connections after 1 hour
 )
 
 # Create session factory
