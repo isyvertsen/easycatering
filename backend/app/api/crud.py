@@ -6,7 +6,7 @@ from sqlalchemy import inspect, select, text, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import class_mapper
 
-from app.infrastructure.database.session import get_db, engine
+from app.infrastructure.database.session import get_db, get_engine
 from app.api.deps import get_current_active_user
 from app.schemas.common import PaginatedResponse
 from app.domain.entities.user import User
@@ -41,7 +41,7 @@ def validate_sql_identifier(identifier: str, identifier_type: str = "identifier"
 
 async def get_table_metadata():
     """Get metadata for all tables."""
-    async with engine.begin() as conn:
+    async with get_engine().begin() as conn:
         # Get all table names
         result = await conn.execute(
             text("""

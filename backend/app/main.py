@@ -10,7 +10,7 @@ from app.core.migrations import run_migrations
 from app.core.exceptions import setup_exception_handlers
 from app.api import health, auth, anonymization, admin
 from app.api.v1 import api_router as v1_router
-from app.infrastructure.database.session import engine, Base
+from app.infrastructure.database.session import get_engine, dispose_engine, Base
 from app.middleware.activity_logger import ActivityLoggerMiddleware
 
 # Import all models to ensure they're registered with Base.metadata
@@ -21,7 +21,7 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
-APP_VERSION = "2.6.0"
+APP_VERSION = "2.6.1"
 
 
 @asynccontextmanager
@@ -37,9 +37,10 @@ async def lifespan(app: FastAPI):
         logger.warning("Set AUTH_BYPASS=false in production environments.")
         logger.warning("=" * 60)
 
-    # Run database migrations
+    # Run database migrations (this also initializes the engine for this worker)
     try:
         logger.info("Running database migrations...")
+        engine = get_engine()
         await run_migrations(engine)
         logger.info("Database migrations completed successfully")
     except Exception as e:
@@ -52,7 +53,7 @@ async def lifespan(app: FastAPI):
 
     # Properly dispose of database connections to avoid event loop errors on restart
     try:
-        await engine.dispose()
+        await dispose_engine()
         logger.info("Database connections disposed")
     except Exception as e:
         logger.warning(f"Error disposing database connections: {e}")

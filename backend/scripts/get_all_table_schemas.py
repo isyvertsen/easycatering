@@ -5,12 +5,12 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import text
-from app.infrastructure.database.session import engine
+from app.infrastructure.database.session import get_engine
 import json
 
 async def get_all_table_schemas():
     """Get all tables and their columns with exact casing."""
-    async with engine.begin() as conn:
+    async with get_engine().begin() as conn:
         # Get all tables
         tables_result = await conn.execute(text("""
             SELECT table_name 
