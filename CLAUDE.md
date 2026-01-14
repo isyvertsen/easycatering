@@ -110,3 +110,15 @@ To add a migration:
 **Backend**: FastAPI, SQLAlchemy, PostgreSQL, Redis (cache), uv (package manager)
 
 **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS, shadcn/ui, React Query, NextAuth, Playwright, Jest
+
+## Version Bumping
+
+**VIKTIG**: Hver gang en PR opprettes, SKAL versjonen økes (PATCH bump).
+
+Versjon finnes i to filer som ALLTID må være synkronisert:
+- `frontend/package.json` (version felt)
+- `backend/pyproject.toml` (version felt)
+
+Eksempel: 2.6.1 → 2.6.2
+
+Gjør dette FØR du lager PR, ikke etter.
