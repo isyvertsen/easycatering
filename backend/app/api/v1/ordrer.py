@@ -83,8 +83,7 @@ async def get_ordrer(
     
     # Filter by customer groups if specified
     if kundegruppe_ids:
-        # Need to join with customers to filter by kundegruppe
-        from app.models.kunder import Kunder as KunderModel
+        # Join with customers to filter by kundegruppe
         count_query = count_query.join(KunderModel, OrdrerModel.kundeid == KunderModel.kundeid)
         count_query = count_query.where(KunderModel.kundegruppe.in_(kundegruppe_ids))
 
