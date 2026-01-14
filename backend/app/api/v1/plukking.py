@@ -102,7 +102,8 @@ async def get_plukking_list(
         select(Ordrer)
         .options(
             joinedload(Ordrer.kunde).joinedload(Kunder.gruppe),
-            joinedload(Ordrer.plukker)
+            joinedload(Ordrer.plukker),
+            joinedload(Ordrer.detaljer),
         )
     )
 
