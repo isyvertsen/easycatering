@@ -1,4 +1,5 @@
 """Product API endpoints."""
+import json
 from typing import List, Optional, Dict, Any
 from sqlalchemy import select, or_, func, text, String
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from pydantic import BaseModel
 
 from app.api.deps import get_db, get_current_user
+from app.core.cache import cache_get, cache_set, make_cache_key, CACHE_TTL_MEDIUM
 from app.domain.entities.user import User
 from app.models.produkter import Produkter as ProdukterModel
 from app.models.matinfo_products import MatinfoProduct, MatinfoAllergen, MatinfoNutrient
@@ -317,9 +319,16 @@ async def search_matinfo_products(
 
     Bruker PostgreSQL trigram similarity for fuzzy matching.
     Returnerer også allergen og nutrition data.
+    Resultater caches i 1 time.
     """
     # Normalize søketekst
     search_term = query.strip().lower()
+
+    # Check cache first
+    cache_key = make_cache_key("matinfo_search", search_term, limit)
+    cached = await cache_get(cache_key)
+    if cached:
+        return [MatinfoSearchResult(**item) for item in json.loads(cached)]
 
     # PostgreSQL trigram similarity søk for å få IDs
     # Krever extension: CREATE EXTENSION IF NOT EXISTS pg_trgm;
@@ -366,7 +375,7 @@ async def search_matinfo_products(
     # Bygg respons med sortering basert på similarity
     products_map = {p.id: p for p in products}
 
-    return [
+    results = [
         MatinfoSearchResult(
             id=pid,
             gtin=products_map[pid].gtin,
@@ -394,6 +403,11 @@ async def search_matinfo_products(
         for pid in product_ids if pid in products_map
     ]
 
+    # Cache results
+    await cache_set(cache_key, json.dumps([r.model_dump() for r in results]), CACHE_TTL_MEDIUM)
+
+    return results
+
 
 @router.get("/{produkt_id}/matinfo-suggestions", response_model=List[MatinfoSearchResult])
 async def get_matinfo_suggestions(
@@ -406,7 +420,14 @@ async def get_matinfo_suggestions(
     Få Matinfo-forslag basert på produktnavn.
 
     Bruker fuzzy matching på produktnavn for å finne lignende produkter i Matinfo.
+    Resultater caches i 1 time.
     """
+    # Check cache first
+    cache_key = make_cache_key("matinfo_suggestions", produkt_id, limit)
+    cached = await cache_get(cache_key)
+    if cached:
+        return [MatinfoSearchResult(**item) for item in json.loads(cached)]
+
     # Hent produkt
     result = await db.execute(
         select(ProdukterModel).where(ProdukterModel.produktid == produkt_id)
@@ -462,7 +483,7 @@ async def get_matinfo_suggestions(
     # Bygg respons med sortering basert på similarity
     products_map = {p.id: p for p in products}
 
-    return [
+    results = [
         MatinfoSearchResult(
             id=pid,
             gtin=products_map[pid].gtin,
@@ -489,3 +510,8 @@ async def get_matinfo_suggestions(
         )
         for pid in product_ids if pid in products_map
     ]
+
+    # Cache results
+    await cache_set(cache_key, json.dumps([r.model_dump() for r in results]), CACHE_TTL_MEDIUM)
+
+    return results

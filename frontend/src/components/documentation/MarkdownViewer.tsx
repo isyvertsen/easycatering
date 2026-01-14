@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
-import mermaid from 'mermaid'
 import 'highlight.js/styles/github.css'
 
 interface MarkdownViewerProps {
@@ -15,34 +14,46 @@ export function MarkdownViewer({ content }: MarkdownViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Initialize mermaid
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: 'default',
-      securityLevel: 'strict',
-      fontFamily: 'inherit',
-    })
-
-    // Render mermaid diagrams
-    if (containerRef.current) {
-      const mermaidElements = containerRef.current.querySelectorAll('.language-mermaid')
-      mermaidElements.forEach((element, index) => {
-        const code = element.textContent || ''
-        const id = `mermaid-${Date.now()}-${index}`
-        const container = document.createElement('div')
-        container.id = id
-        container.className = 'mermaid-diagram my-4'
-
-        element.parentElement?.replaceWith(container)
-
-        mermaid.render(`mermaid-svg-${id}`, code).then(({ svg }) => {
-          container.innerHTML = svg
-        }).catch((error) => {
-          console.error('Mermaid rendering error:', error)
-          container.innerHTML = `<pre class="text-red-600">Feil ved rendering av diagram: ${error.message}</pre>`
-        })
-      })
+    // Only load mermaid if there are mermaid diagrams in the content
+    if (!content.includes('```mermaid')) {
+      return
     }
+
+    const renderMermaid = async () => {
+      // Dynamic import of mermaid (reduces initial bundle by ~11MB)
+      const mermaid = (await import('mermaid')).default
+
+      // Initialize mermaid
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        securityLevel: 'strict',
+        fontFamily: 'inherit',
+      })
+
+      // Render mermaid diagrams
+      if (containerRef.current) {
+        const mermaidElements = containerRef.current.querySelectorAll('.language-mermaid')
+        mermaidElements.forEach((element, index) => {
+          const code = element.textContent || ''
+          const id = `mermaid-${Date.now()}-${index}`
+          const container = document.createElement('div')
+          container.id = id
+          container.className = 'mermaid-diagram my-4'
+
+          element.parentElement?.replaceWith(container)
+
+          mermaid.render(`mermaid-svg-${id}`, code).then(({ svg }) => {
+            container.innerHTML = svg
+          }).catch((error) => {
+            console.error('Mermaid rendering error:', error)
+            container.innerHTML = `<pre class="text-red-600">Feil ved rendering av diagram: ${error.message}</pre>`
+          })
+        })
+      }
+    }
+
+    renderMermaid()
   }, [content])
 
   return (
