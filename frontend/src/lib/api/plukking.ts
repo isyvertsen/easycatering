@@ -18,6 +18,8 @@ export interface OrdreForPlukking {
   plukket_av_navn?: string
   pakkseddel_skrevet?: string
   antall_produkter: number
+  ordrestatusid?: number
+  ordrestatus_navn?: string
 }
 
 export interface PlukkingListResponse {

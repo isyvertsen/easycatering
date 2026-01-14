@@ -378,7 +378,8 @@ export default function PlukkingPage() {
                     <TableHead>Kunde</TableHead>
                     <TableHead>Kundegruppe</TableHead>
                     <TableHead>Leveringsdato</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Ordrestatus</TableHead>
+                    <TableHead>Plukkstatus</TableHead>
                     <TableHead>Pakkseddel</TableHead>
                     <TableHead className="text-right">Handlinger</TableHead>
                   </TableRow>
@@ -403,6 +404,13 @@ export default function PlukkingPage() {
                         {ordre.leveringsdato
                           ? new Date(ordre.leveringsdato).toLocaleDateString('no-NO')
                           : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {ordre.ordrestatus_navn ? (
+                          <Badge variant="outline">{ordre.ordrestatus_navn}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {ordre.plukkstatus ? (
@@ -484,7 +492,7 @@ export default function PlukkingPage() {
                   {(!orders?.items || orders.items.length === 0) && (
                     <TableRow>
                       <TableCell
-                        colSpan={8}
+                        colSpan={9}
                         className="text-center text-muted-foreground py-8"
                       >
                         Ingen ordrer funnet

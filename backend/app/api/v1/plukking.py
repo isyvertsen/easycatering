@@ -41,6 +41,8 @@ class OrdreForPlukking(BaseModel):
     plukket_av_navn: Optional[str]
     pakkseddel_skrevet: Optional[datetime]
     antall_produkter: int = 0
+    ordrestatusid: Optional[int] = None
+    ordrestatus_navn: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -104,6 +106,7 @@ async def get_plukking_list(
             joinedload(Ordrer.kunde).joinedload(Kunder.gruppe),
             joinedload(Ordrer.plukker),
             joinedload(Ordrer.detaljer),
+            joinedload(Ordrer.status),
         )
     )
 
@@ -171,6 +174,8 @@ async def get_plukking_list(
             plukket_av_navn=ordre.plukker.name if ordre.plukker else None,
             pakkseddel_skrevet=ordre.pakkseddel_skrevet,
             antall_produkter=len(ordre.detaljer) if ordre.detaljer else 0,
+            ordrestatusid=ordre.ordrestatusid,
+            ordrestatus_navn=ordre.status.statusnavn if ordre.status else None,
         )
         items.append(item)
 

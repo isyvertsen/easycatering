@@ -7,6 +7,7 @@ from .kategorier import Kategorier
 from .produkter import Produkter
 from .ordrer import Ordrer
 from .ordredetaljer import Ordredetaljer
+from .ordrestatus import Ordrestatus
 from .asko_ny import AskoNy
 from .meny import Meny
 from .menygruppe import Menygruppe
@@ -35,6 +36,7 @@ __all__ = [
     "Produkter",
     "Ordrer",
     "Ordredetaljer",
+    "Ordrestatus",
     "AskoNy",
     "Meny",
     "Menygruppe",

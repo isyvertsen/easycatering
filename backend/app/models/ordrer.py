@@ -43,3 +43,4 @@ class Ordrer(Base):
     detaljer = relationship("Ordredetaljer", foreign_keys="Ordredetaljer.ordreid", lazy="select")
     plukker = relationship("User", foreign_keys=[plukket_av], lazy="joined")
     bestiller = relationship("User", foreign_keys=[bestilt_av], lazy="joined")
+    status = relationship("Ordrestatus", foreign_keys=[ordrestatusid], primaryjoin="Ordrer.ordrestatusid == Ordrestatus.statusid", lazy="joined")
