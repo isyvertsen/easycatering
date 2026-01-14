@@ -1,5 +1,6 @@
 import { TopNav } from '@/components/layout/top-nav'
 import { DocumentationChatbot } from '@/components/chatbot'
+import { WorkflowCopilot } from '@/components/workflow'
 
 export default function MainLayout({
   children,
@@ -13,6 +14,7 @@ export default function MainLayout({
         {children}
       </main>
       <DocumentationChatbot />
+      <WorkflowCopilot />
     </div>
   )
 }
