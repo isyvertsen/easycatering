@@ -484,11 +484,9 @@ async def register_pick_quantities(
             updated_count += 1
 
     # Update order status to PLUKKET
-    ordre.plukkstatus = PlukkStatus.PLUKKET.value
+    ordre.ordrestatusid = ORDRESTATUS_PLUKKET
     ordre.plukket_dato = datetime.utcnow()
     ordre.plukket_av = current_user.id
-    # Also update ordrestatusid to 30 (Plukket)
-    ordre.ordrestatusid = 30
 
     await db.commit()
 
@@ -496,7 +494,7 @@ async def register_pick_quantities(
         "message": f"Plukk registrert for {updated_count} linjer",
         "updated_count": updated_count,
         "ordreid": ordre_id,
-        "plukkstatus": ordre.plukkstatus,
+        "ordrestatusid": ordre.ordrestatusid,
     }
 
 

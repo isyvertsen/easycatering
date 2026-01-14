@@ -166,7 +166,7 @@ export async function getPickDetails(ordreId: number): Promise<PickDetailsRespon
 export async function registerPickQuantities(
   ordreId: number,
   lines: PickedLineInput[]
-): Promise<{ message: string; updated_count: number; ordreid: number; plukkstatus: string }> {
+): Promise<{ message: string; updated_count: number; ordreid: number; ordrestatusid: number }> {
   const response = await apiClient.post(`/v1/plukking/${ordreId}/registrer-plukk`, { lines })
   return response.data
 }
