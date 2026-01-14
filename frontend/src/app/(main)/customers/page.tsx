@@ -56,7 +56,8 @@ import {
   ChevronsRight,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  X
 } from "lucide-react"
 import { reportsApi } from "@/lib/api/reports"
 import { useToast } from "@/hooks/use-toast"
