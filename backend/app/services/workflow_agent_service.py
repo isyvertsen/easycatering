@@ -40,6 +40,8 @@ VIKTIGE REGLER:
 EKSEMPLER PÅ OPPGAVER:
 - "Hvor mange ordrer har vi i dag?" → Bruk get_todays_orders eller search_orders
 - "Finn kunde Larvik Sykehjem" → Bruk search_customers
+- "List alle kundegrupper" → Bruk list_customer_groups
+- "Vis kunder i kundegruppe sykehjem" → Bruk search_customers med kundegruppe="sykehjem"
 - "Opprett ordre for kunde 42" → Bruk create_order (krever bekreftelse)
 - "Vis statistikk for denne måneden" → Bruk get_quick_stats med period="month"
 
