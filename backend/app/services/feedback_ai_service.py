@@ -1,17 +1,26 @@
 """Service for AI-powered feedback analysis."""
 from typing import Optional, Dict, Any, List
 import json
-import openai
+import logging
 from app.core.config import settings
 from app.services.system_map import get_system_context, get_existing_features_by_repo
+from app.services.ai_client import get_default_ai_client, AIClient
+
+logger = logging.getLogger(__name__)
 
 
 class FeedbackAIService:
     """Service for analyzing user feedback with AI."""
 
-    def __init__(self):
-        self.api_key = settings.OPENAI_API_KEY
-        self.model = "gpt-4o"  # Using gpt-4o for faster and more cost-effective analysis
+    def __init__(self, ai_client: Optional[AIClient] = None):
+        self._ai_client = ai_client
+
+    @property
+    def ai_client(self) -> AIClient:
+        """Lazy-load AI client."""
+        if self._ai_client is None:
+            self._ai_client = get_default_ai_client()
+        return self._ai_client
 
     def _get_existing_features_context(self) -> str:
         """Get context about existing features in the system."""
@@ -60,10 +69,17 @@ Backend (backend/):
             }
         """
 
-        if not self.api_key:
+        # Check if AI is configured
+        try:
+            if not self.ai_client.is_configured():
+                return {
+                    "success": False,
+                    "error": "AI not configured. Please set AI provider API key in environment variables."
+                }
+        except ValueError as e:
             return {
                 "success": False,
-                "error": "AI not configured. Please set OPENAI_API_KEY in environment variables."
+                "error": f"AI provider error: {e}"
             }
 
         # Build prompt based on feedback type
@@ -117,19 +133,13 @@ Beskrivelse: {description}"""
                 user_context += f"- {q}: {a}\n"
 
         try:
-            client = openai.OpenAI(api_key=self.api_key)
-
-            response = client.chat.completions.create(
-                model=self.model,
+            ai_response = await self.ai_client.chat_completion(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_context}
                 ],
                 temperature=0.3,
-                response_format={"type": "json_object"}
             )
-
-            ai_response = response.choices[0].message.content
 
             # Parse JSON response
             analysis = json.loads(ai_response)
@@ -140,8 +150,8 @@ Beskrivelse: {description}"""
             }
 
         except json.JSONDecodeError as e:
-            print(f"[Feedback AI] JSON parsing error: {e}")
-            print(f"[Feedback AI] AI response was: {ai_response if 'ai_response' in locals() else 'N/A'}")
+            logger.warning(f"JSON parsing error: {e}")
+            logger.warning(f"AI response was: {ai_response if 'ai_response' in locals() else 'N/A'}")
             # Fallback response
             return {
                 "success": True,
@@ -155,15 +165,8 @@ Beskrivelse: {description}"""
                 "targetRepositories": ["backend", "frontend"]  # Both if AI fails
             }
 
-        except openai.APIError as e:
-            print(f"[Feedback AI] OpenAI API error: {e}")
-            return {
-                "success": False,
-                "error": f"AI API error: {str(e)}"
-            }
-
         except Exception as e:
-            print(f"[Feedback AI] Unexpected error: {e}")
+            logger.error(f"Error analyzing feedback: {e}")
             # Fallback response
             return {
                 "success": True,

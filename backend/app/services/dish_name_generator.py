@@ -1,11 +1,23 @@
 """Service for generating dish names using AI or rule-based approach."""
 from typing import List, Optional
-import httpx
-from app.core.config import settings
+import logging
+from app.services.ai_client import get_default_ai_client, AIClient
+
+logger = logging.getLogger(__name__)
 
 
 class DishNameGenerator:
     """Generate dish names from recipe and product components."""
+
+    def __init__(self, ai_client: Optional[AIClient] = None):
+        self._ai_client = ai_client
+
+    @property
+    def ai_client(self) -> AIClient:
+        """Lazy-load AI client."""
+        if self._ai_client is None:
+            self._ai_client = get_default_ai_client()
+        return self._ai_client
 
     async def generate_name(
         self,
@@ -22,22 +34,24 @@ class DishNameGenerator:
         Returns:
             Generated dish name
         """
-        # Try OpenAI if configured
-        if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY != "your-openai-api-key-here":
-            try:
-                return await self._generate_with_openai(recipes, products)
-            except Exception as e:
-                print(f"OpenAI generation failed: {e}, falling back to rule-based")
+        # Try AI if configured
+        try:
+            if self.ai_client.is_configured():
+                return await self._generate_with_ai(recipes, products)
+        except ValueError as e:
+            logger.warning(f"AI provider not configured: {e}")
+        except Exception as e:
+            logger.warning(f"AI generation failed: {e}, falling back to rule-based")
 
         # Fallback to rule-based generation
         return self._generate_rule_based(recipes, products)
 
-    async def _generate_with_openai(
+    async def _generate_with_ai(
         self,
         recipes: List[dict],
         products: List[dict]
     ) -> str:
-        """Generate name using OpenAI API."""
+        """Generate name using AI client."""
         # Combine all components and sort by amount (largest first)
         all_components = []
         for recipe in recipes:
@@ -85,33 +99,19 @@ EKSEMPLER PÅ GODE NAVN:
 
 Svar kun med rettens navn, ingenting annet."""
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {settings.OPENAI_API_KEY}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": settings.OPENAI_MODEL,
-                    "messages": [
-                        {"role": "system", "content": "Du er en profesjonell kokk som lager kreative rettenavn."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    "temperature": 0.7,
-                    "max_tokens": 50,
-                },
-                timeout=10.0,
-            )
-            response.raise_for_status()
+        generated_name = await self.ai_client.chat_completion(
+            messages=[
+                {"role": "system", "content": "Du er en profesjonell kokk som lager kreative rettenavn."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=50,
+        )
 
-            result = response.json()
-            generated_name = result["choices"][0]["message"]["content"].strip()
+        # Remove quotes if present
+        generated_name = generated_name.strip().strip('"\'')
 
-            # Remove quotes if present
-            generated_name = generated_name.strip('"\'')
-
-            return generated_name
+        return generated_name
 
     def _generate_rule_based(
         self,

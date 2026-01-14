@@ -1,17 +1,29 @@
-"""Service for AI-powered pick list scanning using GPT-4o Vision."""
+"""Service for AI-powered pick list scanning using GPT-4o Vision.
+
+Note: Vision capabilities require OpenAI GPT-4o or similar models with vision support.
+This service uses OpenAI directly as vision APIs vary significantly between providers.
+"""
 import json
 import base64
 from typing import Optional, Dict, Any, List
+import logging
 import openai
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
+
 
 class PickListScannerService:
-    """Service for analyzing scanned pick lists with AI Vision."""
+    """Service for analyzing scanned pick lists with AI Vision.
+
+    Note: Requires OpenAI API key and a vision-capable model (e.g., gpt-4o).
+    """
 
     def __init__(self):
+        # Vision features require OpenAI directly
         self.api_key = settings.OPENAI_API_KEY
-        self.model = "gpt-4o"  # GPT-4o has vision capabilities
+        # Use gpt-4o for vision capabilities (configured model may not support vision)
+        self.model = "gpt-4o"
 
     async def analyze_pick_list_image(
         self,
@@ -153,6 +165,7 @@ Analyser bildet og finn plukket mengde for hvert produkt. Returner JSON med prod
                 }
 
         except openai.APIError as e:
+            logger.error(f"OpenAI API error in pick list scanner: {e}")
             return {
                 "success": False,
                 "error": f"OpenAI API-feil: {str(e)}",
@@ -161,6 +174,7 @@ Analyser bildet og finn plukket mengde for hvert produkt. Returner JSON med prod
                 "notes": ""
             }
         except Exception as e:
+            logger.error(f"Unexpected error in pick list scanner: {e}")
             return {
                 "success": False,
                 "error": f"Uventet feil: {str(e)}",

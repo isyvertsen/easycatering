@@ -1,7 +1,9 @@
-"""Service for documentation chatbot with OpenAI integration."""
-from typing import List, Dict, Any
-import openai
-from app.core.config import settings
+"""Service for documentation chatbot with configurable AI providers."""
+from typing import List, Dict, Any, Optional
+import logging
+from app.services.ai_client import get_default_ai_client, AIClient
+
+logger = logging.getLogger(__name__)
 
 
 # User documentation content - focused on how to use the system
@@ -211,11 +213,17 @@ Klikk på tema-knappen i sidemenyen (sol/måne-ikon).
 
 
 class DocumentationChatService:
-    """Service for handling documentation chat with OpenAI."""
+    """Service for handling documentation chat with AI providers."""
 
-    def __init__(self):
-        self.api_key = settings.OPENAI_API_KEY
-        self.model = "gpt-4o"  # Using gpt-4o for faster responses
+    def __init__(self, ai_client: Optional[AIClient] = None):
+        self._ai_client = ai_client
+
+    @property
+    def ai_client(self) -> AIClient:
+        """Lazy-load AI client."""
+        if self._ai_client is None:
+            self._ai_client = get_default_ai_client()
+        return self._ai_client
 
     def _get_system_prompt(self) -> str:
         """Build system prompt with documentation context."""
@@ -254,14 +262,22 @@ REGLER:
                 "error": Optional[str]
             }
         """
-        if not self.api_key:
+        # Check if AI is configured
+        try:
+            if not self.ai_client.is_configured():
+                return {
+                    "success": False,
+                    "message": "",
+                    "error": "AI er ikke konfigurert. Kontakt administrator."
+                }
+        except ValueError as e:
             return {
                 "success": False,
                 "message": "",
-                "error": "AI er ikke konfigurert. Kontakt administrator."
+                "error": f"AI-konfigurasjonsfeil: {e}"
             }
 
-        # Build messages for OpenAI
+        # Build messages for AI
         messages = [{"role": "system", "content": self._get_system_prompt()}]
 
         # Add conversation history (limit to last 10 messages to avoid token overflow)
@@ -272,16 +288,11 @@ REGLER:
         messages.append({"role": "user", "content": message})
 
         try:
-            client = openai.OpenAI(api_key=self.api_key)
-
-            response = client.chat.completions.create(
-                model=self.model,
+            ai_response = await self.ai_client.chat_completion(
                 messages=messages,
                 temperature=0.3,  # Low temperature for factual responses
                 max_tokens=1000
             )
-
-            ai_response = response.choices[0].message.content
 
             return {
                 "success": True,
@@ -289,20 +300,12 @@ REGLER:
                 "error": None
             }
 
-        except openai.APIError as e:
-            print(f"[Documentation Chat] OpenAI API error: {e}")
-            return {
-                "success": False,
-                "message": "",
-                "error": f"AI-tjenesten er midlertidig utilgjengelig. Prøv igjen senere."
-            }
-
         except Exception as e:
-            print(f"[Documentation Chat] Unexpected error: {e}")
+            logger.error(f"Documentation chat error: {e}")
             return {
                 "success": False,
                 "message": "",
-                "error": "En uventet feil oppstod. Prøv igjen."
+                "error": "AI-tjenesten er midlertidig utilgjengelig. Prøv igjen senere."
             }
 
 

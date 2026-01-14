@@ -63,10 +63,29 @@ class Settings(BaseSettings):
     ANYTHINGLLM_API_URL: str = "http://localhost:3001/api/v1"
     ANYTHINGLLM_API_KEY: str = ""
     ANYTHINGLLM_WORKSPACE_SLUG: str = "catering-products"
-    
-    # Optional: OpenAI Configuration
-    OPENAI_API_KEY: str = ""
-    OPENAI_MODEL: str = "gpt-3.5-turbo"
+
+    # AI Provider Configuration
+    # Supported providers: openai, azure, anthropic
+    AI_PROVIDER: str = Field(default="openai", env="AI_PROVIDER")
+
+    # OpenAI Configuration
+    OPENAI_API_KEY: str = Field(default="", env="OPENAI_API_KEY")
+    OPENAI_MODEL: str = Field(default="gpt-4-turbo", env="OPENAI_MODEL")
+    OPENAI_BASE_URL: Optional[str] = Field(default=None, env="OPENAI_BASE_URL")
+    OPENAI_ORGANIZATION: Optional[str] = Field(default=None, env="OPENAI_ORGANIZATION")
+    OPENAI_MAX_TOKENS: int = Field(default=4096, env="OPENAI_MAX_TOKENS")
+    OPENAI_TEMPERATURE: float = Field(default=0.7, env="OPENAI_TEMPERATURE")
+
+    # Azure OpenAI Configuration
+    AZURE_OPENAI_API_KEY: str = Field(default="", env="AZURE_OPENAI_API_KEY")
+    AZURE_OPENAI_ENDPOINT: str = Field(default="", env="AZURE_OPENAI_ENDPOINT")
+    AZURE_OPENAI_DEPLOYMENT: str = Field(default="", env="AZURE_OPENAI_DEPLOYMENT")
+    AZURE_OPENAI_API_VERSION: str = Field(default="2024-02-15-preview", env="AZURE_OPENAI_API_VERSION")
+
+    # Anthropic (Claude) Configuration
+    ANTHROPIC_API_KEY: str = Field(default="", env="ANTHROPIC_API_KEY")
+    ANTHROPIC_MODEL: str = Field(default="claude-3-sonnet-20240229", env="ANTHROPIC_MODEL")
+    ANTHROPIC_MAX_TOKENS: int = Field(default=4096, env="ANTHROPIC_MAX_TOKENS")
 
     # GitHub Integration for Feedback System
     GITHUB_TOKEN: str = Field(default="", env="GITHUB_TOKEN")
