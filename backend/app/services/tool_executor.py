@@ -18,7 +18,7 @@ from app.models.produkter import Produkter as ProdukterModel
 from app.models.kategorier import Kategorier as KategorierModel
 from app.models.meny import Meny as MenyModel
 from app.models.meny_produkt import MenyProdukt as MenyProduktModel
-from app.models.oppskrifter import Oppskrifter as OppskrifterModel
+from app.models.kalkyle import Kalkyle as KalkyleModel
 from app.models.leverandorer import Leverandorer as LeverandorerModel
 
 logger = logging.getLogger(__name__)
@@ -696,25 +696,25 @@ class ToolExecutor:
     # =========================================================================
 
     async def _search_recipes(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Search for recipes."""
+        """Search for recipes (kalkyler)."""
         search = params.get("search")
         page_size = params.get("page_size", 20)
 
-        query = select(OppskrifterModel)
+        query = select(KalkyleModel)
 
         if search:
             search_term = f"%{search}%"
-            query = query.where(OppskrifterModel.oppskriftnavn.ilike(search_term))
+            query = query.where(KalkyleModel.kalkylenavn.ilike(search_term))
 
-        query = query.order_by(OppskrifterModel.oppskriftnavn).limit(page_size)
+        query = query.order_by(KalkyleModel.kalkylenavn).limit(page_size)
         result = await self.db.execute(query)
         recipes = result.scalars().all()
 
         return {
             "items": [
                 {
-                    "oppskriftid": r.oppskriftid,
-                    "oppskriftnavn": r.oppskriftnavn,
+                    "oppskriftid": r.kalkylekode,
+                    "oppskriftnavn": r.kalkylenavn,
                 }
                 for r in recipes
             ],
@@ -722,13 +722,13 @@ class ToolExecutor:
         }
 
     async def _get_recipe(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Get a recipe with ingredients."""
+        """Get a recipe (kalkyle) with details."""
         oppskriftid = params.get("oppskriftid")
         if not oppskriftid:
             raise ValueError("oppskriftid is required")
 
         result = await self.db.execute(
-            select(OppskrifterModel).where(OppskrifterModel.oppskriftid == oppskriftid)
+            select(KalkyleModel).where(KalkyleModel.kalkylekode == oppskriftid)
         )
         recipe = result.scalar_one_or_none()
 
@@ -736,10 +736,10 @@ class ToolExecutor:
             raise ValueError(f"Oppskrift med ID {oppskriftid} ikke funnet")
 
         return {
-            "oppskriftid": recipe.oppskriftid,
-            "oppskriftnavn": recipe.oppskriftnavn,
-            "fremgangsmaate": recipe.fremgangsmaate,
-            "porsjoner": recipe.porsjoner,
+            "oppskriftid": recipe.kalkylekode,
+            "oppskriftnavn": recipe.kalkylenavn,
+            "fremgangsmaate": recipe.produksjonsmetode,
+            "porsjoner": recipe.antallporsjoner,
         }
 
     # =========================================================================
