@@ -162,6 +162,40 @@ export default function PlukkingPage() {
     }
   }
 
+  const handleBulkDownloadPlukklister = async () => {
+    if (selectedOrders.length === 0) return
+    try {
+      await reportsApi.downloadBatchPickList(selectedOrders)
+      toast({
+        title: 'Plukklister lastet ned',
+        description: `${selectedOrders.length} plukkliste(r) er lastet ned`,
+      })
+    } catch {
+      toast({
+        title: 'Feil',
+        description: 'Kunne ikke laste ned plukklister',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleBulkDownloadPakksedler = async () => {
+    if (selectedOrders.length === 0) return
+    try {
+      await reportsApi.downloadBatchDeliveryNote(selectedOrders)
+      toast({
+        title: 'Pakksedler lastet ned',
+        description: `${selectedOrders.length} pakkseddel(er) er lastet ned`,
+      })
+    } catch {
+      toast({
+        title: 'Feil',
+        description: 'Kunne ikke laste ned pakksedler',
+        variant: 'destructive',
+      })
+    }
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -302,8 +336,8 @@ export default function PlukkingPage() {
         </CardContent>
       </Card>
 
-      {/* Bulk Actions */}
-      {selectedOrders.length > 0 && (
+      {/* Bulk Actions - only available when a specific status is selected */}
+      {selectedOrders.length > 0 && params.ordrestatusid && (
         <Card>
           <CardContent className="py-4">
             <div className="flex items-center justify-between">
@@ -311,6 +345,22 @@ export default function PlukkingPage() {
                 {selectedOrders.length} ordre(r) valgt
               </span>
               <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleBulkDownloadPlukklister}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Skriv ut plukklister
+                </Button>
+                {params.ordrestatusid === ORDRESTATUS_PLUKKET && (
+                  <Button
+                    variant="outline"
+                    onClick={handleBulkDownloadPakksedler}
+                  >
+                    <Truck className="h-4 w-4 mr-2" />
+                    Skriv ut pakksedler
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => handleBulkUpdate(ORDRESTATUS_PLUKKLISTE)}
@@ -426,14 +476,16 @@ export default function PlukkingPage() {
                           >
                             <FileText className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDownloadPakkseddel(ordre.ordreid)}
-                            title="Last ned pakkseddel"
-                          >
-                            <Truck className="h-4 w-4" />
-                          </Button>
+                          {ordre.ordrestatusid === ORDRESTATUS_PLUKKET && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDownloadPakkseddel(ordre.ordreid)}
+                              title="Last ned pakkseddel"
+                            >
+                              <Truck className="h-4 w-4" />
+                            </Button>
+                          )}
                           {ordre.ordrestatusid !== ORDRESTATUS_PLUKKLISTE && (
                             <Button
                               variant="ghost"
