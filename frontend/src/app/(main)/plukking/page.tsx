@@ -34,7 +34,6 @@ import { reportsApi } from '@/lib/api/reports'
 import {
   Package,
   PackageCheck,
-  Clock,
   Truck,
   ChevronLeft,
   ChevronRight,
@@ -179,7 +178,7 @@ export default function PlukkingPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Totalt ordrer</CardTitle>
@@ -187,21 +186,6 @@ export default function PlukkingPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.total_ordrer || 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:bg-muted/50"
-          onClick={() => handleParamsChange({ plukkstatus: undefined })}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Uten status</CardTitle>
-            <Clock className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-600">
-              {stats?.uten_status || 0}
-            </div>
           </CardContent>
         </Card>
 

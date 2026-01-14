@@ -33,11 +33,11 @@ fi
 
 # Load environment variables from .env
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_FILE="$SCRIPT_DIR/../../.env"
+ENV_FILE="./.env"
 
 if [ -f "$ENV_FILE" ]; then
     # Extract database connection info from DATABASE_URL
-    DATABASE_URL=$(grep "^DATABASE_URL=" "$ENV_FILE" | cut -d'=' -f2-)
+    DATABASE_URL=$(grep "^TO_DATABASE_URL=" "$ENV_FILE" | cut -d'=' -f2-)
 
     # Parse the URL: postgresql+asyncpg://user:password@host:port/database
     DB_USER=$(echo "$DATABASE_URL" | sed -E 's|.*://([^:]+):.*|\1|')
@@ -82,11 +82,7 @@ echo "Restoring data..."
 # Run pg_restore
 # Note: Using pipe through sed to filter out transaction_timeout which is not supported
 # on older PostgreSQL versions (parameter was added in PostgreSQL 17)
-PGPASSWORD="$DB_PASS" pg_restore \
-    -h "$DB_HOST" \
-    -p "$DB_PORT" \
-    -U "$DB_USER" \
-    -d "$TARGET_DB" \
+pg_restore \
     -f - \
     "$DUMP_FILE" 2>/dev/null | \
     sed '/SET transaction_timeout/d' | \
