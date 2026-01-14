@@ -6,11 +6,10 @@ import {
   getPlukkingList,
   getPlukkingStats,
   getKundegrupperForPlukking,
-  updatePlukkstatus,
+  updateOrdrestatus,
   markerPakkseddelSkrevet,
-  bulkUpdatePlukkstatus,
+  bulkUpdateOrdrestatus,
   PlukkingListParams,
-  PlukkStatus,
 } from '@/lib/api/plukking'
 
 const PLUKKING_KEYS = {
@@ -53,14 +52,14 @@ export function useKundegrupperForPlukking() {
 }
 
 /**
- * Hook to update picking status
+ * Hook to update order status
  */
-export function useUpdatePlukkstatus() {
+export function useUpdateOrdrestatus() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ ordreId, plukkstatus }: { ordreId: number; plukkstatus: PlukkStatus }) =>
-      updatePlukkstatus(ordreId, plukkstatus),
+    mutationFn: ({ ordreId, ordrestatusid }: { ordreId: number; ordrestatusid: number }) =>
+      updateOrdrestatus(ordreId, ordrestatusid),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PLUKKING_KEYS.all })
     },
@@ -84,12 +83,12 @@ export function useMarkerPakkseddelSkrevet() {
 /**
  * Hook for bulk status update
  */
-export function useBulkUpdatePlukkstatus() {
+export function useBulkUpdateOrdrestatus() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ ordreIds, plukkstatus }: { ordreIds: number[]; plukkstatus: PlukkStatus }) =>
-      bulkUpdatePlukkstatus(ordreIds, plukkstatus),
+    mutationFn: ({ ordreIds, ordrestatusid }: { ordreIds: number[]; ordrestatusid: number }) =>
+      bulkUpdateOrdrestatus(ordreIds, ordrestatusid),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PLUKKING_KEYS.all })
     },

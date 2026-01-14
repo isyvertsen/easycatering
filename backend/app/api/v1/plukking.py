@@ -13,6 +13,7 @@ from app.api.deps import get_db, get_current_active_user
 from app.domain.entities.user import User
 from app.models.ordrer import Ordrer
 from app.models.ordredetaljer import Ordredetaljer
+from app.models.ordrestatus import Ordrestatus
 from app.models.kunder import Kunder
 from app.models.kunde_gruppe import Kundegruppe
 from app.schemas.ordredetaljer import RegisterPickRequest
@@ -20,11 +21,9 @@ from app.services.pick_list_scanner_service import get_pick_list_scanner_service
 
 router = APIRouter(prefix="/plukking", tags=["Plukking"])
 
-
-class PlukkStatus(str, Enum):
-    """Picking status values."""
-    KLAR_TIL_PLUKKING = "KLAR_TIL_PLUKKING"
-    PLUKKET = "PLUKKET"
+# Ordrestatus IDs from tblordrestatus
+ORDRESTATUS_PLUKKLISTE = 25  # Klar til plukking
+ORDRESTATUS_PLUKKET = 30     # Plukket
 
 
 class OrdreForPlukking(BaseModel):
@@ -36,7 +35,6 @@ class OrdreForPlukking(BaseModel):
     kundegruppe_id: Optional[int]
     leveringsdato: Optional[datetime]
     ordredato: Optional[datetime]
-    plukkstatus: Optional[str]
     plukket_dato: Optional[datetime]
     plukket_av_navn: Optional[str]
     pakkseddel_skrevet: Optional[datetime]
@@ -62,18 +60,18 @@ class PlukkingStats(BaseModel):
     total_ordrer: int
     klar_til_plukking: int
     plukket: int
-    uten_status: int
 
 
-class UpdatePlukkStatusRequest(BaseModel):
-    """Request to update picking status."""
-    plukkstatus: PlukkStatus
+class UpdateOrdreStatusRequest(BaseModel):
+    """Request to update order status."""
+    ordrestatusid: int
 
 
-class UpdatePlukkStatusResponse(BaseModel):
-    """Response after updating picking status."""
+class UpdateOrdreStatusResponse(BaseModel):
+    """Response after updating order status."""
     ordreid: int
-    plukkstatus: str
+    ordrestatusid: int
+    ordrestatus_navn: Optional[str]
     plukket_dato: Optional[datetime]
     plukket_av_navn: Optional[str]
     message: str
@@ -84,7 +82,7 @@ async def get_plukking_list(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     kundegruppe_id: Optional[int] = Query(None, description="Filter by customer group"),
-    plukkstatus: Optional[str] = Query(None, description="Filter by picking status"),
+    ordrestatusid: Optional[int] = Query(None, description="Filter by order status ID"),
     leveringsdato_fra: Optional[datetime] = Query(None, description="Delivery date from"),
     leveringsdato_til: Optional[datetime] = Query(None, description="Delivery date to"),
     include_cancelled: bool = Query(False, description="Include cancelled orders"),
@@ -96,7 +94,7 @@ async def get_plukking_list(
 
     Can filter by:
     - kundegruppe_id: Customer group ID
-    - plukkstatus: KLAR_TIL_PLUKKING, PLUKKET, or NULL for no status
+    - ordrestatusid: Filter by order status (25=Plukkliste, 30=Plukket)
     - leveringsdato_fra/til: Delivery date range
     """
     # Build query
@@ -122,12 +120,9 @@ async def get_plukking_list(
         query = query.join(Ordrer.kunde)
         conditions.append(Kunder.kundegruppe == kundegruppe_id)
 
-    # Filter by plukkstatus
-    if plukkstatus:
-        if plukkstatus == "NULL":
-            conditions.append(Ordrer.plukkstatus.is_(None))
-        else:
-            conditions.append(Ordrer.plukkstatus == plukkstatus)
+    # Filter by ordrestatusid
+    if ordrestatusid is not None:
+        conditions.append(Ordrer.ordrestatusid == ordrestatusid)
 
     # Filter by delivery date range
     if leveringsdato_fra:
@@ -169,7 +164,6 @@ async def get_plukking_list(
             kundegruppe_id=ordre.kunde.kundegruppe if ordre.kunde else None,
             leveringsdato=ordre.leveringsdato,
             ordredato=ordre.ordredato,
-            plukkstatus=ordre.plukkstatus,
             plukket_dato=ordre.plukket_dato,
             plukket_av_navn=ordre.plukker.name if ordre.plukker else None,
             pakkseddel_skrevet=ordre.pakkseddel_skrevet,
@@ -196,18 +190,28 @@ async def get_plukking_stats(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Get statistics for picking workflow."""
+    """Get statistics for picking workflow based on ordrestatusid."""
     # Base query conditions (exclude cancelled)
     base_conditions = [Ordrer.kansellertdato.is_(None)]
-
-    if kundegruppe_id is not None:
-        # Need to join with Kunder for group filter
-        pass
 
     if leveringsdato_fra:
         base_conditions.append(Ordrer.leveringsdato >= leveringsdato_fra)
     if leveringsdato_til:
         base_conditions.append(Ordrer.leveringsdato <= leveringsdato_til)
+
+    # Count by ordrestatusid
+    async def count_by_ordrestatus(status_id: int) -> int:
+        if kundegruppe_id is not None:
+            q = (
+                select(func.count(Ordrer.ordreid))
+                .join(Ordrer.kunde)
+                .where(and_(*base_conditions, Ordrer.ordrestatusid == status_id, Kunder.kundegruppe == kundegruppe_id))
+            )
+        else:
+            q = select(func.count(Ordrer.ordreid)).where(and_(*base_conditions, Ordrer.ordrestatusid == status_id))
+
+        res = await db.execute(q)
+        return res.scalar() or 0
 
     # Count total orders
     if kundegruppe_id is not None:
@@ -222,34 +226,13 @@ async def get_plukking_stats(
     total_result = await db.execute(total_query)
     total = total_result.scalar() or 0
 
-    # Count by status
-    async def count_by_status(status_value):
-        if status_value is None:
-            status_condition = Ordrer.plukkstatus.is_(None)
-        else:
-            status_condition = Ordrer.plukkstatus == status_value
-
-        if kundegruppe_id is not None:
-            q = (
-                select(func.count(Ordrer.ordreid))
-                .join(Ordrer.kunde)
-                .where(and_(*base_conditions, status_condition, Kunder.kundegruppe == kundegruppe_id))
-            )
-        else:
-            q = select(func.count(Ordrer.ordreid)).where(and_(*base_conditions, status_condition))
-
-        res = await db.execute(q)
-        return res.scalar() or 0
-
-    klar_til_plukking = await count_by_status(PlukkStatus.KLAR_TIL_PLUKKING.value)
-    plukket = await count_by_status(PlukkStatus.PLUKKET.value)
-    uten_status = await count_by_status(None)
+    klar_til_plukking = await count_by_ordrestatus(ORDRESTATUS_PLUKKLISTE)
+    plukket = await count_by_ordrestatus(ORDRESTATUS_PLUKKET)
 
     return PlukkingStats(
         total_ordrer=total,
         klar_til_plukking=klar_til_plukking,
         plukket=plukket,
-        uten_status=uten_status,
     )
 
 
@@ -269,23 +252,23 @@ async def get_kundegrupper_for_plukking(
     ]
 
 
-@router.put("/{ordre_id}/status", response_model=UpdatePlukkStatusResponse)
-async def update_plukkstatus(
+@router.put("/{ordre_id}/status", response_model=UpdateOrdreStatusResponse)
+async def update_ordrestatus(
     ordre_id: int,
-    request: UpdatePlukkStatusRequest,
+    request: UpdateOrdreStatusRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
-    Update picking status for an order.
+    Update order status (ordrestatusid).
 
-    When setting to PLUKKET, automatically sets plukket_dato and plukket_av.
+    When setting to PLUKKET (30), automatically sets plukket_dato and plukket_av.
     """
-    # Get order
+    # Get order with status
     result = await db.execute(
-        select(Ordrer).where(Ordrer.ordreid == ordre_id)
+        select(Ordrer).options(joinedload(Ordrer.status)).where(Ordrer.ordreid == ordre_id)
     )
-    ordre = result.scalar_one_or_none()
+    ordre = result.unique().scalar_one_or_none()
 
     if not ordre:
         raise HTTPException(status_code=404, detail="Ordre ikke funnet")
@@ -293,27 +276,33 @@ async def update_plukkstatus(
     if ordre.kansellertdato:
         raise HTTPException(status_code=400, detail="Kan ikke endre status på kansellert ordre")
 
-    # Update status
-    ordre.plukkstatus = request.plukkstatus.value
+    # Update ordrestatusid
+    ordre.ordrestatusid = request.ordrestatusid
 
-    # If marking as picked, set timestamp and user
-    if request.plukkstatus == PlukkStatus.PLUKKET:
+    # If marking as picked (30), set timestamp and user
+    if request.ordrestatusid == ORDRESTATUS_PLUKKET:
         ordre.plukket_dato = datetime.utcnow()
         ordre.plukket_av = current_user.id
-    elif request.plukkstatus == PlukkStatus.KLAR_TIL_PLUKKING:
+    elif request.ordrestatusid == ORDRESTATUS_PLUKKLISTE:
         # Reset picked info when changing back to ready
         ordre.plukket_dato = None
         ordre.plukket_av = None
 
     await db.commit()
-    await db.refresh(ordre)
 
-    return UpdatePlukkStatusResponse(
+    # Get status name
+    status_result = await db.execute(
+        select(Ordrestatus).where(Ordrestatus.statusid == request.ordrestatusid)
+    )
+    status = status_result.scalar_one_or_none()
+
+    return UpdateOrdreStatusResponse(
         ordreid=ordre.ordreid,
-        plukkstatus=ordre.plukkstatus,
+        ordrestatusid=ordre.ordrestatusid,
+        ordrestatus_navn=status.status if status else None,
         plukket_dato=ordre.plukket_dato,
         plukket_av_navn=current_user.name if ordre.plukket_av else None,
-        message=f"Plukkstatus oppdatert til {request.plukkstatus.value}",
+        message=f"Ordrestatus oppdatert til {status.status if status else request.ordrestatusid}",
     )
 
 
@@ -339,13 +328,13 @@ async def marker_pakkseddel_skrevet(
 
 
 @router.post("/bulk-update-status")
-async def bulk_update_plukkstatus(
+async def bulk_update_ordrestatus(
     ordre_ids: List[int],
-    plukkstatus: PlukkStatus,
+    ordrestatusid: int = Query(..., description="New order status ID"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Update picking status for multiple orders at once."""
+    """Update order status for multiple orders at once."""
     # Get orders
     result = await db.execute(
         select(Ordrer).where(
@@ -360,14 +349,21 @@ async def bulk_update_plukkstatus(
     if not orders:
         raise HTTPException(status_code=404, detail="Ingen gyldige ordrer funnet")
 
+    # Get status name
+    status_result = await db.execute(
+        select(Ordrestatus).where(Ordrestatus.statusid == ordrestatusid)
+    )
+    status = status_result.scalar_one_or_none()
+    status_navn = status.status if status else str(ordrestatusid)
+
     updated_count = 0
     for ordre in orders:
-        ordre.plukkstatus = plukkstatus.value
+        ordre.ordrestatusid = ordrestatusid
 
-        if plukkstatus == PlukkStatus.PLUKKET:
+        if ordrestatusid == ORDRESTATUS_PLUKKET:
             ordre.plukket_dato = datetime.utcnow()
             ordre.plukket_av = current_user.id
-        elif plukkstatus == PlukkStatus.KLAR_TIL_PLUKKING:
+        elif ordrestatusid == ORDRESTATUS_PLUKKLISTE:
             ordre.plukket_dato = None
             ordre.plukket_av = None
 
@@ -376,7 +372,7 @@ async def bulk_update_plukkstatus(
     await db.commit()
 
     return {
-        "message": f"{updated_count} ordrer oppdatert til {plukkstatus.value}",
+        "message": f"{updated_count} ordrer oppdatert til {status_navn}",
         "updated_count": updated_count,
     }
 
