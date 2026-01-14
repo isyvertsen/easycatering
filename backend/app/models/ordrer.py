@@ -20,7 +20,7 @@ class Ordrer(Base):
     betalingsmate = Column(BigInteger)
     lagerok = Column(Boolean)
     informasjon = Column(Text)
-    ordrestatusid = Column(BigInteger)
+    ordrestatusid = Column(BigInteger, ForeignKey("tblordrestatus.statusid"))
     fakturaid = Column(Float)
     kansellertdato = Column(DateTime)
     sentbekreftelse = Column(Boolean)
@@ -40,7 +40,7 @@ class Ordrer(Base):
     # Relationships
     kunde = relationship("Kunder", foreign_keys=[kundeid], lazy="joined")
     ansatt = relationship("Ansatte", foreign_keys=[ansattid], lazy="joined")
-    detaljer = relationship("Ordredetaljer", foreign_keys="Ordredetaljer.ordreid", lazy="select")
+    detaljer = relationship("Ordredetaljer", foreign_keys="Ordredetaljer.ordreid", lazy="raise")
     plukker = relationship("User", foreign_keys=[plukket_av], lazy="joined")
     bestiller = relationship("User", foreign_keys=[bestilt_av], lazy="joined")
-    status = relationship("Ordrestatus", foreign_keys=[ordrestatusid], primaryjoin="Ordrer.ordrestatusid == Ordrestatus.statusid", lazy="joined")
+    status = relationship("Ordrestatus", foreign_keys=[ordrestatusid], lazy="joined")
