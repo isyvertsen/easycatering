@@ -27,8 +27,8 @@ def get_engine() -> AsyncEngine:
             settings.DATABASE_URL,
             echo=settings.DATABASE_ECHO,
             pool_pre_ping=True,
-            pool_size=5,         # Reduced per-worker pool size for multi-worker
-            max_overflow=10,     # Reduced per-worker overflow for multi-worker
+            pool_size=10,        # Per-worker pool size (10 * num_workers = total)
+            max_overflow=20,     # Per-worker overflow for burst traffic
             pool_recycle=3600,   # Recycle connections after 1 hour
         )
     return _engine

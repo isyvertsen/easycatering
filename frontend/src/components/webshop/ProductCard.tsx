@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useMemo, useCallback } from "react"
 import { Product } from "@/types/models"
 import { useCart } from "@/contexts/CartContext"
 import { Button } from "@/components/ui/button"
@@ -11,15 +12,26 @@ interface ProductCardProps {
   product: Product
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+// Capitalize helper moved outside component to avoid recreation
+const capitalize = (str: string) => {
+  return str.toLowerCase().replace(/(?:^|[\s-])(\w)/g, (match) => match.toUpperCase())
+}
+
+function ProductCardComponent({ product }: ProductCardProps) {
   const { addItem } = useCart()
   const { toast } = useToast()
 
-  const handleAddToCart = () => {
+  // Memoize price calculations
+  const { displayName, priceWithMva } = useMemo(() => {
     const priceExMva = product.pris || 0
     const mvaRate = product.mvaverdi || 0
-    const priceWithMva = priceExMva * (1 + mvaRate / 100)
+    return {
+      displayName: capitalize(product.produktnavn),
+      priceWithMva: priceExMva * (1 + mvaRate / 100)
+    }
+  }, [product.produktnavn, product.pris, product.mvaverdi])
 
+  const handleAddToCart = useCallback(() => {
     addItem({
       produktid: product.produktid,
       produktnavn: product.produktnavn,
@@ -32,17 +44,7 @@ export function ProductCard({ product }: ProductCardProps) {
       title: "Lagt til i handlekurv",
       description: `${product.visningsnavn || product.produktnavn} ble lagt til`,
     })
-  }
-
-  const displayName = product.produktnavn
-  const priceExMva = product.pris || 0
-  const mvaRate = product.mvaverdi || 0
-  const priceWithMva = priceExMva * (1 + mvaRate / 100)
-
-  // Capitalize helper: "01-ASPARGESSUPPE" -> "01-Aspargessuppe"
-  const capitalize = (str: string) => {
-    return str.toLowerCase().replace(/(?:^|[\s-])(\w)/g, (match) => match.toUpperCase())
-  }
+  }, [addItem, product.produktid, product.produktnavn, product.visningsnavn, priceWithMva, toast])
 
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow">
@@ -51,8 +53,8 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="aspect-square bg-muted rounded-md flex items-center justify-center mb-3">
           <Package className="h-12 w-12 text-muted-foreground" />
         </div>
-        <h3 className="font-semibold text-lg line-clamp-2" title={displayName}>
-          {capitalize(displayName)}
+        <h3 className="font-semibold text-lg line-clamp-2" title={product.produktnavn}>
+          {displayName}
         </h3>
       </CardHeader>
 
@@ -78,3 +80,6 @@ export function ProductCard({ product }: ProductCardProps) {
     </Card>
   )
 }
+
+// Wrap in React.memo to prevent unnecessary re-renders
+export const ProductCard = memo(ProductCardComponent)

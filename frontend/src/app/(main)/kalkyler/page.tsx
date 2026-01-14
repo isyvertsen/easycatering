@@ -1,13 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { ChefHat, Search, Users, Calculator } from "lucide-react"
+import { ChefHat, Search, Users, Calculator, ChevronLeft, ChevronRight } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
+import { useDebounce } from "@/hooks/useDebounce"
 
 interface Kalkyle {
   kalkylekode: number
@@ -18,32 +19,60 @@ interface Kalkyle {
   opprettetdato: string | null
 }
 
+interface KalkyleListResponse {
+  items: Kalkyle[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+const PAGE_SIZE = 20
+
 export default function KalkylerPage() {
   const router = useRouter()
   const [kalkyler, setKalkyler] = useState<Kalkyle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
 
-  useEffect(() => {
-    fetchKalkyler()
-  }, [])
+  // Debounce search term for server-side filtering
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
 
-  const fetchKalkyler = async () => {
+  const fetchKalkyler = useCallback(async () => {
+    setLoading(true)
     try {
-      const response = await apiClient.get("/v1/oppskrifter/")
-      setKalkyler(response.data)
+      const skip = (page - 1) * PAGE_SIZE
+      const params = new URLSearchParams({
+        skip: skip.toString(),
+        limit: PAGE_SIZE.toString(),
+      })
+      if (debouncedSearchTerm) {
+        params.append('search', debouncedSearchTerm)
+      }
+      const response = await apiClient.get<KalkyleListResponse>(`/v1/oppskrifter/?${params}`)
+      setKalkyler(response.data.items)
+      setTotal(response.data.total)
+      setTotalPages(response.data.total_pages)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunne ikke hente kalkyler")
       console.error("Error fetching kalkyler:", err)
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, debouncedSearchTerm])
 
-  const filteredKalkyler = kalkyler.filter((kalkyle) =>
-    kalkyle.kalkylenavn.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  useEffect(() => {
+    fetchKalkyler()
+  }, [fetchKalkyler])
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearchTerm])
 
   if (loading) {
     return (
@@ -106,7 +135,7 @@ export default function KalkylerPage() {
 
       {/* Kalkyler Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredKalkyler.map((kalkyle) => (
+        {kalkyler.map((kalkyle) => (
           <Card
             key={kalkyle.kalkylekode}
             className="hover:shadow-lg transition-shadow cursor-pointer"
@@ -146,7 +175,7 @@ export default function KalkylerPage() {
         ))}
       </div>
 
-      {filteredKalkyler.length === 0 && (
+      {kalkyler.length === 0 && !loading && (
         <Card>
           <CardContent className="py-12 text-center">
             <ChefHat className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
@@ -159,14 +188,50 @@ export default function KalkylerPage() {
         </Card>
       )}
 
-      {/* Summary */}
-      <Card>
-        <CardContent className="py-4">
-          <div className="text-sm text-muted-foreground text-center">
-            Viser {filteredKalkyler.length} av {kalkyler.length} oppskrifter
-          </div>
-        </CardContent>
-      </Card>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Viser {((page - 1) * PAGE_SIZE) + 1} til {Math.min(page * PAGE_SIZE, total)} av {total} oppskrifter
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => p - 1)}
+                  disabled={page <= 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm">
+                  Side {page} av {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={page >= totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Summary for single page */}
+      {totalPages <= 1 && total > 0 && (
+        <Card>
+          <CardContent className="py-4">
+            <div className="text-sm text-muted-foreground text-center">
+              Viser {kalkyler.length} av {total} oppskrifter
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

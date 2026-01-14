@@ -1,4 +1,5 @@
 """AI-powered report generation service using configurable AI providers."""
+import asyncio
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -52,8 +53,8 @@ class AIReportService:
         start_date: datetime,
         end_date: datetime
     ) -> Dict[str, Any]:
-        """Fetch sales data from database."""
-        # Total sales and orders
+        """Fetch sales data from database using parallel queries."""
+        # Define all queries
         sales_query = select(
             func.count(OrdrerModel.ordreid).label("total_orders"),
             func.sum(OrdredetaljerModel.pris * OrdredetaljerModel.antall).label("total_revenue")
@@ -66,10 +67,6 @@ class AIReportService:
             )
         )
 
-        result = await db.execute(sales_query)
-        sales = result.first()
-
-        # Top products
         top_products_query = select(
             ProdukterModel.produktnavn,
             func.sum(OrdredetaljerModel.antall).label("quantity"),
@@ -89,17 +86,6 @@ class AIReportService:
             desc("revenue")
         ).limit(10)
 
-        top_products_result = await db.execute(top_products_query)
-        top_products = [
-            {
-                "name": p.produktnavn or "Ukjent",
-                "quantity": int(p.quantity or 0),
-                "revenue": float(p.revenue or 0)
-            }
-            for p in top_products_result.all()
-        ]
-
-        # Category breakdown
         category_query = select(
             KategorierModel.kategori,
             func.sum(OrdredetaljerModel.pris * OrdredetaljerModel.antall).label("revenue")
@@ -119,16 +105,6 @@ class AIReportService:
             KategorierModel.kategori
         )
 
-        category_result = await db.execute(category_query)
-        categories = [
-            {
-                "category": c.kategori or "Ukjent",
-                "revenue": float(c.revenue or 0)
-            }
-            for c in category_result.all()
-        ]
-
-        # Top customers
         top_customers_query = select(
             KunderModel.kundenavn,
             func.count(OrdrerModel.ordreid).label("order_count"),
@@ -148,7 +124,31 @@ class AIReportService:
             desc("revenue")
         ).limit(10)
 
-        top_customers_result = await db.execute(top_customers_query)
+        # Execute all queries in parallel
+        sales_result, top_products_result, category_result, top_customers_result = await asyncio.gather(
+            db.execute(sales_query),
+            db.execute(top_products_query),
+            db.execute(category_query),
+            db.execute(top_customers_query)
+        )
+
+        # Process results
+        sales = sales_result.first()
+        top_products = [
+            {
+                "name": p.produktnavn or "Ukjent",
+                "quantity": int(p.quantity or 0),
+                "revenue": float(p.revenue or 0)
+            }
+            for p in top_products_result.all()
+        ]
+        categories = [
+            {
+                "category": c.kategori or "Ukjent",
+                "revenue": float(c.revenue or 0)
+            }
+            for c in category_result.all()
+        ]
         top_customers = [
             {
                 "name": c.kundenavn or "Ukjent",

@@ -67,7 +67,9 @@ export function useCreateProdukt(
   return useMutation<Produkt, Error, ProduktCreateData>({
     mutationFn: (data) => produkterApi.create(data),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['produkter'] })
+      // Only invalidate list queries, not individual product queries
+      queryClient.invalidateQueries({ queryKey: ['produkter', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['produkter', 'list-with-meta'] })
       toast({
         title: 'Produkt opprettet',
         description: `"${data.produktnavn}" ble opprettet`,
@@ -96,7 +98,11 @@ export function useUpdateProdukt(
   return useMutation<Produkt, Error, { id: number; data: Partial<Produkt> }>({
     mutationFn: ({ id, data }) => produkterApi.update(id, data),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['produkter'] })
+      // Update the specific product in cache (optimistic)
+      queryClient.setQueryData(['produkter', variables.id], data)
+      // Invalidate list queries to refresh counts/ordering
+      queryClient.invalidateQueries({ queryKey: ['produkter', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['produkter', 'list-with-meta'] })
       toast({
         title: 'Produkt oppdatert',
         description: `"${data.produktnavn}" ble oppdatert`,
@@ -157,7 +163,10 @@ export function useUpdateGtin(
   return useMutation<GtinUpdateResponse, Error, { produktId: number; gtin: string }>({
     mutationFn: ({ produktId, gtin }) => produkterApi.updateGtin(produktId, gtin),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['produkter'] })
+      // Invalidate specific product and lists
+      queryClient.invalidateQueries({ queryKey: ['produkter', variables.produktId] })
+      queryClient.invalidateQueries({ queryKey: ['produkter', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['produkter', 'list-with-meta'] })
 
       toast({
         title: 'GTIN oppdatert!',
@@ -188,7 +197,13 @@ export function useBulkUpdateGtin(
   return useMutation<BulkGtinUpdateResponse, Error, BulkGtinUpdate[]>({
     mutationFn: (updates) => produkterApi.bulkUpdateGtin(updates),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['produkter'] })
+      // Invalidate lists after bulk update
+      queryClient.invalidateQueries({ queryKey: ['produkter', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['produkter', 'list-with-meta'] })
+      // Invalidate individual products that were updated
+      variables.forEach(update => {
+        queryClient.invalidateQueries({ queryKey: ['produkter', update.produkt_id] })
+      })
 
       const message = `Oppdatert: ${data.success} av ${data.total} produkter${data.failed > 0 ? `. Feilet: ${data.failed}` : ''}${data.matinfo_matches > 0 ? `. Matinfo-match: ${data.matinfo_matches}` : ''}`
 
@@ -219,8 +234,11 @@ export function useDeleteProdukt() {
 
   return useMutation({
     mutationFn: (id: number) => produkterApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['produkter'] })
+    onSuccess: (_, id) => {
+      // Remove from cache and invalidate lists
+      queryClient.removeQueries({ queryKey: ['produkter', id] })
+      queryClient.invalidateQueries({ queryKey: ['produkter', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['produkter', 'list-with-meta'] })
       toast({
         title: 'Produkt slettet',
         description: 'Produktet ble slettet',
@@ -247,7 +265,13 @@ export function useBulkDeleteProdukter() {
       await Promise.all(ids.map(id => produkterApi.delete(id)))
     },
     onSuccess: (_, ids) => {
-      queryClient.invalidateQueries({ queryKey: ['produkter'] })
+      // Remove deleted products from cache
+      ids.forEach(id => {
+        queryClient.removeQueries({ queryKey: ['produkter', id] })
+      })
+      // Invalidate list queries
+      queryClient.invalidateQueries({ queryKey: ['produkter', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['produkter', 'list-with-meta'] })
       toast({
         title: 'Produkter slettet',
         description: `${ids.length} produkter ble slettet`,
