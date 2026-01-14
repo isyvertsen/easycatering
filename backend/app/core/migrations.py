@@ -1144,14 +1144,15 @@ class AddPerformanceIndexes(Migration):
                 ON tblordredetaljer(produktid)
             """))
 
-            # Periode-meny FK indexes
+            # Periode-meny FK indexes (only if table exists)
             await conn.execute(text("""
-                CREATE INDEX IF NOT EXISTS idx_periode_meny_periodeid
-                ON periode_meny(periodeid)
-            """))
-            await conn.execute(text("""
-                CREATE INDEX IF NOT EXISTS idx_periode_meny_menyid
-                ON periode_meny(menyid)
+                DO $$
+                BEGIN
+                    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'periode_meny') THEN
+                        CREATE INDEX IF NOT EXISTS idx_periode_meny_periodeid ON periode_meny(periodeid);
+                        CREATE INDEX IF NOT EXISTS idx_periode_meny_menyid ON periode_meny(menyid);
+                    END IF;
+                END $$
             """))
 
             # Customer search index
