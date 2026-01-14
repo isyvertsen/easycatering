@@ -42,7 +42,7 @@ async def workflow_chat(
     - "Opprett ordre for kunde 42" → Returns confirmation request
     """
     try:
-        agent = get_workflow_agent_service(db, current_user.brukerid)
+        agent = get_workflow_agent_service(db, current_user.id)
         response = await agent.process_message(
             message=request.message,
             conversation_history=request.conversation_history,
@@ -75,7 +75,7 @@ async def confirm_workflow(
         )
 
     try:
-        agent = get_workflow_agent_service(db, current_user.brukerid)
+        agent = get_workflow_agent_service(db, current_user.id)
         response = await agent.process_message(
             message="",
             confirmed_workflow_id=request.workflow_id,
