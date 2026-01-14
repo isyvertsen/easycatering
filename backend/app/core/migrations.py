@@ -450,6 +450,8 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(AddBestiltAvToOrders())
         migration_runner.add_migration(AddPlukketAntallToOrderDetails())
         migration_runner.add_migration(AddPerformanceIndexes())
+        migration_runner.add_migration(CreateSystemSettingsTable())
+        migration_runner.add_migration(AddWebshopSortingIndexes())
     return migration_runner
 
 
@@ -1154,6 +1156,60 @@ class AddPerformanceIndexes(Migration):
             await conn.execute(text("""
                 CREATE INDEX IF NOT EXISTS idx_kunder_kundenavn_trgm
                 ON tblkunder USING gin(kundenavn gin_trgm_ops)
+            """))
+
+
+class CreateSystemSettingsTable(Migration):
+    """Create system_settings table for key-value configuration."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260114_002_system_settings",
+            description="Create system_settings table for application configuration"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Create system_settings table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS system_settings (
+                    key VARCHAR(100) PRIMARY KEY,
+                    value JSONB NOT NULL,
+                    description TEXT,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+                )
+            """))
+
+            # Seed default webshop category order
+            await conn.execute(text("""
+                INSERT INTO system_settings (key, value, description)
+                VALUES (
+                    'webshop_category_order',
+                    '[1, 2, 14]',
+                    'Kategori-IDer i visningsrekkefølge for webshop smart sortering'
+                )
+                ON CONFLICT (key) DO NOTHING
+            """))
+
+
+class AddWebshopSortingIndexes(Migration):
+    """Add indexes for webshop smart sorting queries."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260114_003_webshop_sorting_indexes",
+            description="Add composite index for order frequency calculation"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Composite index for order frequency by customer in date range
+            # Partial index excludes cancelled orders (status 98, 99)
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_ordrer_kundeid_ordredato_status
+                ON tblordrer(kundeid, ordredato)
+                WHERE ordrestatusid NOT IN (98, 99)
             """))
 
 

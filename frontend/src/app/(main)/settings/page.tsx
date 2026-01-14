@@ -26,6 +26,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useBackendHealth } from "@/hooks/useBackendHealth"
+import { WebshopCategoryOrderSettings } from "@/components/settings/WebshopCategoryOrderSettings"
 
 export default function SettingsPage() {
   const { toast } = useToast()
@@ -398,6 +399,9 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Webshop Category Order Settings */}
+          <WebshopCategoryOrderSettings />
 
           <Card>
             <CardHeader>

@@ -31,6 +31,13 @@ export interface WebshopProductListParams {
   sort_by?: 'produktnavn' | 'pris' | 'visningsnavn'
   /** Sorteringsretning (default: 'asc') */
   sort_order?: 'asc' | 'desc'
+  /**
+   * Aktiver smart sortering (default: true)
+   * - Produkter sorteres etter bestillingsfrekvens siste 4 uker
+   * - Deretter etter kategori-rekkefølge fra systeminnstillinger
+   * - Til slutt alfabetisk
+   */
+  smart_sort?: boolean
 }
 
 /**
@@ -296,6 +303,8 @@ export const webshopApi = {
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString())
     if (params?.sort_by) queryParams.append('sort_by', params.sort_by)
     if (params?.sort_order) queryParams.append('sort_order', params.sort_order)
+    // smart_sort is true by default on backend, only pass if explicitly false
+    if (params?.smart_sort === false) queryParams.append('smart_sort', 'false')
 
     const queryString = queryParams.toString()
     const url = queryString ? `/v1/webshop/produkter?${queryString}` : '/v1/webshop/produkter'

@@ -26,6 +26,7 @@ from .report_templates import ReportTemplates
 from .customer_access_token import CustomerAccessToken
 from .activity_log import ActivityLog
 from .app_log import AppLog
+from .system_settings import SystemSettings
 
 __all__ = [
     "Ansatte",
@@ -63,4 +64,5 @@ __all__ = [
     "CustomerAccessToken",
     "ActivityLog",
     "AppLog",
+    "SystemSettings",
 ]
