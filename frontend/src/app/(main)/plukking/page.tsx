@@ -25,16 +25,15 @@ import {
   usePlukkingList,
   usePlukkingStats,
   useKundegrupperForPlukking,
-  useUpdatePlukkstatus,
-  useBulkUpdatePlukkstatus,
+  useUpdateOrdrestatus,
+  useBulkUpdateOrdrestatus,
   useMarkerPakkseddelSkrevet,
 } from '@/hooks/usePlukking'
-import { PlukkingListParams, PlukkStatus } from '@/lib/api/plukking'
+import { PlukkingListParams, ORDRESTATUS_PLUKKLISTE, ORDRESTATUS_PLUKKET } from '@/lib/api/plukking'
 import { reportsApi } from '@/lib/api/reports'
 import {
   Package,
   PackageCheck,
-  Clock,
   Truck,
   ChevronLeft,
   ChevronRight,
@@ -46,9 +45,9 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { Input } from '@/components/ui/input'
 
-const statusColors: Record<string, string> = {
-  KLAR_TIL_PLUKKING: 'bg-yellow-100 text-yellow-800',
-  PLUKKET: 'bg-green-100 text-green-800',
+const statusColors: Record<number, string> = {
+  [ORDRESTATUS_PLUKKLISTE]: 'bg-yellow-100 text-yellow-800',
+  [ORDRESTATUS_PLUKKET]: 'bg-green-100 text-green-800',
 }
 
 export default function PlukkingPage() {
@@ -67,8 +66,8 @@ export default function PlukkingPage() {
   })
   const { data: kundegrupper } = useKundegrupperForPlukking()
 
-  const updateStatusMutation = useUpdatePlukkstatus()
-  const bulkUpdateMutation = useBulkUpdatePlukkstatus()
+  const updateStatusMutation = useUpdateOrdrestatus()
+  const bulkUpdateMutation = useBulkUpdateOrdrestatus()
   const markerPakkseddelMutation = useMarkerPakkseddelSkrevet()
 
   const handleParamsChange = (newParams: Partial<PlukkingListParams>) => {
@@ -92,12 +91,12 @@ export default function PlukkingPage() {
     }
   }
 
-  const handleUpdateStatus = async (ordreId: number, status: PlukkStatus) => {
+  const handleUpdateStatus = async (ordreId: number, ordrestatusid: number) => {
     try {
-      await updateStatusMutation.mutateAsync({ ordreId, plukkstatus: status })
+      await updateStatusMutation.mutateAsync({ ordreId, ordrestatusid })
       toast({
         title: 'Status oppdatert',
-        description: `Ordre #${ordreId} er nå ${status === 'PLUKKET' ? 'plukket' : 'klar til plukking'}`,
+        description: `Ordre #${ordreId} er nå ${ordrestatusid === ORDRESTATUS_PLUKKET ? 'plukket' : 'klar til plukking'}`,
       })
     } catch {
       toast({
@@ -108,13 +107,13 @@ export default function PlukkingPage() {
     }
   }
 
-  const handleBulkUpdate = async (status: PlukkStatus) => {
+  const handleBulkUpdate = async (ordrestatusid: number) => {
     if (selectedOrders.length === 0) return
 
     try {
       const result = await bulkUpdateMutation.mutateAsync({
         ordreIds: selectedOrders,
-        plukkstatus: status,
+        ordrestatusid,
       })
       toast({
         title: 'Status oppdatert',
@@ -163,6 +162,40 @@ export default function PlukkingPage() {
     }
   }
 
+  const handleBulkDownloadPlukklister = async () => {
+    if (selectedOrders.length === 0) return
+    try {
+      await reportsApi.downloadBatchPickList(selectedOrders)
+      toast({
+        title: 'Plukklister lastet ned',
+        description: `${selectedOrders.length} plukkliste(r) er lastet ned`,
+      })
+    } catch {
+      toast({
+        title: 'Feil',
+        description: 'Kunne ikke laste ned plukklister',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleBulkDownloadPakksedler = async () => {
+    if (selectedOrders.length === 0) return
+    try {
+      await reportsApi.downloadBatchDeliveryNote(selectedOrders)
+      toast({
+        title: 'Pakksedler lastet ned',
+        description: `${selectedOrders.length} pakkseddel(er) er lastet ned`,
+      })
+    } catch {
+      toast({
+        title: 'Feil',
+        description: 'Kunne ikke laste ned pakksedler',
+        variant: 'destructive',
+      })
+    }
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -179,7 +212,7 @@ export default function PlukkingPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Totalt ordrer</CardTitle>
@@ -192,22 +225,7 @@ export default function PlukkingPage() {
 
         <Card
           className="cursor-pointer hover:bg-muted/50"
-          onClick={() => handleParamsChange({ plukkstatus: undefined })}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Uten status</CardTitle>
-            <Clock className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-600">
-              {stats?.uten_status || 0}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:bg-muted/50"
-          onClick={() => handleParamsChange({ plukkstatus: 'KLAR_TIL_PLUKKING' })}
+          onClick={() => handleParamsChange({ ordrestatusid: ORDRESTATUS_PLUKKLISTE })}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Klar til plukking</CardTitle>
@@ -222,7 +240,7 @@ export default function PlukkingPage() {
 
         <Card
           className="cursor-pointer hover:bg-muted/50"
-          onClick={() => handleParamsChange({ plukkstatus: 'PLUKKET' })}
+          onClick={() => handleParamsChange({ ordrestatusid: ORDRESTATUS_PLUKKET })}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Plukket</CardTitle>
@@ -265,9 +283,9 @@ export default function PlukkingPage() {
             </Select>
 
             <Select
-              value={params.plukkstatus || 'all'}
+              value={params.ordrestatusid?.toString() || 'all'}
               onValueChange={(v) =>
-                handleParamsChange({ plukkstatus: v === 'all' ? undefined : v })
+                handleParamsChange({ ordrestatusid: v === 'all' ? undefined : Number(v) })
               }
             >
               <SelectTrigger>
@@ -275,9 +293,8 @@ export default function PlukkingPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle statuser</SelectItem>
-                <SelectItem value="NULL">Uten status</SelectItem>
-                <SelectItem value="KLAR_TIL_PLUKKING">Klar til plukking</SelectItem>
-                <SelectItem value="PLUKKET">Plukket</SelectItem>
+                <SelectItem value={ORDRESTATUS_PLUKKLISTE.toString()}>Plukkliste</SelectItem>
+                <SelectItem value={ORDRESTATUS_PLUKKET.toString()}>Plukket</SelectItem>
               </SelectContent>
             </Select>
 
@@ -319,8 +336,8 @@ export default function PlukkingPage() {
         </CardContent>
       </Card>
 
-      {/* Bulk Actions */}
-      {selectedOrders.length > 0 && (
+      {/* Bulk Actions - only available when a specific status is selected */}
+      {selectedOrders.length > 0 && params.ordrestatusid && (
         <Card>
           <CardContent className="py-4">
             <div className="flex items-center justify-between">
@@ -330,14 +347,30 @@ export default function PlukkingPage() {
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => handleBulkUpdate('KLAR_TIL_PLUKKING')}
+                  onClick={handleBulkDownloadPlukklister}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Skriv ut plukklister
+                </Button>
+                {params.ordrestatusid === ORDRESTATUS_PLUKKET && (
+                  <Button
+                    variant="outline"
+                    onClick={handleBulkDownloadPakksedler}
+                  >
+                    <Truck className="h-4 w-4 mr-2" />
+                    Skriv ut pakksedler
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() => handleBulkUpdate(ORDRESTATUS_PLUKKLISTE)}
                   disabled={bulkUpdateMutation.isPending}
                 >
                   <Package className="h-4 w-4 mr-2" />
                   Merk som klar til plukking
                 </Button>
                 <Button
-                  onClick={() => handleBulkUpdate('PLUKKET')}
+                  onClick={() => handleBulkUpdate(ORDRESTATUS_PLUKKET)}
                   disabled={bulkUpdateMutation.isPending}
                 >
                   <PackageCheck className="h-4 w-4 mr-2" />
@@ -405,13 +438,9 @@ export default function PlukkingPage() {
                           : '-'}
                       </TableCell>
                       <TableCell>
-                        {ordre.plukkstatus ? (
-                          <Badge className={statusColors[ordre.plukkstatus] || 'bg-gray-100'}>
-                            {ordre.plukkstatus === 'KLAR_TIL_PLUKKING'
-                              ? 'Klar'
-                              : ordre.plukkstatus === 'PLUKKET'
-                              ? 'Plukket'
-                              : ordre.plukkstatus}
+                        {ordre.ordrestatus_navn ? (
+                          <Badge className={ordre.ordrestatusid ? statusColors[ordre.ordrestatusid] || 'bg-gray-100 text-gray-800' : 'bg-gray-100 text-gray-800'}>
+                            {ordre.ordrestatus_navn}
                           </Badge>
                         ) : (
                           <span className="text-muted-foreground">-</span>
@@ -447,31 +476,33 @@ export default function PlukkingPage() {
                           >
                             <FileText className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDownloadPakkseddel(ordre.ordreid)}
-                            title="Last ned pakkseddel"
-                          >
-                            <Truck className="h-4 w-4" />
-                          </Button>
-                          {ordre.plukkstatus !== 'KLAR_TIL_PLUKKING' && (
+                          {ordre.ordrestatusid === ORDRESTATUS_PLUKKET && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDownloadPakkseddel(ordre.ordreid)}
+                              title="Last ned pakkseddel"
+                            >
+                              <Truck className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {ordre.ordrestatusid !== ORDRESTATUS_PLUKKLISTE && (
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() =>
-                                handleUpdateStatus(ordre.ordreid, 'KLAR_TIL_PLUKKING')
+                                handleUpdateStatus(ordre.ordreid, ORDRESTATUS_PLUKKLISTE)
                               }
                               title="Merk som klar til plukking"
                             >
                               <Package className="h-4 w-4" />
                             </Button>
                           )}
-                          {ordre.plukkstatus !== 'PLUKKET' && (
+                          {ordre.ordrestatusid !== ORDRESTATUS_PLUKKET && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleUpdateStatus(ordre.ordreid, 'PLUKKET')}
+                              onClick={() => handleUpdateStatus(ordre.ordreid, ORDRESTATUS_PLUKKET)}
                               title="Merk som plukket"
                             >
                               <PackageCheck className="h-4 w-4" />

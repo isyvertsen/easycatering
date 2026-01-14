@@ -3,7 +3,9 @@
  */
 import { apiClient } from '@/lib/api-client'
 
-export type PlukkStatus = 'KLAR_TIL_PLUKKING' | 'PLUKKET'
+// Ordrestatus IDs from tblordrestatus
+export const ORDRESTATUS_PLUKKLISTE = 25  // Klar til plukking
+export const ORDRESTATUS_PLUKKET = 30     // Plukket
 
 export interface OrdreForPlukking {
   ordreid: number
@@ -13,11 +15,12 @@ export interface OrdreForPlukking {
   kundegruppe_id?: number
   leveringsdato?: string
   ordredato?: string
-  plukkstatus?: string
   plukket_dato?: string
   plukket_av_navn?: string
   pakkseddel_skrevet?: string
   antall_produkter: number
+  ordrestatusid?: number
+  ordrestatus_navn?: string
 }
 
 export interface PlukkingListResponse {
@@ -32,7 +35,6 @@ export interface PlukkingStats {
   total_ordrer: number
   klar_til_plukking: number
   plukket: number
-  uten_status: number
 }
 
 export interface Kundegruppe {
@@ -44,7 +46,7 @@ export interface PlukkingListParams {
   page?: number
   page_size?: number
   kundegruppe_id?: number
-  plukkstatus?: string
+  ordrestatusid?: number
   leveringsdato_fra?: string
   leveringsdato_til?: string
   include_cancelled?: boolean
@@ -93,14 +95,14 @@ export async function getKundegrupperForPlukking(): Promise<Kundegruppe[]> {
 }
 
 /**
- * Update picking status for an order
+ * Update order status for an order
  */
-export async function updatePlukkstatus(
+export async function updateOrdrestatus(
   ordreId: number,
-  plukkstatus: PlukkStatus
-): Promise<{ ordreid: number; plukkstatus: string; message: string }> {
+  ordrestatusid: number
+): Promise<{ ordreid: number; ordrestatusid: number; ordrestatus_navn?: string; message: string }> {
   const response = await apiClient.put(`/v1/plukking/${ordreId}/status`, {
-    plukkstatus,
+    ordrestatusid,
   })
   return response.data
 }
@@ -116,13 +118,13 @@ export async function markerPakkseddelSkrevet(
 }
 
 /**
- * Bulk update picking status
+ * Bulk update order status
  */
-export async function bulkUpdatePlukkstatus(
+export async function bulkUpdateOrdrestatus(
   ordreIds: number[],
-  plukkstatus: PlukkStatus
+  ordrestatusid: number
 ): Promise<{ message: string; updated_count: number }> {
-  const response = await apiClient.post(`/v1/plukking/bulk-update-status?plukkstatus=${plukkstatus}`, ordreIds)
+  const response = await apiClient.post(`/v1/plukking/bulk-update-status?ordrestatusid=${ordrestatusid}`, ordreIds)
   return response.data
 }
 
@@ -164,7 +166,7 @@ export async function getPickDetails(ordreId: number): Promise<PickDetailsRespon
 export async function registerPickQuantities(
   ordreId: number,
   lines: PickedLineInput[]
-): Promise<{ message: string; updated_count: number; ordreid: number; plukkstatus: string }> {
+): Promise<{ message: string; updated_count: number; ordreid: number; ordrestatusid: number }> {
   const response = await apiClient.post(`/v1/plukking/${ordreId}/registrer-plukk`, { lines })
   return response.data
 }

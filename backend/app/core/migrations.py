@@ -1144,15 +1144,7 @@ class AddPerformanceIndexes(Migration):
                 ON tblordredetaljer(produktid)
             """))
 
-            # Periode-meny FK indexes
-            await conn.execute(text("""
-                CREATE INDEX IF NOT EXISTS idx_periode_meny_periodeid
-                ON periode_meny(periodeid)
-            """))
-            await conn.execute(text("""
-                CREATE INDEX IF NOT EXISTS idx_periode_meny_menyid
-                ON periode_meny(menyid)
-            """))
+            # Periode-meny FK indexes (columns are part of primary key, already indexed)
 
             # Customer search index
             await conn.execute(text("""
