@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.kunder import Kunder as KunderModel
+from app.models.kunde_gruppe import Kundegruppe as KundegruppeModel
 from app.models.ordrer import Ordrer as OrdrerModel
 from app.models.ordredetaljer import Ordredetaljer as OrdredetaljerModel
 from app.models.produkter import Produkter as ProdukterModel
@@ -49,6 +50,7 @@ class ToolExecutor:
         executors = {
             # Kunder
             "search_customers": self._search_customers,
+            "list_customer_groups": self._list_customer_groups,
             "get_customer": self._get_customer,
             "create_customer": self._create_customer,
             # Ordrer
@@ -106,18 +108,30 @@ class ToolExecutor:
 
         if tool_name == "search_customers":
             search = parameters.get("search", "")
+            kundegruppe = parameters.get("kundegruppe", "")
+            params = {}
             if search:
-                links.append({
-                    "label": "Se kunder",
-                    "url": f"/customers?search={search}",
-                    "icon": "Users"
-                })
-            else:
-                links.append({
-                    "label": "Se alle kunder",
-                    "url": "/customers",
-                    "icon": "Users"
-                })
+                params["search"] = search
+            if kundegruppe:
+                # Find group ID from result if available
+                kundegruppe_filter = result.get("kundegruppe_filter")
+                if kundegruppe_filter:
+                    params["gruppe"] = kundegruppe_filter
+            url = "/customers"
+            if params:
+                url += "?" + urlencode(params)
+            links.append({
+                "label": f"Se kunder{' (' + kundegruppe + ')' if kundegruppe else ''}",
+                "url": url,
+                "icon": "Users"
+            })
+
+        elif tool_name == "list_customer_groups":
+            links.append({
+                "label": "Se kundegrupper",
+                "url": "/kundegrupper",
+                "icon": "FolderTree"
+            })
 
         elif tool_name == "get_customer":
             kundeid = parameters.get("kundeid")
@@ -248,12 +262,35 @@ class ToolExecutor:
     # =========================================================================
 
     async def _search_customers(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Search for customers."""
+        """Search for customers, optionally filtered by customer group."""
         search = params.get("search", "")
-        page_size = params.get("page_size", 10)
+        kundegruppe_name = params.get("kundegruppe", "")
+        page_size = params.get("page_size", 50)
 
-        query = select(KunderModel)
+        query = select(KunderModel).options(joinedload(KunderModel.gruppe))
 
+        # Filter by customer group name if provided
+        if kundegruppe_name:
+            # First find the group ID(s) matching the name
+            group_result = await self.db.execute(
+                select(KundegruppeModel.gruppeid).where(
+                    KundegruppeModel.gruppe.ilike(f"%{kundegruppe_name}%")
+                )
+            )
+            group_ids = [r for r in group_result.scalars().all()]
+
+            if group_ids:
+                query = query.where(KunderModel.kundegruppe.in_(group_ids))
+            else:
+                # No matching groups found
+                return {
+                    "items": [],
+                    "total": 0,
+                    "kundegruppe_filter": kundegruppe_name,
+                    "message": f"Ingen kundegruppe funnet som matcher '{kundegruppe_name}'"
+                }
+
+        # Filter by search term if provided
         if search:
             search_term = f"%{search}%"
             query = query.where(
@@ -272,7 +309,7 @@ class ToolExecutor:
 
         query = query.order_by(KunderModel.kundenavn).limit(page_size)
         result = await self.db.execute(query)
-        customers = result.scalars().all()
+        customers = result.unique().scalars().all()
 
         return {
             "items": [
@@ -284,10 +321,33 @@ class ToolExecutor:
                     "sted": c.sted,
                     "telefonnummer": c.telefonnummer,
                     "e_post": c.e_post,
+                    "kundegruppe": c.gruppe.gruppe if c.gruppe else None,
                 }
                 for c in customers
             ],
             "total": len(customers),
+            "kundegruppe_filter": kundegruppe_name if kundegruppe_name else None,
+        }
+
+    async def _list_customer_groups(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """List all customer groups."""
+        page_size = params.get("page_size", 50)
+
+        result = await self.db.execute(
+            select(KundegruppeModel).order_by(KundegruppeModel.gruppe).limit(page_size)
+        )
+        groups = result.scalars().all()
+
+        return {
+            "items": [
+                {
+                    "gruppeid": g.gruppeid,
+                    "gruppe": g.gruppe,
+                    "webshop": g.webshop,
+                }
+                for g in groups
+            ],
+            "total": len(groups),
         }
 
     async def _get_customer(self, params: Dict[str, Any]) -> Dict[str, Any]:
