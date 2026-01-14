@@ -35,8 +35,10 @@ npm run dev
 
 | Komponent | Versjon |
 |-----------|---------|
-| Frontend  | 2.0.2   |
-| Backend   | 2.1.0   |
+| Frontend  | 2.6.0   |
+| Backend   | 2.6.0   |
+
+Se [CHANGELOG.md](CHANGELOG.md) for endringshistorikk.
 
 ## Teknologi
 
@@ -44,10 +46,13 @@ npm run dev
 
 **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS, shadcn/ui
 
+**AI-støtte:** OpenAI, Azure OpenAI, Anthropic (Claude)
+
 ## Dokumentasjon
 
+- [CHANGELOG](CHANGELOG.md) - Endringshistorikk
 - [API Dokumentasjon](backend/docs/API_DOCUMENTATION.md)
-- [Kravspesifikasjon](kravspsifikasjon.md)
+- [Brukerveiledning](backend/docs/user-guides/README.md)
 - [Rapport Guide](docs/RAPPORT_GUIDE.md)
 
 ## Lisens

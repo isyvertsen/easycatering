@@ -17,14 +17,27 @@ USER_DOCS = """# Brukerveiledning for LKC-systemet
 3. Første gang må en administrator godkjenne kontoen din
 
 ## Navigering
-Menyen ligger på venstre side og inneholder:
-- **Hjem**: Oversikt og dashboard
-- **Kunder**: Kundeadministrasjon
-- **Ordrer**: Ordrehåndtering
+Menyen ligger øverst og er organisert i kategorier:
+
+**Menyplanlegging:**
 - **Menyer**: Ukemenyer og menyplanlegging
+- **Periodevisning**: Administrer perioder og se ukeoversikt
 - **Oppskrifter**: Oppskriftsbibliotek
-- **Produkter**: Produktkatalog
+- **Retter**: Sammensatte retter
+
+**Produktstyring:**
+- **Produkter**: Produktkatalog og GTIN
+- **Kategorier**: Produktkategorier
+- **Leverandører**: Leverandøradministrasjon
+- **Matinfo**: Matinfo-integrasjon
+
+**Salg & Ordre:**
+- **Ordrer**: Ordrehåndtering
+- **Plukking**: Plukklistestyring
+- **Kunder**: Kundeadministrasjon
 - **Etiketter**: Etikettdesign og utskrift
+
+**System:**
 - **Rapporter**: Statistikk og rapporter
 - **Innstillinger**: Systeminnstillinger
 
