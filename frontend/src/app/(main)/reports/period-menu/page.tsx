@@ -77,12 +77,13 @@ export default function PeriodMenuReportPage() {
 
   const fetchPeriods = async () => {
     try {
-      const response = await api.get("/periode");
-      setPeriods(response.data);
+      const response = await api.get("/v1/periode/");
+      // API returns paginated response with items array
+      setPeriods(response.data.items || response.data);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to load periods",
+        title: "Feil",
+        description: "Kunne ikke laste perioder",
         variant: "destructive",
       });
     }
@@ -90,8 +91,9 @@ export default function PeriodMenuReportPage() {
 
   const fetchMenuGroups = async () => {
     try {
-      const response = await api.get("/kundegruppe");
-      setMenuGroups(response.data);
+      const response = await api.get("/v1/kunde-gruppe/");
+      // API returns paginated response with items array
+      setMenuGroups(response.data.items || response.data);
     } catch (error) {
       console.error("Failed to load menu groups:", error);
     }
@@ -100,8 +102,8 @@ export default function PeriodMenuReportPage() {
   const generateReport = async () => {
     if (!selectedPeriod) {
       toast({
-        title: "Error",
-        description: "Please select a period",
+        title: "Feil",
+        description: "Velg en periode",
         variant: "destructive",
       });
       return;
@@ -114,14 +116,14 @@ export default function PeriodMenuReportPage() {
         params.menu_group_id = selectedMenuGroup;
       }
 
-      const response = await api.get("/menu-management/customer-period-report", {
+      const response = await api.get("/v1/menu-management/customer-period-report", {
         params,
       });
       setReportData(response.data);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to generate report",
+        title: "Feil",
+        description: "Kunne ikke generere rapport",
         variant: "destructive",
       });
     } finally {
@@ -132,8 +134,8 @@ export default function PeriodMenuReportPage() {
   const exportToPDF = async () => {
     if (!selectedPeriod) {
       toast({
-        title: "Error",
-        description: "Please select a period and generate report first",
+        title: "Feil",
+        description: "Velg en periode og generer rapport først",
         variant: "destructive",
       });
       return;
@@ -145,7 +147,7 @@ export default function PeriodMenuReportPage() {
         params.menu_group_id = selectedMenuGroup;
       }
 
-      const response = await api.get("/reports/period-menu-pdf", {
+      const response = await api.get("/v1/reports/period-menu-pdf", {
         params,
         responseType: "blob",
       });
@@ -153,26 +155,26 @@ export default function PeriodMenuReportPage() {
       // Create a blob from the PDF data
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
-      
+
       // Create a temporary link and click it to download
       const a = document.createElement("a");
       a.href = url;
       a.download = `periode_${selectedPeriodData?.ukenr}_meny_rapport.pdf`;
       document.body.appendChild(a);
       a.click();
-      
+
       // Clean up
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-      
+
       toast({
-        title: "Success",
-        description: "PDF report downloaded successfully",
+        title: "Suksess",
+        description: "PDF-rapport lastet ned",
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to generate PDF report",
+        title: "Feil",
+        description: "Kunne ikke generere PDF-rapport",
         variant: "destructive",
       });
     }
