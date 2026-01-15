@@ -236,7 +236,7 @@ wheels = [
 
 [[package]]
 name = "catering-backend"
-version = "2.6.1"
+version = "2.6.6"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
