@@ -36,23 +36,33 @@ async def get_current_user_optional(
                 detail="AUTH_BYPASS cannot be enabled in production environment"
             )
 
-        # Get or create a development user (with admin role)
+        # Get or create a development user (with admin role and webshop access)
         dev_user = await user_service.get_by_email("dev@example.com")
+        needs_update = False
+
         if not dev_user:
             dev_user = await user_service.create(
                 email="dev@example.com",
                 full_name="Development User",
                 password="devpassword",
             )
-            # Set admin role for dev user
+            needs_update = True
+
+        # Ensure dev user has admin role
+        if dev_user.rolle != "admin":
             dev_user.rolle = "admin"
+            needs_update = True
+
+        # Ensure dev user has kundeid for webshop access
+        # Customer 409 belongs to kundegruppe 7 which has webshop=true
+        if not dev_user.kundeid:
+            dev_user.kundeid = 409
+            needs_update = True
+
+        if needs_update:
             await db.commit()
             await db.refresh(dev_user)
-        elif dev_user.rolle != "admin":
-            # Ensure existing dev user has admin role
-            dev_user.rolle = "admin"
-            await db.commit()
-            await db.refresh(dev_user)
+
         return dev_user
 
     return None

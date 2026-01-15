@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { API_BASE_URL } from './helpers/test-utils';
 
 test.describe('All Pages Backend Integration', () => {
-  
+
   test('Recipes page shows data from backend', async ({ page }) => {
-    await page.goto('http://localhost:3001/recipes');
+    await page.goto('/recipes');
     
     // Wait for data to load
     await page.waitForSelector('tbody tr', { timeout: 10000 });
@@ -22,7 +23,7 @@ test.describe('All Pages Backend Integration', () => {
   });
 
   test('Employees page shows data from backend', async ({ page }) => {
-    await page.goto('http://localhost:3001/employees');
+    await page.goto('/employees');
     
     // Wait for data to load
     await page.waitForSelector('tbody tr', { timeout: 10000 });
@@ -43,7 +44,7 @@ test.describe('All Pages Backend Integration', () => {
   });
 
   test('Customers page shows data from backend', async ({ page }) => {
-    await page.goto('http://localhost:3001/customers');
+    await page.goto('/customers');
     
     // Wait for possible data or empty state
     await page.waitForTimeout(2000);
@@ -68,7 +69,7 @@ test.describe('All Pages Backend Integration', () => {
   });
 
   test('Products page shows data from backend', async ({ page }) => {
-    await page.goto('http://localhost:3001/products');
+    await page.goto('/products');
     
     // Wait for possible data or empty state
     await page.waitForTimeout(2000);
@@ -92,7 +93,7 @@ test.describe('All Pages Backend Integration', () => {
   });
 
   test('Orders page shows data from backend', async ({ page }) => {
-    await page.goto('http://localhost:3001/orders');
+    await page.goto('/orders');
     
     // Wait for possible data or empty state
     await page.waitForTimeout(2000);
@@ -118,7 +119,7 @@ test.describe('All Pages Backend Integration', () => {
   });
 
   test('Menus page shows data from backend', async ({ page }) => {
-    await page.goto('http://localhost:3001/menus');
+    await page.goto('/menus');
     
     // Wait for possible data or empty state
     await page.waitForTimeout(2000);
@@ -152,7 +153,7 @@ test.describe('API Response Verification', () => {
     ];
     
     for (const endpoint of endpoints) {
-      const response = await page.request.get(`http://localhost:8000${endpoint.url}`);
+      const response = await page.request.get(`${API_BASE_URL}${endpoint.url}`);
       expect(response.ok()).toBeTruthy();
       
       const data = await response.json();
@@ -164,7 +165,7 @@ test.describe('API Response Verification', () => {
 
   test('API endpoints handle parameters correctly', async ({ page }) => {
     // Test pagination
-    const response = await page.request.get('http://localhost:8000/api/v1/oppskrifter/', {
+    const response = await page.request.get(`${API_BASE_URL}/api/v1/oppskrifter/`, {
       params: {
         skip: 0,
         limit: 5
@@ -183,7 +184,7 @@ test.describe('API Response Verification', () => {
 test.describe('Navigation and UI Elements', () => {
   
   test('Navigation menu works on all pages', async ({ page }) => {
-    await page.goto('http://localhost:3001/');
+    await page.goto('/');
     
     // Check all navigation links exist
     const navLinks = [
@@ -216,7 +217,7 @@ test.describe('Navigation and UI Elements', () => {
     ];
     
     for (const pageUrl of pagesWithSearch) {
-      await page.goto(`http://localhost:3001${pageUrl}`);
+      await page.goto(`${pageUrl}`);
       
       // Look for search input
       const searchInput = page.locator('input[type="text"], input[placeholder*="Søk"], input[placeholder*="Search"]').first();
@@ -236,7 +237,7 @@ test.describe('Navigation and UI Elements', () => {
     ];
     
     for (const pageUrl of pagesWithAddNew) {
-      await page.goto(`http://localhost:3001${pageUrl}`);
+      await page.goto(`${pageUrl}`);
       
       // Look for Add New button
       const addNewButton = page.locator('a:has-text("Add New"), button:has-text("Add New"), a:has-text("Legg til")').first();
@@ -259,7 +260,7 @@ test.describe('Error Handling', () => {
       });
     });
     
-    await page.goto('http://localhost:3001/recipes');
+    await page.goto('/recipes');
     await page.waitForTimeout(2000);
     
     // Should not crash - should show error state or retry
@@ -274,7 +275,7 @@ test.describe('Error Handling', () => {
 test.describe('Data Display Formats', () => {
   
   test('Dates are formatted in Norwegian format', async ({ page }) => {
-    await page.goto('http://localhost:3001/recipes');
+    await page.goto('/recipes');
     await page.waitForSelector('tbody tr', { timeout: 10000 });
     
     // Check date format (DD.MM.YYYY)
@@ -288,7 +289,7 @@ test.describe('Data Display Formats', () => {
   });
 
   test('Norwegian language is used throughout', async ({ page }) => {
-    await page.goto('http://localhost:3001/employees');
+    await page.goto('/employees');
     
     // Check for Norwegian text
     const pageContent = await page.locator('body').textContent();
