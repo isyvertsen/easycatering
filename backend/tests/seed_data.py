@@ -11,14 +11,20 @@ from app.models.kategorier import Kategorier
 from app.infrastructure.database.session import Base
 
 
-# Test database URL
-TEST_DATABASE_URL = "postgresql+asyncpg://catering_user:change_me_in_production@localhost:15432/catering_test"
+# Test database URL - use environment variable or default
+import os
+TEST_DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql+asyncpg://catering_user:change_me_in_production@localhost:15432/catering_test"
+)
 
 
 async def create_test_database():
     """Create test database if it doesn't exist."""
     # Connect to default postgres database
-    admin_url = "postgresql+asyncpg://catering_user:change_me_in_production@localhost:15432/postgres"
+    # Extract base URL from TEST_DATABASE_URL
+    base_url = TEST_DATABASE_URL.rsplit('/', 1)[0]
+    admin_url = f"{base_url}/postgres"
     admin_engine = create_async_engine(admin_url, isolation_level="AUTOCOMMIT")
 
     async with admin_engine.connect() as conn:
@@ -40,7 +46,8 @@ async def create_test_database():
 async def drop_test_database():
     """Drop test database."""
     # Connect to default postgres database
-    admin_url = "postgresql+asyncpg://catering_user:change_me_in_production@localhost:15432/postgres"
+    base_url = TEST_DATABASE_URL.rsplit('/', 1)[0]
+    admin_url = f"{base_url}/postgres"
     admin_engine = create_async_engine(admin_url, isolation_level="AUTOCOMMIT")
 
     async with admin_engine.connect() as conn:

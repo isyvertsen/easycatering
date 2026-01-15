@@ -4,6 +4,10 @@ import { Page, expect } from '@playwright/test';
  * Test utilities for Playwright E2E tests
  */
 
+// API URL for backend calls
+export const API_BASE_URL = process.env.API_URL || 'http://localhost:8000';
+export const API_V1_URL = `${API_BASE_URL}/api/v1`;
+
 export interface TestUser {
   email: string;
   password: string;
