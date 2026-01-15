@@ -23,7 +23,8 @@ class KunderBase(BaseSchema):
     leveringsdag: Optional[int] = Field(None, ge=0, le=6)
     kundeinaktiv: Optional[bool] = None
     kundenragresso: Optional[float] = None
-    e_post: Optional[EmailStr] = None
+    # Use str instead of EmailStr for reading - database contains legacy invalid emails
+    e_post: Optional[str] = Field(None, max_length=200)
     webside: Optional[str] = Field(None, max_length=200)
     kundegruppe: Optional[int] = None
     bestillerselv: Optional[bool] = None
@@ -40,7 +41,8 @@ class KunderBase(BaseSchema):
     mobilnummer: Optional[str] = Field(None, max_length=20)
     formkost: Optional[bool] = None
     sykehjemid: Optional[int] = None
-    e_post2: Optional[EmailStr] = None
+    # Use str instead of EmailStr for reading - database contains legacy invalid emails
+    e_post2: Optional[str] = Field(None, max_length=200)
 
     @field_validator('telefonnummer', 'mobilnummer', mode='before')
     @classmethod
