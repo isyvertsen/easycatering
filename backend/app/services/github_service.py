@@ -48,6 +48,19 @@ class GitHubService:
             "frontend": self.repo_frontend
         }
 
+        # Check if this is a monorepo (both repos point to same path)
+        is_monorepo = self.repo_backend == self.repo_frontend
+
+        # For monorepo: deduplicate to avoid creating multiple issues in same repo
+        if is_monorepo and len(target_repositories) > 1:
+            # Combine targets into one issue with combined scope
+            target_repositories = ["backend"]  # Use backend as the single target
+            combined_scope = "backend og frontend"
+        elif is_monorepo:
+            combined_scope = target_repositories[0]
+        else:
+            combined_scope = None
+
         # Determine labels
         labels = ["user-reported"]
         if issue_type == "bug":
@@ -72,12 +85,17 @@ class GitHubService:
                 errors.append(f"Unknown repository: {repo_name}")
                 continue
 
-            # Add repository indicator to body
-            repo_indicator = f"\n\n**Repository:** {repo_name.upper()}\n" if len(target_repositories) > 1 else ""
+            # Add scope indicator to body (for monorepo, show combined scope)
+            if combined_scope:
+                scope_indicator = f"\n\n**Område:** {combined_scope.upper()}\n"
+            elif len(target_repositories) > 1:
+                scope_indicator = f"\n\n**Repository:** {repo_name.upper()}\n"
+            else:
+                scope_indicator = ""
 
             issue_body = f"""## {type_label}
 
-{description}{repo_indicator}
+{description}{scope_indicator}
 
 ## Systeminfo
 
