@@ -45,8 +45,8 @@ export function ProductListItem({ product }: ProductListItemProps) {
 
   return (
     <div className="flex items-center gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors">
-      {/* Product Icon */}
-      <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center flex-shrink-0">
+      {/* Product Icon - hidden on mobile */}
+      <div className="hidden md:flex w-16 h-16 bg-muted rounded-md items-center justify-center flex-shrink-0">
         <Package className="h-8 w-8 text-muted-foreground" />
       </div>
 
