@@ -86,10 +86,11 @@ export default function WebshopPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoading) {
+          console.log('Loading more products, current page:', page)
           setPage((p) => p + 1)
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: '200px' }
     )
 
     const currentTarget = observerTarget.current
@@ -102,7 +103,14 @@ export default function WebshopPage() {
         observer.unobserve(currentTarget)
       }
     }
-  }, [hasMore, isLoading])
+  }, [hasMore, isLoading, page])
+
+  // Manual load more button as fallback
+  const handleLoadMore = () => {
+    if (hasMore && !isLoading) {
+      setPage((p) => p + 1)
+    }
+  }
 
   return (
     <div className="container mx-auto py-6 px-4">
@@ -144,7 +152,6 @@ export default function WebshopPage() {
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value)
-              setPage(1) // Reset to first page on search
             }}
             className="pl-10"
           />
@@ -154,7 +161,6 @@ export default function WebshopPage() {
           value={sortBy}
           onValueChange={(value: any) => {
             setSortBy(value)
-            setPage(1)
           }}
         >
           <SelectTrigger className="w-full md:w-[200px]">
@@ -172,7 +178,6 @@ export default function WebshopPage() {
           value={sortOrder}
           onValueChange={(value: any) => {
             setSortOrder(value)
-            setPage(1)
           }}
         >
           <SelectTrigger className="w-full md:w-[150px]">
@@ -237,16 +242,34 @@ export default function WebshopPage() {
                 </div>
               )}
 
-              {/* Infinite Scroll Trigger */}
-              <div ref={observerTarget} className="h-20 flex items-center justify-center mt-8">
-                {isLoading && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
-                    <span>Laster flere produkter...</span>
-                  </div>
+              {/* Infinite Scroll Trigger & Load More Button */}
+              <div className="mt-8 space-y-4">
+                {hasMore && (
+                  <>
+                    {/* Invisible trigger for infinite scroll */}
+                    <div ref={observerTarget} className="h-4"></div>
+
+                    {/* Manual load button as fallback */}
+                    <div className="flex items-center justify-center">
+                      {isLoading ? (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
+                          <span>Laster flere produkter...</span>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          onClick={handleLoadMore}
+                          disabled={isLoading || !hasMore}
+                        >
+                          Last flere produkter
+                        </Button>
+                      )}
+                    </div>
+                  </>
                 )}
                 {!hasMore && allProducts.length > 0 && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground text-center">
                     Alle produkter er lastet ({allProducts.length} totalt)
                   </p>
                 )}
