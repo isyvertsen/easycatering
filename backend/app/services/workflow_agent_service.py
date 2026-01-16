@@ -36,6 +36,8 @@ VIKTIGE REGLER:
 4. Hvis du trenger å finne en kunde eller produkt først, bruk søkeverktøy før du utfører handlingen.
 5. Vær presis med datoer - bruk formatet YYYY-MM-DD.
 6. Svar alltid på norsk.
+7. Når brukeren ber om å "finne meny [nummer]" eller "vis meny [nummer]", bruk get_menu med menyid=[nummer].
+8. Når brukeren ber om å "finne oppskrift [nummer]" eller "vis oppskrift [nummer]", bruk get_recipe med oppskriftid=[nummer].
 
 EKSEMPLER PÅ OPPGAVER:
 - "Hvor mange ordrer har vi i dag?" → Bruk get_todays_orders eller search_orders
@@ -44,6 +46,8 @@ EKSEMPLER PÅ OPPGAVER:
 - "Vis kunder i kundegruppe sykehjem" → Bruk search_customers med kundegruppe="sykehjem"
 - "Opprett ordre for kunde 42" → Bruk create_order (krever bekreftelse)
 - "Vis statistikk for denne måneden" → Bruk get_quick_stats med period="month"
+- "Finn meny 50" → Bruk get_menu med menyid=50
+- "Vis oppskrift 123" → Bruk get_recipe med oppskriftid=123
 
 Når du trenger flere steg (f.eks. finn kunde, så opprett ordre), utfør dem i rekkefølge."""
 
@@ -108,9 +112,21 @@ class WorkflowAgentService:
 
         except Exception as e:
             logger.error(f"Error in workflow agent: {e}", exc_info=True)
+
+            # Provide more helpful error messages
+            error_message = "Beklager, det oppstod en feil."
+            if "API" in str(e) or "api" in str(e).lower():
+                error_message = "Kunne ikke koble til AI-tjenesten. Sjekk API-nøkkel og tilkobling."
+            elif "timeout" in str(e).lower():
+                error_message = "Forespørselen tok for lang tid. Prøv igjen."
+            elif "not found" in str(e).lower():
+                error_message = f"Kunne ikke finne: {str(e)}"
+            else:
+                error_message = f"En feil oppstod: {str(e)}"
+
             return WorkflowChatResponse(
                 success=False,
-                message="Beklager, det oppstod en feil. Prøv igjen.",
+                message=error_message,
                 error=str(e),
             )
 
