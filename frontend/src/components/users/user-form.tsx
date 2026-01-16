@@ -174,24 +174,18 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Rolle</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Velg rolle" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
+                <FormControl>
+                  <select
+                    {...field}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
                     {ROLLER.map((rolle) => (
-                      <SelectItem key={rolle.value} value={rolle.value}>
+                      <option key={rolle.value} value={rolle.value}>
                         {rolle.label}
-                      </SelectItem>
+                      </option>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </select>
+                </FormControl>
                 <FormDescription>
                   Administratorer kan administrere brukere og system
                 </FormDescription>
@@ -204,35 +198,32 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
             control={form.control}
             name="ansattid"
             render={({ field }) => {
-              const selectValue = field.value?.toString() || "__none__"
+              const selectValue = field.value?.toString() || ""
               return (
                 <FormItem className="md:col-span-2">
                   <FormLabel>Tilknyttet ansatt</FormLabel>
-                  <Select
-                    onValueChange={(value) =>
-                      field.onChange(value === "__none__" ? null : parseInt(value))
-                    }
-                    value={selectValue}
-                    defaultValue={selectValue}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Velg ansatt (valgfritt)" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="__none__">Ingen tilknytning</SelectItem>
+                  <FormControl>
+                    <select
+                      {...field}
+                      value={selectValue}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        field.onChange(value === "" ? null : parseInt(value))
+                      }}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="">Ingen tilknytning</option>
                       {sortedEmployees.map((emp) => (
-                        <SelectItem
+                        <option
                           key={emp.ansattid}
                           value={emp.ansattid.toString()}
                         >
                           {emp.fornavn} {emp.etternavn}
                           {emp.e_postjobb && ` (${emp.e_postjobb})`}
-                        </SelectItem>
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </select>
+                  </FormControl>
                   <FormDescription>
                     Koble brukerkontoen til en ansatt i systemet
                   </FormDescription>

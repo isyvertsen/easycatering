@@ -337,9 +337,21 @@ export function DataTable<T extends CrudItem>({
                 const itemId = item[idField] as number
                 const isSelected = selectedIds.has(itemId)
                 return (
-                  <TableRow key={itemId} className={isSelected ? "bg-primary/5" : undefined}>
+                  <TableRow
+                    key={itemId}
+                    className={isSelected ? "bg-primary/5 cursor-pointer" : "cursor-pointer hover:bg-muted/50"}
+                    onClick={() => {
+                      if (enableEdit) {
+                        if (onEdit) {
+                          onEdit(item)
+                        } else {
+                          router.push(`/${tableName}/${itemId}`)
+                        }
+                      }
+                    }}
+                  >
                     {enableBulkOperations && (
-                      <TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={(checked) => handleSelectRow(itemId, checked as boolean)}
@@ -355,7 +367,7 @@ export function DataTable<T extends CrudItem>({
                         }
                       </TableCell>
                     ))}
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon">
