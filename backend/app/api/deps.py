@@ -54,9 +54,9 @@ async def get_current_user_optional(
             needs_update = True
 
         # Ensure dev user has kundeid for webshop access
-        # Customer 409 belongs to kundegruppe 7 which has webshop=true
+        # Customer 9001 is a test customer
         if not dev_user.kundeid:
-            dev_user.kundeid = 409
+            dev_user.kundeid = 9001
             needs_update = True
 
         if needs_update:
