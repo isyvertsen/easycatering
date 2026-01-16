@@ -13,10 +13,20 @@ from app.schemas.system_settings import (
     WebshopCategoryOrderResponse,
     WebshopCategoryOrderUpdate,
 )
+from app.core.config import settings
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+class FeatureFlagsResponse(BaseModel):
+    """Response model for AI feature flags."""
+    ai_recipe_validation: bool
+    ai_dish_name_generator: bool
+    ai_label_generator: bool
+    ai_chatbot: bool
 
 
 def require_admin(current_user: User) -> User:
@@ -87,3 +97,21 @@ async def update_webshop_category_order(
     logger.info(f"User {current_user.email} updated webshop category order to {data.category_ids}")
 
     return WebshopCategoryOrderResponse(category_ids=data.category_ids)
+
+
+@router.get("/feature-flags", response_model=FeatureFlagsResponse)
+async def get_feature_flags(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get AI feature flags status.
+
+    Returns the current status of AI-powered features.
+    This endpoint is available to all authenticated users.
+    """
+    return FeatureFlagsResponse(
+        ai_recipe_validation=settings.FEATURE_AI_RECIPE_VALIDATION,
+        ai_dish_name_generator=settings.FEATURE_AI_DISH_NAME_GENERATOR,
+        ai_label_generator=settings.FEATURE_AI_LABEL_GENERATOR,
+        ai_chatbot=settings.FEATURE_AI_CHATBOT,
+    )

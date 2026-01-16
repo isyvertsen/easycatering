@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,11 +22,16 @@ import {
   Globe,
   Save,
   ChevronRight,
-  Info
+  Info,
+  Sparkles,
+  Check,
+  X
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useBackendHealth } from "@/hooks/useBackendHealth"
 import { WebshopCategoryOrderSettings } from "@/components/settings/WebshopCategoryOrderSettings"
+import { systemSettingsApi, FeatureFlags } from "@/lib/api/system-settings"
+import { Badge } from "@/components/ui/badge"
 
 export default function SettingsPage() {
   const { toast } = useToast()
@@ -52,6 +57,24 @@ export default function SettingsPage() {
     weeklyReports: false
   })
 
+  const [featureFlags, setFeatureFlags] = useState<FeatureFlags | null>(null)
+  const [featureFlagsLoading, setFeatureFlagsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchFeatureFlags = async () => {
+      try {
+        const flags = await systemSettingsApi.getFeatureFlags()
+        setFeatureFlags(flags)
+      } catch (error) {
+        console.error("Error fetching feature flags:", error)
+      } finally {
+        setFeatureFlagsLoading(false)
+      }
+    }
+
+    fetchFeatureFlags()
+  }, [])
+
   const handleSave = () => {
     toast({
       title: "Innstillinger lagret",
@@ -75,10 +98,14 @@ export default function SettingsPage() {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="company" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="company">Bedrift</TabsTrigger>
           <TabsTrigger value="email">E-post</TabsTrigger>
           <TabsTrigger value="notifications">Varsler</TabsTrigger>
+          <TabsTrigger value="ai-features">
+            <Sparkles className="h-4 w-4 mr-1" />
+            AI Features
+          </TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
           <TabsTrigger value="security">Sikkerhet</TabsTrigger>
         </TabsList>
@@ -324,6 +351,112 @@ export default function SettingsPage() {
                 </div>
                 <Switch />
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ai-features" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5" />
+                AI-Funksjoner
+              </CardTitle>
+              <CardDescription>
+                Status for AI-drevne funksjoner i systemet. Disse funksjonene styres via miljøvariabler (.env) og kan bare endres av systemadministrator.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {featureFlagsLoading ? (
+                <div className="text-sm text-gray-500">Laster feature flags...</div>
+              ) : featureFlags ? (
+                <>
+                  <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-base font-semibold">Oppskriftsvalidering</Label>
+                        {featureFlags.ai_recipe_validation ? (
+                          <Badge variant="default" className="flex items-center gap-1">
+                            <Check className="h-3 w-3" /> Aktiv
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <X className="h-3 w-3" /> Inaktiv
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        AI-validering av oppskrifter før PDF-generering. Sjekker for uvanlige mengder av ingredienser (salt, pepper, etc.)
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2 font-mono">
+                        FEATURE_AI_RECIPE_VALIDATION={featureFlags.ai_recipe_validation.toString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-base font-semibold">Rettnavn-generator</Label>
+                        {featureFlags.ai_dish_name_generator ? (
+                          <Badge variant="default" className="flex items-center gap-1">
+                            <Check className="h-3 w-3" /> Aktiv
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <X className="h-3 w-3" /> Inaktiv
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        AI-generering av rettnavn basert på oppskrifter og produkter. Fallback til regelbasert generering hvis inaktiv.
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2 font-mono">
+                        FEATURE_AI_DISH_NAME_GENERATOR={featureFlags.ai_dish_name_generator.toString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-base font-semibold">Chatbot</Label>
+                        {featureFlags.ai_chatbot ? (
+                          <Badge variant="default" className="flex items-center gap-1">
+                            <Check className="h-3 w-3" /> Aktiv
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <X className="h-3 w-3" /> Inaktiv
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        AI-chatbot for dokumentasjon og brukerstøtte
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2 font-mono">
+                        FEATURE_AI_CHATBOT={featureFlags.ai_chatbot.toString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-blue-900 dark:text-blue-100">
+                        <p className="font-semibold mb-1">Hvordan endre AI-innstillinger:</p>
+                        <ol className="list-decimal list-inside space-y-1 text-blue-800 dark:text-blue-200">
+                          <li>Åpne <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">.env</code> filen i backend-mappen</li>
+                          <li>Sett ønsket feature flag til <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">true</code> eller <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">false</code></li>
+                          <li>Start backend på nytt for at endringene skal tre i kraft</li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-sm text-red-500">Kunne ikke laste feature flags</div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

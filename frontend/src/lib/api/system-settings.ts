@@ -27,6 +27,13 @@ export interface WebshopCategoryOrderUpdate {
   category_ids: number[]
 }
 
+export interface FeatureFlags {
+  ai_recipe_validation: boolean
+  ai_dish_name_generator: boolean
+  ai_label_generator: boolean
+  ai_chatbot: boolean
+}
+
 export const systemSettingsApi = {
   /**
    * Hent alle systeminnstillinger (kun admin)
@@ -57,6 +64,16 @@ export const systemSettingsApi = {
     const response = await apiClient.put('/v1/system-settings/webshop-category-order', {
       category_ids: categoryIds
     })
+    return response.data
+  },
+
+  /**
+   * Hent AI feature flags status
+   *
+   * Backend endpoint: GET /api/v1/system-settings/feature-flags
+   */
+  getFeatureFlags: async (): Promise<FeatureFlags> => {
+    const response = await apiClient.get('/v1/system-settings/feature-flags')
     return response.data
   }
 }

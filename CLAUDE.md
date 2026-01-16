@@ -70,6 +70,61 @@ src/
 └── types/         # TypeScript definitions
 ```
 
+## Critical UI Components
+
+### Dialog Component - Focus Trap Issue
+
+**IMPORTANT**: The Radix UI Dialog component has a known focus trap issue that causes UI to freeze after closing dialogs.
+
+**Problem**: When `modal={true}` (default), Radix UI creates a focus trap for accessibility. If the DOM changes during dialog close (e.g., via `refetch()`), the focus trap doesn't release properly, causing mouse and keyboard to become unresponsive.
+
+**Solution** (implemented in v2.7.0+):
+
+1. **Global fix in `frontend/src/components/ui/dialog.tsx`**:
+   ```typescript
+   const DialogContent = React.forwardRef<
+     React.ElementRef<typeof DialogPrimitive.Content>,
+     React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+       onOpenAutoFocus?: (event: Event) => void
+       onCloseAutoFocus?: (event: Event) => void
+     }
+   >(({ className, children, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => (
+     <DialogPrimitive.Content
+       onOpenAutoFocus={(e) => {
+         e.preventDefault()  // Prevent auto-focus on open
+         onOpenAutoFocus?.(e)
+       }}
+       onCloseAutoFocus={(e) => {
+         e.preventDefault()  // Prevent auto-focus on close
+         onCloseAutoFocus?.(e)
+       }}
+       {...props}
+     >
+       {children}
+     </DialogPrimitive.Content>
+   ))
+   ```
+
+2. **Per-dialog fix when needed**:
+   ```typescript
+   <Dialog open={isOpen} onOpenChange={setIsOpen} modal={false}>
+     <DialogContent onPointerDownOutside={() => setIsOpen(false)}>
+       {/* Dialog content */}
+     </DialogContent>
+   </Dialog>
+   ```
+
+**Key points**:
+- `e.preventDefault()` in focus handlers prevents automatic focus management
+- `modal={false}` completely disables focus trap (use when e.preventDefault() isn't enough)
+- `onPointerDownOutside` restores click-outside-to-close behavior when using `modal={false}`
+- **NEVER** use `setTimeout` workarounds for this issue
+
+**References**:
+- GitHub Issue: https://github.com/radix-ui/primitives/issues/1891
+- GitHub Issue: https://github.com/radix-ui/primitives/issues/2544
+- Fixed in: PR #195, PR #196
+
 ## Critical Database Information
 
 Two separate product tables exist:

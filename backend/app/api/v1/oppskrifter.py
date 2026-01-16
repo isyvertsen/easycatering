@@ -17,6 +17,7 @@ from app.services.label_generator import get_label_generator
 from app.services.zpl_label_generator import get_zpl_label_generator
 from app.services.dish_name_generator import get_dish_name_generator
 from app.services.report_service import ReportService
+from app.services.recipe_validation_service import RecipeValidationService, RecipeValidationResult
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -169,6 +170,10 @@ class KalkyleListResponse(BaseModel):
 class KalkulerRequest(BaseModel):
     """Request for calculating recipe quantities."""
     antallporsjoner: int
+
+class ValidateRecipeRequest(BaseModel):
+    """Request for validating recipe with AI before PDF generation."""
+    antallporsjoner: Optional[int] = None
 
 class KalkulerDetalj(BaseModel):
     """Detail for calculated recipe ingredient."""
@@ -448,6 +453,86 @@ async def get_oppskrift_rapport_pdf(
             "Content-Disposition": f'attachment; filename="oppskrift_{safe_filename}.pdf"'
         }
     )
+
+@router.post("/{kalkylekode}/validate", response_model=RecipeValidationResult)
+async def validate_recipe(
+    kalkylekode: int,
+    validate_request: Optional[ValidateRecipeRequest] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Validate recipe with AI before PDF generation.
+
+    Checks for unusual ingredient amounts (e.g., excessive salt, pepper, etc.)
+    and returns warnings if any issues are found.
+
+    Args:
+        kalkylekode: Recipe ID
+        validate_request: Optional request with antallporsjoner
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        RecipeValidationResult with warnings if any
+    """
+    # Calculate if antallporsjoner provided
+    if validate_request and validate_request.antallporsjoner:
+        kalkuler_request = KalkulerRequest(antallporsjoner=validate_request.antallporsjoner)
+        await kalkuler_oppskrift(kalkylekode, kalkuler_request, db, current_user)
+
+    # Reuse same SQL query as PDF endpoint
+    query = text("""
+        SELECT
+            k.kalkylekode, k.kalkylenavn, k.ansattid, k.opprettetdato,
+            k.revidertdato, k.refporsjon, k.antallporsjoner, k.produksjonsmetode,
+            kd.produktid, p.produktnavn, kd.porsjonsmengde, te.enhet, kd.enh,
+            kd.totmeng, kd.visningsenhet, p.lagerid,
+            k.leveringsdato, k.merknad, k.informasjon, k.brukestil, k.enhet as kalkyleenhet
+        FROM tbl_rpkalkyle k
+        INNER JOIN tbl_rpkalkyledetaljer kd ON k.kalkylekode = kd.kalkylekode
+        INNER JOIN tblprodukter p ON kd.produktid = p.produktid
+        LEFT JOIN tbl_rptabenheter te ON kd.enh = te.enhet
+        WHERE k.kalkylekode = :kalkylekode
+        ORDER BY p.lagerid
+    """)
+
+    result = await db.execute(query, {"kalkylekode": kalkylekode})
+    rows = result.fetchall()
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="Oppskrift ikke funnet eller har ingen ingredienser")
+
+    # Extract recipe metadata from first row
+    first_row = rows[0]
+    kalkyle_info = {
+        "kalkylekode": first_row.kalkylekode,
+        "kalkylenavn": first_row.kalkylenavn,
+        "antallporsjoner": first_row.antallporsjoner,
+        "refporsjon": first_row.refporsjon,
+    }
+
+    # Build ingredient list with per-portion amounts
+    ingredienser = []
+    for row in rows:
+        # Calculate amount per portion
+        antall_porsjoner = first_row.antallporsjoner or 1
+        mengde_per_porsjon = (row.totmeng or 0) / antall_porsjoner if antall_porsjoner > 0 else 0
+
+        ingredienser.append({
+            "produktnavn": row.produktnavn or "",
+            "mengde_per_porsjon": mengde_per_porsjon,
+            "enhetsnavn": row.visningsenhet or row.enh or "",
+            "totalmengde": row.totmeng or 0,
+        })
+
+    # Validate with AI
+    validation_service = RecipeValidationService()
+    validation_result = await validation_service.validate_recipe(
+        kalkyle_info=kalkyle_info,
+        ingredienser=ingredienser
+    )
+
+    return validation_result
 
 @router.post("/", response_model=KalkyleResponse, status_code=201)
 async def create_kalkyle(
