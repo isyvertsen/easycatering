@@ -68,6 +68,12 @@ class Settings(BaseSettings):
     # Supported providers: openai, azure, anthropic
     AI_PROVIDER: str = Field(default="openai", env="AI_PROVIDER")
 
+    # AI Feature Flags
+    FEATURE_AI_RECIPE_VALIDATION: bool = Field(default=True, env="FEATURE_AI_RECIPE_VALIDATION")
+    FEATURE_AI_DISH_NAME_GENERATOR: bool = Field(default=True, env="FEATURE_AI_DISH_NAME_GENERATOR")
+    FEATURE_AI_LABEL_GENERATOR: bool = Field(default=True, env="FEATURE_AI_LABEL_GENERATOR")
+    FEATURE_AI_CHATBOT: bool = Field(default=True, env="FEATURE_AI_CHATBOT")
+
     # OpenAI Configuration
     OPENAI_API_KEY: str = Field(default="", env="OPENAI_API_KEY")
     OPENAI_MODEL: str = Field(default="gpt-4-turbo", env="OPENAI_MODEL")

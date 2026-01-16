@@ -13,7 +13,8 @@ import { ErrorDisplay, LoadingError } from "@/components/error/error-display"
 import { ErrorBoundary } from "@/components/error/error-boundary"
 import { toast } from "@/hooks/use-toast"
 import { getErrorMessage, getCrudErrorMessage } from "@/lib/error-utils"
-import { recipesApi } from "@/lib/api/recipes"
+import { recipesApi, RecipeValidationWarning } from "@/lib/api/recipes"
+import { RecipeValidationDialog } from "@/components/recipes/recipe-validation-dialog"
 import {
   Dialog,
   DialogContent,
@@ -67,6 +68,10 @@ function RecipesPageContent() {
   const [antallPorsjoner, setAntallPorsjoner] = useState<number>(1)
   const [isCalculating, setIsCalculating] = useState(false)
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
+  const [showValidationDialog, setShowValidationDialog] = useState(false)
+  const [validationWarnings, setValidationWarnings] = useState<RecipeValidationWarning[]>([])
+  const [validationSummary, setValidationSummary] = useState<string>("")
+  const [pendingPDFRecipe, setPendingPDFRecipe] = useState<Recipe | null>(null)
 
   const { data, isLoading, error, refetch } = useRecipesList(params)
   const deleteMutation = useDeleteRecipe({
@@ -143,8 +148,7 @@ function RecipesPageContent() {
     }
   }
 
-  const handleDownloadPDF = async (recipe: Recipe) => {
-    setIsDownloadingPDF(true)
+  const generatePDFForRecipe = async (recipe: Recipe) => {
     try {
       const blob = await recipesApi.downloadRecipeReport(recipe.kalkylekode)
 
@@ -163,16 +167,61 @@ function RecipesPageContent() {
       toast({
         title: "Suksess",
         description: "PDF-rapport lastet ned",
+        variant: "default",
       })
     } catch (err) {
       toast({
         title: "Feil",
-        description: "Kunne ikke generere rapport",
+        description: "Kunne ikke laste ned PDF-rapport",
         variant: "destructive",
       })
+    }
+  }
+
+  const handleDownloadPDF = async (recipe: Recipe) => {
+    setIsDownloadingPDF(true)
+    try {
+      // Step 1: Validate recipe with AI
+      const validation = await recipesApi.validateRecipe(recipe.kalkylekode)
+
+      // Step 2: If warnings exist, show confirmation dialog
+      if (!validation.is_valid && validation.warnings.length > 0) {
+        setValidationWarnings(validation.warnings)
+        setValidationSummary(validation.summary)
+        setPendingPDFRecipe(recipe)
+        setShowValidationDialog(true)
+        setIsDownloadingPDF(false)
+        return // Wait for user confirmation
+      }
+
+      // Step 3: No warnings, proceed directly
+      await generatePDFForRecipe(recipe)
+    } catch (err) {
+      console.error("Error validating recipe:", err)
+      // Fallback: If validation fails, still allow PDF generation
+      await generatePDFForRecipe(recipe)
     } finally {
       setIsDownloadingPDF(false)
     }
+  }
+
+  const handleValidationConfirm = async () => {
+    if (!pendingPDFRecipe) return
+
+    setIsDownloadingPDF(true)
+    try {
+      await generatePDFForRecipe(pendingPDFRecipe)
+    } finally {
+      setIsDownloadingPDF(false)
+      setPendingPDFRecipe(null)
+    }
+  }
+
+  const handleValidationCancel = () => {
+    // User canceled, do nothing
+    setValidationWarnings([])
+    setValidationSummary("")
+    setPendingPDFRecipe(null)
   }
 
   // Show error state if there's an error loading recipes
@@ -293,6 +342,16 @@ function RecipesPageContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Validation Dialog */}
+      <RecipeValidationDialog
+        open={showValidationDialog}
+        onOpenChange={setShowValidationDialog}
+        warnings={validationWarnings}
+        summary={validationSummary}
+        onConfirm={handleValidationConfirm}
+        onCancel={handleValidationCancel}
+      />
     </div>
   )
 }

@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Calculator, ChefHat, Scale, Users, Printer, FileText } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
-import { recipesApi } from "@/lib/api/recipes"
+import { recipesApi, RecipeValidationWarning } from "@/lib/api/recipes"
+import { RecipeValidationDialog } from "@/components/recipes/recipe-validation-dialog"
 
 interface KalkylePageProps {
   params: Promise<{ id: string }>
@@ -62,6 +63,9 @@ export default function KalkylePage({ params }: KalkylePageProps) {
   const [error, setError] = useState<string | null>(null)
   const [antallPorsjoner, setAntallPorsjoner] = useState<number>(1)
   const [calculateBeforeReport, setCalculateBeforeReport] = useState(false)
+  const [showValidationDialog, setShowValidationDialog] = useState(false)
+  const [validationWarnings, setValidationWarnings] = useState<RecipeValidationWarning[]>([])
+  const [validationSummary, setValidationSummary] = useState<string>("")
 
   const fetchNutrition = async () => {
     setLoading(true)
@@ -95,8 +99,7 @@ export default function KalkylePage({ params }: KalkylePageProps) {
     }
   }
 
-  const downloadReport = async () => {
-    setReportLoading(true)
+  const generatePDF = async () => {
     try {
       const blob = await recipesApi.downloadRecipeReport(
         parseInt(id),
@@ -122,9 +125,51 @@ export default function KalkylePage({ params }: KalkylePageProps) {
     } catch (err) {
       console.error("Error downloading report:", err)
       alert("Kunne ikke generere rapport. Vennligst prøv igjen.")
+    }
+  }
+
+  const downloadReport = async () => {
+    setReportLoading(true)
+    try {
+      // Step 1: Validate recipe with AI
+      const validation = await recipesApi.validateRecipe(
+        parseInt(id),
+        calculateBeforeReport ? antallPorsjoner : undefined
+      )
+
+      // Step 2: If warnings exist, show confirmation dialog
+      if (!validation.is_valid && validation.warnings.length > 0) {
+        setValidationWarnings(validation.warnings)
+        setValidationSummary(validation.summary)
+        setShowValidationDialog(true)
+        setReportLoading(false)
+        return // Wait for user confirmation
+      }
+
+      // Step 3: No warnings, proceed directly
+      await generatePDF()
+    } catch (err) {
+      console.error("Error validating recipe:", err)
+      // Fallback: If validation fails, still allow PDF generation
+      await generatePDF()
     } finally {
       setReportLoading(false)
     }
+  }
+
+  const handleValidationConfirm = async () => {
+    setReportLoading(true)
+    try {
+      await generatePDF()
+    } finally {
+      setReportLoading(false)
+    }
+  }
+
+  const handleValidationCancel = () => {
+    // User canceled, do nothing
+    setValidationWarnings([])
+    setValidationSummary("")
   }
 
   const printLabel = async () => {
@@ -425,6 +470,15 @@ export default function KalkylePage({ params }: KalkylePageProps) {
           </div>
         </CardContent>
       </Card>
+
+      <RecipeValidationDialog
+        open={showValidationDialog}
+        onOpenChange={setShowValidationDialog}
+        warnings={validationWarnings}
+        summary={validationSummary}
+        onConfirm={handleValidationConfirm}
+        onCancel={handleValidationCancel}
+      />
     </div>
   )
 }

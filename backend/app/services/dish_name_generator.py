@@ -2,6 +2,7 @@
 from typing import List, Optional
 import logging
 from app.services.ai_client import get_default_ai_client, AIClient
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,11 @@ class DishNameGenerator:
         Returns:
             Generated dish name
         """
+        # If feature flag is disabled, use rule-based generation
+        if not settings.FEATURE_AI_DISH_NAME_GENERATOR:
+            logger.info("AI dish name generator is disabled via feature flag")
+            return self._generate_rule_based(recipes, products)
+
         # Try AI if configured
         try:
             if self.ai_client.is_configured():

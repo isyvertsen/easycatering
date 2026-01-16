@@ -16,6 +16,20 @@ export interface RecipeListResponse {
   total_pages: number
 }
 
+export interface RecipeValidationWarning {
+  ingredient: string
+  amount_per_portion: number
+  unit: string
+  reason: string
+  severity: 'high' | 'medium' | 'low'
+}
+
+export interface RecipeValidationResult {
+  is_valid: boolean
+  warnings: RecipeValidationWarning[]
+  summary: string
+}
+
 export const recipesApi = {
   list: async (params?: RecipeListParams): Promise<RecipeListResponse> => {
     const queryParams = new URLSearchParams()
@@ -100,6 +114,14 @@ export const recipesApi = {
       responseType: 'blob'
     })
 
+    return response.data
+  },
+
+  // Validate recipe with AI before PDF generation
+  validateRecipe: async (recipeId: number, antallporsjoner?: number): Promise<RecipeValidationResult> => {
+    const response = await apiClient.post(`/v1/oppskrifter/${recipeId}/validate`,
+      antallporsjoner ? { antallporsjoner } : {}
+    )
     return response.data
   }
 }
