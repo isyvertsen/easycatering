@@ -28,6 +28,7 @@ from app.models.kategorier import Kategorier
 from app.models.produkter import Produkter
 from app.models.ordrer import Ordrer
 from app.models.ordredetaljer import Ordredetaljer
+from app.models.ordrestatus import Ordrestatus
 
 # Import test fixtures
 from tests.fixtures import (
@@ -39,6 +40,7 @@ from tests.fixtures import (
     get_test_products,
     get_test_orders,
     get_test_order_details,
+    get_test_order_statuses,
     TEST_USER,
     TEST_ADMIN,
 )
@@ -76,10 +78,11 @@ async def seed_test_data(session: AsyncSession) -> None:
     2. Customer groups (no dependencies)
     3. Suppliers (no dependencies)
     4. Categories (no dependencies)
-    5. Customers (depends on customer groups)
-    6. Products (depends on suppliers, categories)
-    7. Orders (depends on customers, users)
-    8. Order details (depends on orders, products)
+    5. Order statuses (no dependencies)
+    6. Customers (depends on customer groups)
+    7. Products (depends on suppliers, categories)
+    8. Orders (depends on customers, users, order statuses)
+    9. Order details (depends on orders, products)
     """
     # 1. Insert users
     for user_data in get_test_users():
@@ -101,21 +104,26 @@ async def seed_test_data(session: AsyncSession) -> None:
         category = Kategorier(**category_data)
         session.add(category)
 
+    # 5. Insert order statuses
+    for status_data in get_test_order_statuses():
+        status = Ordrestatus(**status_data)
+        session.add(status)
+
     await session.commit()
 
-    # 5. Insert customers (after groups)
+    # 6. Insert customers (after groups)
     for customer_data in get_test_customers():
         customer = Kunder(**customer_data)
         session.add(customer)
 
-    # 6. Insert products (after suppliers and categories)
+    # 7. Insert products (after suppliers and categories)
     for product_data in get_test_products():
         product = Produkter(**product_data)
         session.add(product)
 
     await session.commit()
 
-    # 7. Insert orders (after customers and users)
+    # 8. Insert orders (after customers and users and order statuses)
     for order_data in get_test_orders():
         order = Ordrer(**order_data)
         session.add(order)
@@ -135,13 +143,17 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """Create a fresh database session for each test.
 
     This fixture:
-    1. Drops all tables
+    1. Drops all tables (with CASCADE to handle foreign keys)
     2. Creates all tables
     3. Seeds with test data
     4. Yields session for test
     """
     async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        # Use raw SQL with CASCADE to handle foreign key dependencies
+        # from tables outside our model definitions
+        from sqlalchemy import text
+        for table in reversed(Base.metadata.sorted_tables):
+            await conn.execute(text(f'DROP TABLE IF EXISTS "{table.name}" CASCADE'))
         await conn.run_sync(Base.metadata.create_all)
 
     async with TestSessionLocal() as session:
