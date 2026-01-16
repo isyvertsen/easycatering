@@ -30,6 +30,7 @@ export interface CreateIssueRequest {
   aiImproved?: boolean
   targetRepositories?: string[]
   screenshots?: string[]  // Base64 encoded images
+  autoHandle?: boolean  // Request automatic handling by Claude
 }
 
 export interface IssueInfo {

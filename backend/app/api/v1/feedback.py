@@ -44,6 +44,7 @@ class CreateIssueRequest(BaseModel):
     aiImproved: bool = Field(default=False, description="Whether the feedback was improved by AI")
     targetRepositories: Optional[List[str]] = Field(default=None, description="Which repositories to create issues in")
     screenshots: Optional[List[str]] = Field(default=None, description="Base64 encoded screenshots")
+    autoHandle: bool = Field(default=False, description="Request automatic handling by Claude")
 
 
 class IssueInfo(BaseModel):
@@ -129,7 +130,8 @@ async def create_github_issue(
         current_url=request.currentUrl,
         ai_improved=request.aiImproved,
         target_repositories=request.targetRepositories,
-        screenshots=request.screenshots
+        screenshots=request.screenshots,
+        auto_handle=request.autoHandle
     )
 
     if not result.get("success"):
