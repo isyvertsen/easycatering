@@ -53,7 +53,7 @@ function ProductCardComponent({ product }: ProductCardProps) {
         <div className="aspect-square bg-muted rounded-md flex items-center justify-center mb-3">
           <Package className="h-12 w-12 text-muted-foreground" />
         </div>
-        <h3 className="font-semibold text-lg line-clamp-2" title={product.produktnavn}>
+        <h3 className="font-semibold text-base md:text-lg md:line-clamp-2" title={product.produktnavn}>
           {displayName}
         </h3>
       </CardHeader>
@@ -66,13 +66,13 @@ function ProductCardComponent({ product }: ProductCardProps) {
         )}
       </CardContent>
 
-      <CardFooter className="flex items-center justify-between pt-3 border-t">
+      <CardFooter className="flex flex-col md:flex-row md:items-center gap-3 md:justify-between pt-3 border-t">
         <div className="flex flex-col">
-          <span className="text-2xl font-bold">
+          <span className="text-xl md:text-2xl font-bold">
             {priceWithMva.toFixed(2)} kr
           </span>
         </div>
-        <Button onClick={handleAddToCart} size="sm">
+        <Button onClick={handleAddToCart} size="sm" className="w-full md:w-auto">
           <ShoppingCart className="mr-2 h-4 w-4" />
           Legg til
         </Button>
