@@ -15,8 +15,7 @@ export default function UserEditPage() {
   const isNew = userId === 'new'
 
   const { data: bruker, isLoading } = useBruker(
-    isNew ? undefined : parseInt(userId),
-    { enabled: !isNew }
+    isNew ? undefined : parseInt(userId)
   )
   const createMutation = useCreateBruker()
   const updateMutation = useUpdateBruker()
