@@ -1,7 +1,7 @@
 # Brukermanual - Larvik Kommune Catering System
 
-**Versjon:** 2.5.11
-**Sist oppdatert:** 2026-01-13
+**Versjon:** 2.7.0
+**Sist oppdatert:** 2026-01-16
 
 ---
 
@@ -103,6 +103,23 @@ Detaljert visning og redigering av en oppskrift.
 - **Kostnadskalkyle** - Totalkostnad basert på produktpriser
 - **Tilberedning** - Fremgangsmåte
 
+#### Nye funksjoner (v2.7.0)
+- **Kalkulering** - Beregn mengder for et spesifikt antall porsjoner
+  - Skriv inn ønsket antall porsjoner
+  - Klikk "Kalkuler" for å beregne alle ingrediensmengder
+  - Systemet oppdaterer automatisk totalmengder og priser
+  - Enhetskonvertering håndteres automatisk
+
+- **PDF-rapport** - Last ned detaljert produksjonsrapport
+  - Klikk "Last ned rapport (PDF)" for å generere rapport
+  - Valgfritt: Kalkuler for et bestemt antall porsjoner først
+  - Rapporten inneholder:
+    - Oppskriftsdetaljer (navn, porsjoner, datoer)
+    - Ingrediensliste sortert etter Lager-ID
+    - Mengder og enheter
+    - Tilleggsinformasjon (bruk, merknader)
+  - Perfekt for bruk i produksjonen eller vareinntak
+
 ### Kalkyler
 **Sti:** `/kalkyler`
 
@@ -110,8 +127,14 @@ Oversikt over alle kalkyler (oppskrifter med priskalkyle).
 
 #### Funksjoner
 - **Se kalkyle** - Vis detaljert kostnadsoversikt
-- **Eksporter** - Last ned som PDF eller Excel
-- **Skriv ut** - Send til printer
+- **Kalkuler mengder** - Automatisk beregning for ønsket antall porsjoner (NYT i v2.7.0)
+  - Beregner totalmengder for alle ingredienser
+  - Konverterer enheter automatisk (gram til kilogram, etc.)
+  - Oppdaterer priser basert på nye mengder
+- **Last ned rapport (PDF)** - Generer produksjonsrapport (NYT i v2.7.0)
+  - Detaljert PDF med ingrediensliste sortert etter Lager-ID
+  - Inkluderer alle mengder, enheter og tilleggsinformasjon
+  - Kan kalkuleres for et bestemt antall porsjoner før generering
 
 ---
 

@@ -9,12 +9,14 @@ from app.api.deps import get_db, get_current_user
 from app.models.kalkyle import Kalkyle
 from app.models.kalkyledetaljer import Kalkyledetaljer
 from app.models.kalkylegruppe import Kalkylegruppe
+from app.models.tabenhet import TabEnhet
 from app.models.matinfo_products import MatinfoProduct, MatinfoNutrient, MatinfoAllergen
 from app.models.produkter import Produkter
 from app.domain.entities.user import User
 from app.services.label_generator import get_label_generator
 from app.services.zpl_label_generator import get_zpl_label_generator
 from app.services.dish_name_generator import get_dish_name_generator
+from app.services.report_service import ReportService
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -164,6 +166,28 @@ class KalkyleListResponse(BaseModel):
     page_size: int
     total_pages: int
 
+class KalkulerRequest(BaseModel):
+    """Request for calculating recipe quantities."""
+    antallporsjoner: int
+
+class KalkulerDetalj(BaseModel):
+    """Detail for calculated recipe ingredient."""
+    produktid: int
+    produktnavn: str
+    porsjonsmengde: float
+    enhet: str
+    totmeng: float
+    pris: float
+    visningsenhet: Optional[str] = None
+
+class KalkulerResponse(BaseModel):
+    """Response for calculated recipe."""
+    kalkylekode: int
+    kalkylenavn: str
+    antallporsjoner: int
+    detaljer: List[KalkulerDetalj]
+    oppdatert: bool
+
 @router.get("/", response_model=KalkyleListResponse)
 async def list_kalkyler(
     skip: int = Query(0, ge=0),
@@ -221,8 +245,209 @@ async def get_kalkyle(
     
     if not kalkyle:
         raise HTTPException(status_code=404, detail="Oppskrift ikke funnet")
-    
+
     return kalkyle
+
+@router.post("/{kalkylekode}/kalkuler", response_model=KalkulerResponse)
+async def kalkuler_oppskrift(
+    kalkylekode: int,
+    request: KalkulerRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Kalkuler mengder og priser for en oppskrift basert på antall porsjoner.
+    Oppdaterer tbl_rpkalkyledetaljer med beregnede verdier.
+    """
+    # Hent kalkyle og verifiser at den eksisterer
+    kalkyle_query = select(Kalkyle).where(Kalkyle.kalkylekode == kalkylekode)
+    kalkyle_result = await db.execute(kalkyle_query)
+    kalkyle = kalkyle_result.scalar_one_or_none()
+
+    if not kalkyle:
+        raise HTTPException(status_code=404, detail="Oppskrift ikke funnet")
+
+    # Hent alle kalkyledetaljer for denne oppskriften
+    detaljer_query = select(Kalkyledetaljer).where(
+        Kalkyledetaljer.kalkylekode == kalkylekode
+    ).options(selectinload(Kalkyledetaljer.produkt))
+
+    detaljer_result = await db.execute(detaljer_query)
+    detaljer_list = detaljer_result.scalars().all()
+
+    if not detaljer_list:
+        raise HTTPException(status_code=400, detail="Oppskriften har ingen ingredienser")
+
+    response_detaljer = []
+
+    try:
+        # Prosesser hver detalj
+        for detalj in detaljer_list:
+            # Hent enhet fra tbl_rpTabEnheter hvor kalkuler = True
+            enhet_query = select(TabEnhet).where(
+                TabEnhet.enhet == detalj.enh,
+                TabEnhet.kalkuler == True
+            )
+            enhet_result = await db.execute(enhet_query)
+            enhet = enhet_result.scalar_one_or_none()
+
+            if not enhet:
+                # Hvis enheten ikke finnes i tabellen, bruk default verdier
+                visningsfaktor = 1.0
+                visningsenhet = detalj.enh
+            else:
+                visningsfaktor = enhet.visningsfaktor if enhet.visningsfaktor else 1.0
+                visningsenhet = detalj.enh
+
+            # Beregn TotMeng = (porsjonsmengde * antallPorsjoner) / VisningsFaktor
+            porsjonsmengde = float(detalj.porsjonsmengde) if detalj.porsjonsmengde else 0.0
+            totmeng = (porsjonsmengde * request.antallporsjoner) / visningsfaktor
+
+            # Hent produkt for prisberegning
+            if detalj.produkt:
+                produkt_pris = detalj.produkt.pris if detalj.produkt.pris else 0.0
+                utregningsfaktor = detalj.produkt.utregningsfaktor if detalj.produkt.utregningsfaktor else 1.0
+
+                # Beregn pris = (Produkt.Pris / Produkt.utregningsfaktor) * totmeng
+                if utregningsfaktor != 0:
+                    pris = (produkt_pris / utregningsfaktor) * totmeng
+                else:
+                    pris = 0.0
+
+                produktnavn = detalj.produkt.produktnavn or "Ukjent produkt"
+            else:
+                pris = 0.0
+                produktnavn = detalj.produktnavn or "Ukjent produkt"
+
+            # Oppdater detalj i database
+            detalj.totmeng = totmeng
+            detalj.pris = pris
+            detalj.visningsenhet = visningsenhet
+
+            # Legg til i response
+            response_detaljer.append(KalkulerDetalj(
+                produktid=detalj.produktid,
+                produktnavn=produktnavn,
+                porsjonsmengde=porsjonsmengde,
+                enhet=detalj.enh or "",
+                totmeng=round(totmeng, 2),
+                pris=round(pris, 2),
+                visningsenhet=visningsenhet
+            ))
+
+        # Oppdater antall porsjoner på kalkyle
+        kalkyle.antallporsjoner = request.antallporsjoner
+        kalkyle.revidertdato = datetime.utcnow()
+
+        # Commit alle endringer
+        await db.commit()
+
+        return KalkulerResponse(
+            kalkylekode=kalkylekode,
+            kalkylenavn=kalkyle.kalkylenavn,
+            antallporsjoner=request.antallporsjoner,
+            detaljer=response_detaljer,
+            oppdatert=True
+        )
+
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Feil ved kalkulering: {str(e)}"
+        )
+
+@router.get("/{kalkylekode}/rapport-pdf")
+async def get_oppskrift_rapport_pdf(
+    kalkylekode: int,
+    antallporsjoner: Optional[int] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Generer detaljert PDF-rapport for en oppskrift.
+
+    Args:
+        kalkylekode: ID for oppskriften
+        antallporsjoner: (Valgfritt) Kalkuler mengder for antall porsjoner før generering
+
+    Returns:
+        PDF-fil med detaljert oppskriftsinformasjon
+    """
+    # Hvis antallporsjoner er angitt, kalkuler først
+    if antallporsjoner:
+        kalkuler_request = KalkulerRequest(antallporsjoner=antallporsjoner)
+        await kalkuler_oppskrift(kalkylekode, kalkuler_request, db, current_user)
+
+    # Hent data med SQL-query (tilsvarende brukerens SELECT-query)
+    query = text("""
+        SELECT
+            k.kalkylekode, k.kalkylenavn, k.ansattid, k.opprettetdato,
+            k.revidertdato, k.refporsjon, k.antallporsjoner, k.produksjonsmetode,
+            kd.produktid, p.produktnavn, kd.porsjonsmengde, te.enhet, kd.enh,
+            kd.totmeng, kd.visningsenhet, p.lagerid,
+            k.leveringsdato, k.merknad, k.informasjon, k.brukestil, k.enhet as kalkyleenhet
+        FROM tbl_rpkalkyle k
+        INNER JOIN tbl_rpkalkyledetaljer kd ON k.kalkylekode = kd.kalkylekode
+        INNER JOIN tblprodukter p ON kd.produktid = p.produktid
+        LEFT JOIN tbl_rptabenheter te ON kd.enh = te.enhet
+        WHERE k.kalkylekode = :kalkylekode
+        ORDER BY p.lagerid
+    """)
+
+    result = await db.execute(query, {"kalkylekode": kalkylekode})
+    rows = result.fetchall()
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="Oppskrift ikke funnet eller har ingen ingredienser")
+
+    # Ekstraher kalkyle-info fra første rad
+    first_row = rows[0]
+    kalkyle_info = {
+        "kalkylekode": first_row.kalkylekode,
+        "kalkylenavn": first_row.kalkylenavn,
+        "ansattid": first_row.ansattid,
+        "opprettetdato": first_row.opprettetdato,
+        "revidertdato": first_row.revidertdato,
+        "refporsjon": first_row.refporsjon,
+        "antallporsjoner": first_row.antallporsjoner,
+        "produksjonsmetode": first_row.produksjonsmetode,
+        "leveringsdato": first_row.leveringsdato,
+        "merknad": first_row.merknad,
+        "informasjon": first_row.informasjon,
+        "brukestil": first_row.brukestil,
+        "enhet": first_row.kalkyleenhet
+    }
+
+    # Bygg ingrediensliste
+    ingredienser = []
+    for row in rows:
+        ingredienser.append({
+            "lagerid": row.lagerid or "",
+            "produktnavn": row.produktnavn or "",
+            "porsjonsmengde": row.porsjonsmengde or 0,
+            "enhet": row.enh or "",
+            "totmeng": row.totmeng or 0,
+            "visningsenhet": row.visningsenhet or row.enh or ""
+        })
+
+    # Generer PDF
+    report_service = ReportService()
+    pdf_bytes = await report_service.generate_recipe_report_pdf(
+        kalkyle_info=kalkyle_info,
+        ingredienser=ingredienser
+    )
+
+    # Sanitize filename
+    safe_filename = kalkyle_info["kalkylenavn"].replace(' ', '_').replace('"', '').replace("'", '')
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="oppskrift_{safe_filename}.pdf"'
+        }
+    )
 
 @router.post("/", response_model=KalkyleResponse, status_code=201)
 async def create_kalkyle(
@@ -321,7 +546,7 @@ async def list_grupper(
     current_user: User = Depends(get_current_user)
 ):
     """List alle oppskriftsgrupper."""
-    query = select(KalkyleGruppe).order_by(KalkyleGruppe.sortering)
+    query = select(Kalkylegruppe).order_by(Kalkylegruppe.sortering)
     result = await db.execute(query)
     grupper = result.scalars().all()
 

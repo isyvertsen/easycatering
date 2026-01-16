@@ -15,6 +15,7 @@ from .meny_produkt import MenyProdukt
 from .kalkyle import Kalkyle
 from .kalkyledetaljer import Kalkyledetaljer
 from .kalkylegruppe import Kalkylegruppe
+from .tabenhet import TabEnhet
 from .periode import Periode
 from .periode_meny import PeriodeMeny
 from .matinfo_products import MatinfoProduct, MatinfoAllergen, MatinfoNutrient
@@ -45,6 +46,7 @@ __all__ = [
     "Kalkyle",
     "Kalkyledetaljer",
     "Kalkylegruppe",
+    "TabEnhet",
     "Periode",
     "PeriodeMeny",
     "MatinfoProduct",

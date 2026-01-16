@@ -122,3 +122,48 @@ Versjon finnes i to filer som ALLTID må være synkronisert:
 Eksempel: 2.6.1 → 2.6.2
 
 Gjør dette FØR du lager PR, ikke etter.
+
+## User Documentation & AI References
+
+### Documentation Locations
+
+**User Guides** (Norwegian):
+- **Main manual**: `/docs/BRUKERMANUAL.md` - General user manual with overview of all features
+- **Recipe guide**: `/backend/docs/user-guides/oppskrifter.md` - Comprehensive guide for recipe management
+  - Includes sections on recipe creation, editing, calculation, and PDF reports
+  - Added in v2.7.0: "Kalkulering av mengder" and "PDF-rapport" sections
+- **Other guides**: `/backend/docs/user-guides/` - Additional module-specific guides
+
+**Developer Documentation**:
+- **CHANGELOG**: `/CHANGELOG.md` - Detailed version history and release notes
+- **API Documentation**: Available at `http://localhost:8000/api/docs` when running backend
+- **Backend CLAUDE.md**: `/backend/CLAUDE.md` - Backend-specific guidance
+
+### AI Assistance References
+
+This project has been developed with assistance from **Claude Code** (Anthropic's AI coding assistant). AI references are documented in:
+
+1. **CHANGELOG.md** - Each major version includes "Developed with assistance from Claude Code"
+2. **User Guides** - Footer sections acknowledge AI assistance:
+   - `/backend/docs/user-guides/oppskrifter.md` includes "Om denne funksjonen" section
+3. **GitHub Pull Requests** - PR descriptions reference Claude Code when applicable
+
+### Recent Major Feature: Recipe Calculation (v2.7.0)
+
+Implemented in January 2026 with Claude Code assistance:
+
+**Functionality**:
+- Automatic calculation of ingredient quantities for N portions
+- PDF report generation sorted by warehouse location (Lager-ID)
+- Replaces legacy SQL stored procedure `sp_KalkulerOppskrift`
+
+**Key Files**:
+- Backend: `/backend/app/api/v1/oppskrifter.py` - Endpoints for calculation and PDF
+- Backend: `/backend/app/services/report_service.py` - PDF generation with ReportLab
+- Backend: `/backend/app/models/tabenhet.py` - Unit conversion table model
+- Frontend: `/frontend/src/app/(main)/kalkyler/[id]/page.tsx` - UI for calculation
+
+**Documentation**:
+- User guide with step-by-step instructions in `/backend/docs/user-guides/oppskrifter.md`
+- CHANGELOG entry with full technical details in `/CHANGELOG.md`
+- GitHub: Issues #186, #187, #188 and PR #189
