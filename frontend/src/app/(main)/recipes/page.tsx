@@ -131,10 +131,7 @@ function RecipesPageContent() {
         description: `Oppskriften er kalkulert for ${antallPorsjoner} porsjoner`,
       })
       setCalculateDialogOpen(false)
-      // Delay refetch to allow dialog to fully close and cleanup
-      setTimeout(() => {
-        refetch()
-      }, 100)
+      refetch()
     } catch (err) {
       toast({
         title: "Feil",
