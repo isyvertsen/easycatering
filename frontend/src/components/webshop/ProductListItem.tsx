@@ -52,11 +52,11 @@ export function ProductListItem({ product }: ProductListItemProps) {
 
       {/* Product Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-base truncate" title={displayName}>
+        <h3 className="font-semibold text-sm md:text-base md:truncate break-words" title={displayName}>
           {capitalize(displayName)}
         </h3>
         {product.leverandor?.navn && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground hidden md:block">
             Leverandor: {product.leverandor.navn}
           </p>
         )}
@@ -68,11 +68,11 @@ export function ProductListItem({ product }: ProductListItemProps) {
       </div>
 
       {/* Price and Add Button */}
-      <div className="flex items-center gap-4 flex-shrink-0">
-        <span className="text-lg font-bold whitespace-nowrap">
+      <div className="flex flex-col md:flex-row items-end md:items-center gap-2 md:gap-4 flex-shrink-0">
+        <span className="text-base md:text-lg font-bold whitespace-nowrap">
           {priceWithMva.toFixed(2)} kr
         </span>
-        <Button onClick={handleAddToCart} size="sm">
+        <Button onClick={handleAddToCart} size="sm" className="w-full md:w-auto">
           <ShoppingCart className="mr-2 h-4 w-4" />
           Legg til
         </Button>
