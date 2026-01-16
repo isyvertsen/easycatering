@@ -66,6 +66,20 @@ else
     echo "Warning: Database '$TARGET_DB' already exists."
     read -p "Drop and recreate? (y/N): " CONFIRM
     if [ "$CONFIRM" = "y" ] || [ "$CONFIRM" = "Y" ]; then
+        # Terminate all existing connections first
+        echo "Terminating existing connections..."
+        CONN_COUNT=$(PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -tAc \
+            "SELECT COUNT(*) FROM pg_stat_activity WHERE datname = '$TARGET_DB' AND pid <> pg_backend_pid();")
+
+        if [ "$CONN_COUNT" -gt "0" ]; then
+            echo "  Found $CONN_COUNT active connection(s). Terminating..."
+            PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -c \
+                "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$TARGET_DB' AND pid <> pg_backend_pid();" > /dev/null
+            echo "  All connections terminated."
+        else
+            echo "  No active connections found."
+        fi
+
         echo "Dropping database..."
         PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -c "DROP DATABASE $TARGET_DB;"
         echo "Recreating database..."
