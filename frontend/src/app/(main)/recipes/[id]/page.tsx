@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { use, useState } from "react"
+import { use, useState, useEffect } from "react"
 import { RecipeForm } from "@/components/recipes/recipe-form"
 import { RecipeIngredients } from "@/components/recipes/recipe-ingredients"
 import { NutritionDisplay } from "@/components/recipes/nutrition-display"
@@ -44,6 +44,13 @@ export default function RecipeEditPage({ params }: RecipeEditPageProps) {
   const handleNutritionCalculated = (data: any) => {
     setNutritionData(data)
   }
+
+  // Set default portion count from recipe when loaded
+  useEffect(() => {
+    if (recipe?.antallporsjoner) {
+      setAntallPorsjoner(recipe.antallporsjoner)
+    }
+  }, [recipe])
 
   const calculateRecipe = async () => {
     setCalculateLoading(true)
