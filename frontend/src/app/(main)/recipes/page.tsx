@@ -258,8 +258,8 @@ function RecipesPageContent() {
       />
 
       {/* Calculate Dialog */}
-      <Dialog open={calculateDialogOpen} onOpenChange={handleDialogClose}>
-        <DialogContent>
+      <Dialog open={calculateDialogOpen} onOpenChange={handleDialogClose} modal={false}>
+        <DialogContent onPointerDownOutside={() => setCalculateDialogOpen(false)}>
           <DialogHeader>
             <DialogTitle>Kalkuler oppskrift</DialogTitle>
             <DialogDescription>
