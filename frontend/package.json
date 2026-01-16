@@ -1,6 +1,6 @@
 {
   "name": "catering-frontend",
-  "version": "2.6.13",
+  "version": "2.6.16",
   "private": true,
   "scripts": {
     "dev": "next dev",
