@@ -112,14 +112,20 @@ async def get_produkter(
             )
         )
 
-    # Apply sorting
+    # Apply sorting with secondary sort by produktnavn for better readability
     if sort_by:
         sort_column = getattr(ProdukterModel, sort_by, None)
         if sort_column is not None:
             if sort_order == "desc":
-                base_query = base_query.order_by(sort_column.desc())
+                base_query = base_query.order_by(
+                    sort_column.desc(),
+                    ProdukterModel.produktnavn.asc()
+                )
             else:
-                base_query = base_query.order_by(sort_column.asc())
+                base_query = base_query.order_by(
+                    sort_column.asc(),
+                    ProdukterModel.produktnavn.asc()
+                )
         else:
             # Default sort by produktid if invalid sort field
             base_query = base_query.order_by(ProdukterModel.produktid.asc())

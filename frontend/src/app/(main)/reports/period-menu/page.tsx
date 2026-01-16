@@ -195,30 +195,30 @@ export default function PeriodMenuReportPage() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8 print:hidden">
-        <h1 className="text-3xl font-bold">Period Menu Report</h1>
+        <h1 className="text-3xl font-bold">Perioderapport Meny</h1>
         <div className="flex gap-2">
           <Button onClick={exportToPDF} variant="outline">
             <FileDown className="mr-2 h-4 w-4" />
-            Export PDF
+            Eksporter PDF
           </Button>
           <Button onClick={print} variant="outline">
             <Printer className="mr-2 h-4 w-4" />
-            Print
+            Skriv ut
           </Button>
         </div>
       </div>
 
       <Card className="mb-6 print:hidden">
         <CardHeader>
-          <CardTitle>Report Parameters</CardTitle>
+          <CardTitle>Rapportparametere</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Period</label>
+              <label className="text-sm font-medium mb-2 block">Periode</label>
               <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a period" />
+                  <SelectValue placeholder="Velg en periode" />
                 </SelectTrigger>
                 <SelectContent>
                   {periods.map((period) => (
@@ -226,7 +226,7 @@ export default function PeriodMenuReportPage() {
                       key={period.menyperiodeid}
                       value={period.menyperiodeid.toString()}
                     >
-                      Week {period.ukenr} - {formatDate(period.fradato)}
+                      Uke {period.ukenr} - {formatDate(period.fradato)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -235,14 +235,14 @@ export default function PeriodMenuReportPage() {
 
             <div>
               <label className="text-sm font-medium mb-2 block">
-                Menu Group (Optional)
+                Menygruppe (Valgfritt)
               </label>
               <Select value={selectedMenuGroup} onValueChange={setSelectedMenuGroup}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All groups" />
+                  <SelectValue placeholder="Alle grupper" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All groups</SelectItem>
+                  <SelectItem value="all">Alle grupper</SelectItem>
                   {menuGroups.map((group) => (
                     <SelectItem key={group.gruppeid} value={group.gruppeid.toString()}>
                       {group.gruppe}
@@ -254,7 +254,7 @@ export default function PeriodMenuReportPage() {
 
             <div className="flex items-end">
               <Button onClick={generateReport} disabled={loading} className="w-full">
-                Generate Report
+                Generer rapport
               </Button>
             </div>
           </div>
@@ -265,10 +265,10 @@ export default function PeriodMenuReportPage() {
         <div className="space-y-8">
           {/* Report Header */}
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-2">Customer Menu Report</h2>
+            <h2 className="text-2xl font-bold mb-2">Kunde Meny Rapport</h2>
             {selectedPeriodData && (
               <p className="text-lg text-muted-foreground">
-                Week {selectedPeriodData.ukenr} - {formatDate(selectedPeriodData.fradato)} to{" "}
+                Uke {selectedPeriodData.ukenr} - {formatDate(selectedPeriodData.fradato)} til{" "}
                 {formatDate(selectedPeriodData.tildato)}
               </p>
             )}
@@ -290,11 +290,11 @@ export default function PeriodMenuReportPage() {
                   <div className="flex gap-2">
                     <Badge variant="secondary">
                       <Users className="mr-1 h-3 w-3" />
-                      {report.customers.length} customers
+                      {report.customers.length} kunder
                     </Badge>
                     <Badge variant="secondary">
                       <Package className="mr-1 h-3 w-3" />
-                      {report.products.length} products
+                      {report.products.length} produkter
                     </Badge>
                   </div>
                 </div>
@@ -302,13 +302,13 @@ export default function PeriodMenuReportPage() {
               <CardContent className="space-y-6">
                 {/* Customers Section */}
                 <div>
-                  <h3 className="font-semibold mb-3">Customers</h3>
+                  <h3 className="font-semibold mb-3">Kunder</h3>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Address</TableHead>
-                        <TableHead>Contact</TableHead>
+                        <TableHead>Navn</TableHead>
+                        <TableHead>Adresse</TableHead>
+                        <TableHead>Kontakt</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -346,13 +346,13 @@ export default function PeriodMenuReportPage() {
 
                 {/* Products Section */}
                 <div>
-                  <h3 className="font-semibold mb-3">Products</h3>
+                  <h3 className="font-semibold mb-3">Produkter</h3>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Unit</TableHead>
-                        <TableHead className="text-right">Price</TableHead>
+                        <TableHead>Produkt</TableHead>
+                        <TableHead>Enhet</TableHead>
+                        <TableHead className="text-right">Pris</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

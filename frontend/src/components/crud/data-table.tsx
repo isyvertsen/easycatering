@@ -105,12 +105,12 @@ export function DataTable<T extends CrudItem>({
   enableEdit = true,
   enableDelete = true,
   enableBulkOperations = true,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = "Søk...",
   hideAddButton = false,
   bulkExportColumns,
   onEdit,
   onCreate,
-  createButtonLabel = "Add New"
+  createButtonLabel = "Legg til ny"
 }: DataTableProps<T>) {
   const router = useRouter()
   const [search, setSearch] = useState("")
@@ -316,20 +316,20 @@ export function DataTable<T extends CrudItem>({
                   )}
                 </TableHead>
               ))}
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead className="w-[100px]">Handlinger</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
                 <TableCell colSpan={columns.length + (enableBulkOperations ? 2 : 1)} className="text-center">
-                  Loading...
+                  Laster...
                 </TableCell>
               </TableRow>
             ) : data.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length + (enableBulkOperations ? 2 : 1)} className="text-center">
-                  No results found
+                  Ingen resultater funnet
                 </TableCell>
               </TableRow>
             ) : (
@@ -368,7 +368,7 @@ export function DataTable<T extends CrudItem>({
                               onClick={() => onEdit ? onEdit(item) : router.push(`/${tableName}/${itemId}`)}
                             >
                               <Edit className="mr-2 h-4 w-4" />
-                              Edit
+                              Rediger
                             </DropdownMenuItem>
                           )}
                           {enableDelete && (
@@ -377,7 +377,7 @@ export function DataTable<T extends CrudItem>({
                               className="text-red-600"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
+                              Slett
                             </DropdownMenuItem>
                           )}
                           {customActions && customActions(item)}
@@ -453,15 +453,15 @@ export function DataTable<T extends CrudItem>({
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Er du sikker?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the item.
+              Denne handlingen kan ikke angres. Dette vil permanent slette elementet.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-red-600">
-              Delete
+              Slett
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
