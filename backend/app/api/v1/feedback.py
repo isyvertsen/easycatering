@@ -17,6 +17,7 @@ class AnalyzeRequest(BaseModel):
     title: str = Field(..., min_length=3, max_length=200, description="Short title for the feedback")
     description: str = Field(..., min_length=10, description="Detailed description of the issue or feature")
     answers: Optional[Dict[str, str]] = Field(default=None, description="Answers to follow-up questions")
+    screenshots: Optional[List[str]] = Field(default=None, description="Base64 encoded screenshots")
 
 
 class AnalyzeResponse(BaseModel):
@@ -42,6 +43,7 @@ class CreateIssueRequest(BaseModel):
     currentUrl: str = Field(..., description="URL where the issue was reported from")
     aiImproved: bool = Field(default=False, description="Whether the feedback was improved by AI")
     targetRepositories: Optional[List[str]] = Field(default=None, description="Which repositories to create issues in")
+    screenshots: Optional[List[str]] = Field(default=None, description="Base64 encoded screenshots")
 
 
 class IssueInfo(BaseModel):
@@ -126,7 +128,8 @@ async def create_github_issue(
         browser_info=request.browserInfo,
         current_url=request.currentUrl,
         ai_improved=request.aiImproved,
-        target_repositories=request.targetRepositories
+        target_repositories=request.targetRepositories,
+        screenshots=request.screenshots
     )
 
     if not result.get("success"):
