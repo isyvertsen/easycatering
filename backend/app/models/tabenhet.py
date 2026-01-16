@@ -1,5 +1,5 @@
 """Unit conversion table model (tbl_rptabenheter)."""
-from sqlalchemy import Column, Text, Float, Integer
+from sqlalchemy import Column, Text, Float, Boolean
 
 from app.infrastructure.database.session import Base
 
@@ -10,4 +10,4 @@ class TabEnhet(Base):
 
     enhet = Column(Text, primary_key=True)
     visningsfaktor = Column(Float)
-    kalkuler = Column(Integer)  # 0 or 1 (boolean flag)
+    kalkuler = Column(Boolean)  # Boolean flag

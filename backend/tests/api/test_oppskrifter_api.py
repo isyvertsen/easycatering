@@ -13,6 +13,8 @@ Tests cover:
 - POST /oppskrifter/kombinere/label - Generate combined PDF label
 - POST /oppskrifter/kombinere/label-zpl - Generate combined ZPL label
 - POST /oppskrifter/kombinere/generate-name - Generate dish name with AI
+- POST /oppskrifter/{id}/kalkuler - Calculate recipe quantities and prices
+- GET /oppskrifter/{id}/rapport-pdf - Generate detailed PDF report
 """
 import pytest
 
@@ -344,4 +346,66 @@ class TestOppskrifterGenerateName:
             "/api/v1/oppskrifter/kombinere/generate-name",
             json={"recipes": [], "products": []},
         )
+        assert response.status_code == 401
+
+
+class TestOppskrifterKalkuler:
+    """Tests for POST /oppskrifter/{id}/kalkuler endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_kalkuler_not_found(self, authenticated_client: AsyncClient):
+        """Test 404 for non-existent recipe."""
+        response = await authenticated_client.post(
+            "/api/v1/oppskrifter/99999/kalkuler",
+            json={"antallporsjoner": 10}
+        )
+        assert response.status_code == 404
+        assert "ikke funnet" in response.json()["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_kalkuler_missing_porsjoner(self, authenticated_client: AsyncClient):
+        """Test that antallporsjoner is required."""
+        response = await authenticated_client.post(
+            "/api/v1/oppskrifter/1/kalkuler",
+            json={}
+        )
+        assert response.status_code == 422
+
+    @skip_if_auth_bypass
+    @pytest.mark.asyncio
+    async def test_kalkuler_requires_auth(self, client: AsyncClient):
+        """Test that endpoint requires authentication."""
+        response = await client.post(
+            "/api/v1/oppskrifter/1/kalkuler",
+            json={"antallporsjoner": 10}
+        )
+        assert response.status_code == 401
+
+
+class TestOppskrifterRapportPdf:
+    """Tests for GET /oppskrifter/{id}/rapport-pdf endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_rapport_pdf_not_found(self, authenticated_client: AsyncClient):
+        """Test 404 for non-existent recipe."""
+        response = await authenticated_client.get(
+            "/api/v1/oppskrifter/99999/rapport-pdf"
+        )
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_rapport_pdf_with_query_params(self, authenticated_client: AsyncClient):
+        """Test that endpoint accepts antallporsjoner query param."""
+        # Test with query parameter (endpoint will fail for non-existent recipe)
+        response = await authenticated_client.get(
+            "/api/v1/oppskrifter/99999/rapport-pdf?antallporsjoner=10"
+        )
+        # Should return 404 for non-existent recipe
+        assert response.status_code == 404
+
+    @skip_if_auth_bypass
+    @pytest.mark.asyncio
+    async def test_rapport_pdf_requires_auth(self, client: AsyncClient):
+        """Test that endpoint requires authentication."""
+        response = await client.get("/api/v1/oppskrifter/1/rapport-pdf")
         assert response.status_code == 401

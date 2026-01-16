@@ -283,10 +283,10 @@ async def kalkuler_oppskrift(
     try:
         # Prosesser hver detalj
         for detalj in detaljer_list:
-            # Hent enhet fra tbl_rpTabEnheter hvor kalkuler = 1
+            # Hent enhet fra tbl_rpTabEnheter hvor kalkuler = True
             enhet_query = select(TabEnhet).where(
                 TabEnhet.enhet == detalj.enh,
-                TabEnhet.kalkuler == 1
+                TabEnhet.kalkuler == True
             )
             enhet_result = await db.execute(enhet_query)
             enhet = enhet_result.scalar_one_or_none()
@@ -382,17 +382,17 @@ async def get_oppskrift_rapport_pdf(
     # Hent data med SQL-query (tilsvarende brukerens SELECT-query)
     query = text("""
         SELECT
-            k.Kalkylekode, k.Kalkylenavn, k.AnsattID, k.OpprettetDato,
-            k.RevidertDato, k.RefPorsjon, k.AntallPorsjoner, k.Produksjonsmetode,
-            kd.ProduktID, p.Produktnavn, kd.Porsjonsmengde, te.Enhet, kd.Enh,
-            kd.TotMeng, kd.VisningsEnhet, p.LagerID,
-            k.Leveringsdato, k.Merknad, k.Informasjon, k.BrukesTil, k.Enhet as KalkyleEnhet
+            k.kalkylekode, k.kalkylenavn, k.ansattid, k.opprettetdato,
+            k.revidertdato, k.refporsjon, k.antallporsjoner, k.produksjonsmetode,
+            kd.produktid, p.produktnavn, kd.porsjonsmengde, te.enhet, kd.enh,
+            kd.totmeng, kd.visningsenhet, p.lagerid,
+            k.leveringsdato, k.merknad, k.informasjon, k.brukestil, k.enhet as kalkyleenhet
         FROM tbl_rpkalkyle k
-        INNER JOIN tbl_rpkalkyledetaljer kd ON k.Kalkylekode = kd.Kalkylekode
-        INNER JOIN tblprodukter p ON kd.ProduktID = p.ProduktID
-        LEFT JOIN tbl_rptabenheter te ON kd.Enh = te.Enhet
-        WHERE k.Kalkylekode = :kalkylekode
-        ORDER BY p.LagerID
+        INNER JOIN tbl_rpkalkyledetaljer kd ON k.kalkylekode = kd.kalkylekode
+        INNER JOIN tblprodukter p ON kd.produktid = p.produktid
+        LEFT JOIN tbl_rptabenheter te ON kd.enh = te.enhet
+        WHERE k.kalkylekode = :kalkylekode
+        ORDER BY p.lagerid
     """)
 
     result = await db.execute(query, {"kalkylekode": kalkylekode})
@@ -404,31 +404,31 @@ async def get_oppskrift_rapport_pdf(
     # Ekstraher kalkyle-info fra første rad
     first_row = rows[0]
     kalkyle_info = {
-        "kalkylekode": first_row.Kalkylekode,
-        "kalkylenavn": first_row.Kalkylenavn,
-        "ansattid": first_row.AnsattID,
-        "opprettetdato": first_row.OpprettetDato,
-        "revidertdato": first_row.RevidertDato,
-        "refporsjon": first_row.RefPorsjon,
-        "antallporsjoner": first_row.AntallPorsjoner,
-        "produksjonsmetode": first_row.Produksjonsmetode,
-        "leveringsdato": first_row.Leveringsdato,
-        "merknad": first_row.Merknad,
-        "informasjon": first_row.Informasjon,
-        "brukestil": first_row.BrukesTil,
-        "enhet": first_row.KalkyleEnhet
+        "kalkylekode": first_row.kalkylekode,
+        "kalkylenavn": first_row.kalkylenavn,
+        "ansattid": first_row.ansattid,
+        "opprettetdato": first_row.opprettetdato,
+        "revidertdato": first_row.revidertdato,
+        "refporsjon": first_row.refporsjon,
+        "antallporsjoner": first_row.antallporsjoner,
+        "produksjonsmetode": first_row.produksjonsmetode,
+        "leveringsdato": first_row.leveringsdato,
+        "merknad": first_row.merknad,
+        "informasjon": first_row.informasjon,
+        "brukestil": first_row.brukestil,
+        "enhet": first_row.kalkyleenhet
     }
 
     # Bygg ingrediensliste
     ingredienser = []
     for row in rows:
         ingredienser.append({
-            "lagerid": row.LagerID or "",
-            "produktnavn": row.Produktnavn or "",
-            "porsjonsmengde": row.Porsjonsmengde or 0,
-            "enhet": row.Enh or "",
-            "totmeng": row.TotMeng or 0,
-            "visningsenhet": row.VisningsEnhet or row.Enh or ""
+            "lagerid": row.lagerid or "",
+            "produktnavn": row.produktnavn or "",
+            "porsjonsmengde": row.porsjonsmengde or 0,
+            "enhet": row.enh or "",
+            "totmeng": row.totmeng or 0,
+            "visningsenhet": row.visningsenhet or row.enh or ""
         })
 
     # Generer PDF
@@ -546,7 +546,7 @@ async def list_grupper(
     current_user: User = Depends(get_current_user)
 ):
     """List alle oppskriftsgrupper."""
-    query = select(KalkyleGruppe).order_by(KalkyleGruppe.sortering)
+    query = select(Kalkylegruppe).order_by(Kalkylegruppe.sortering)
     result = await db.execute(query)
     grupper = result.scalars().all()
 
