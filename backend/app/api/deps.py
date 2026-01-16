@@ -53,11 +53,8 @@ async def get_current_user_optional(
             dev_user.rolle = "admin"
             needs_update = True
 
-        # Ensure dev user has kundeid for webshop access
-        # Customer 9001 is a test customer
-        if not dev_user.kundeid:
-            dev_user.kundeid = 9001
-            needs_update = True
+        # Note: We don't set kundeid for dev user to avoid foreign key constraint errors
+        # Admin users don't need a kundeid to access the system
 
         if needs_update:
             await db.commit()
