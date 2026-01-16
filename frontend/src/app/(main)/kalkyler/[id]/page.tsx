@@ -160,6 +160,13 @@ export default function KalkylePage({ params }: KalkylePageProps) {
     fetchNutrition()
   }, [id])
 
+  // Set default portion count from recipe when loaded
+  useEffect(() => {
+    if (nutritionData?.portions) {
+      setAntallPorsjoner(nutritionData.portions)
+    }
+  }, [nutritionData])
+
   const getQualityColor = (quality: string) => {
     switch (quality) {
       case "utmerket":
