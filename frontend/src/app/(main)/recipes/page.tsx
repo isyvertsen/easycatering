@@ -111,6 +111,15 @@ function RecipesPageContent() {
     setCalculateDialogOpen(true)
   }
 
+  const handleDialogClose = (open: boolean) => {
+    setCalculateDialogOpen(open)
+    if (!open) {
+      // Reset state when dialog closes
+      setSelectedRecipe(null)
+      setIsCalculating(false)
+    }
+  }
+
   const handleCalculate = async () => {
     if (!selectedRecipe) return
 
@@ -122,7 +131,10 @@ function RecipesPageContent() {
         description: `Oppskriften er kalkulert for ${antallPorsjoner} porsjoner`,
       })
       setCalculateDialogOpen(false)
-      refetch()
+      // Delay refetch to allow dialog to fully close and cleanup
+      setTimeout(() => {
+        refetch()
+      }, 100)
     } catch (err) {
       toast({
         title: "Feil",
@@ -223,7 +235,10 @@ function RecipesPageContent() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleCalculateClick(recipe)}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleCalculateClick(recipe)
+              }}
               disabled={isCalculating}
               title="Kalkuler mengder"
             >
@@ -232,7 +247,10 @@ function RecipesPageContent() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleDownloadPDF(recipe)}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDownloadPDF(recipe)
+              }}
               disabled={isDownloadingPDF}
               title="Last ned PDF-rapport"
             >
@@ -243,7 +261,7 @@ function RecipesPageContent() {
       />
 
       {/* Calculate Dialog */}
-      <Dialog open={calculateDialogOpen} onOpenChange={setCalculateDialogOpen}>
+      <Dialog open={calculateDialogOpen} onOpenChange={handleDialogClose}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Kalkuler oppskrift</DialogTitle>
