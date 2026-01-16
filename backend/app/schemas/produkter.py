@@ -33,12 +33,25 @@ class ProdukterBase(BaseSchema):
     @field_validator('ean_kode', mode='before')
     @classmethod
     def validate_ean(cls, v):
-        """Validate EAN code format (8 or 13 digits)."""
+        """Validate and clean EAN code format."""
         if v is None or v == '':
             return v
+
+        # Convert to string and clean
         cleaned = str(v).strip()
+
+        # Remove leading minus sign if present (legacy data issue)
+        if cleaned.startswith('-'):
+            cleaned = cleaned[1:]
+
+        # Remove leading zeros if length > 13 (legacy data issue)
+        while len(cleaned) > 13 and cleaned.startswith('0'):
+            cleaned = cleaned[1:]
+
+        # If still invalid after cleaning, return None instead of raising error
         if not cleaned.isdigit() or len(cleaned) not in (8, 13):
-            raise ValueError('EAN code must be 8 or 13 digits')
+            return None
+
         return cleaned
 
 

@@ -13,8 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { reportsApi } from "@/lib/api/reports"
-import { Copy, FileText, Truck, CheckCircle, Clock, Package, PlayCircle, ClipboardList, Info, RotateCcw } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Copy, FileText, Truck, CheckCircle, Clock, Package, PlayCircle, ClipboardList } from "lucide-react"
 
 interface OrderEditPageProps {
   params: Promise<{ id: string }>
@@ -202,8 +201,7 @@ export default function OrderEditPage({ params }: OrderEditPageProps) {
   const status = getOrderStatus(order)
   const isCancelled = !!order.kansellertdato
   const isDelivered = !!order.ordrelevert
-  // Order lines can only be edited when status < 20 (before "Godkjent")
-  const isApproved = (order.ordrestatusid ?? 0) >= 20
+  // Admin can always edit order lines (except cancelled or delivered orders)
 
   return (
     <div className="space-y-6">
@@ -277,26 +275,9 @@ export default function OrderEditPage({ params }: OrderEditPageProps) {
         </div>
         
         <div className="space-y-6">
-          {isApproved && !isCancelled && !isDelivered && (
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription className="flex items-center justify-between">
-                <span>Ordrelinjer kan ikke endres når ordren er godkjent.</span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleStatusChange(10)}
-                  disabled={updateStatusMutation.isPending}
-                >
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Åpne igjen
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
           <OrderLines
             orderId={Number(id)}
-            readOnly={isCancelled || isDelivered || isApproved}
+            readOnly={isCancelled || isDelivered}
           />
 
           {/* Status Workflow */}
