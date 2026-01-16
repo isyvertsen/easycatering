@@ -180,6 +180,99 @@ Hvis produkter har priser registrert, viser oppskriften:
 
 Dette hjelper deg med prissetting av retter.
 
+## Kalkulering av mengder (NYT i v2.7.0)
+
+Kalkuleringsfunksjonaliteten lar deg automatisk beregne ingrediensmengder og priser for et bestemt antall porsjoner.
+
+### Slik kalkulerer du en oppskrift
+
+1. **Åpne oppskriften**
+   - Naviger til oppskriften du vil kalkulere
+   - Du finner kalkuleringsverktøyet på oppskriftsdetaljsiden
+
+2. **Kalkuler mengder**
+   - Finn seksjonen **"Kalkulering og Rapport"**
+   - Skriv inn ønsket antall porsjoner i input-feltet
+   - Klikk **"Kalkuler"**-knappen
+
+3. **Automatisk beregning**
+   - Systemet beregner automatisk:
+     - Total mengde for hver ingrediens basert på antall porsjoner
+     - Enhetskonvertering (f.eks. gram til kilogram)
+     - Totalkostnad basert på produktpriser
+   - Resultatene lagres i databasen
+   - Ingredienstabellen oppdateres med nye verdier
+
+4. **Se resultatet**
+   - Oppdaterte mengder vises i ingredienslisten
+   - Nye priser beregnes automatisk
+   - Oppskriften er nå klar for det spesifiserte antall porsjoner
+
+### Eksempel
+- **Originaloppskrift**: 4 porsjoner
+- **Du trenger**: 50 porsjoner (til et arrangement)
+- **Systemet kalkulerer**: Alle mengder multipliseres med 12,5
+- **Resultat**: Korrekte mengder for 50 porsjoner, klar for innkjøp og produksjon
+
+## PDF-rapport (NYT i v2.7.0)
+
+Generer en detaljert PDF-rapport av oppskriften, perfekt for utskrift og bruk i produksjonen.
+
+### Slik laster du ned en rapport
+
+1. **Åpne oppskriften**
+   - Naviger til oppskriften
+
+2. **Velg rapportalternativer**
+   - Finn seksjonen **"Kalkulering og Rapport"**
+   - **Valgfritt**: Huk av for "Kalkuler for X porsjoner før generering"
+     - Dette kalkulerer oppskriften automatisk før PDF-en genereres
+     - Nyttig hvis du vil ha rapporten for et spesifikt antall porsjoner
+
+3. **Last ned rapporten**
+   - Klikk **"Last ned rapport (PDF)"**-knappen
+   - PDF-filen lastes ned automatisk til din datamaskin
+
+### Innhold i PDF-rapporten
+
+Rapporten inneholder:
+
+**Oppskriftsdetaljer:**
+- Oppskriftsnavn
+- Kalkylekode
+- Antall porsjoner
+- Referanseporsjon
+- Opprettet og revidert dato
+- Leveringsdato
+- Ansatt-ID
+- Produksjonsmetode
+
+**Tilleggsinformasjon:**
+- Informasjon om oppskriften
+- Brukes til (formål)
+- Merknader
+
+**Ingrediensliste:**
+- Sortert etter **Lager-ID** for enklere vareinntak
+- Produktnavn
+- Porsjonsmengde med enhet
+- Total mengde
+- Visningsenhet (f.eks. kg i stedet for g)
+
+### Bruksområder for rapporten
+
+- **Produksjon**: Skriv ut og bruk som arbeidsark i kjøkkenet
+- **Vareinntak**: Sortert etter lager-ID gjør det enkelt å plukke varer
+- **Dokumentasjon**: Lagre som digital kopi av oppskriften
+- **Kostnadsanalyse**: Se totalkostnader for ingredienser
+- **Leverandørbestilling**: Bruk som grunnlag for innkjøp
+
+### Tips for effektiv bruk
+
+1. **Kalkuler før utskrift**: Huk av for automatisk kalkulering for å få riktig antall porsjoner i rapporten
+2. **Lagring**: Lagre PDF-ene med beskrivende navn (f.eks. "Kyllinggryte_50porsjoner_2026-01-16.pdf")
+3. **Arkivering**: Oppretthold en digital arkivmappe for produksjonsrapporter
+
 ## Bilder
 
 Du kan legge til bilder på oppskrifter:
@@ -240,6 +333,12 @@ Du kan legge til bilder på oppskrifter:
 3. **Faste maler**: Lag "mal-oppskrifter" for vanlige retter som du kan kopiere og tilpasse
 4. **Sjekk allergener**: Alltid dobbeltsjekk allergeninfo før du serverer retter til kunder
 5. **Oppdater jevnlig**: Hold oppskriftene oppdaterte med nye priser og leverandørinfo
+
+---
+
+## Om denne funksjonen
+
+Kalkuleringsfunksjonaliteten og PDF-rapport (v2.7.0) ble utviklet med assistanse fra [Claude Code](https://claude.com/claude-code), Anthropics AI-assistent for programvareutvikling. Funksjonen erstatter den tidligere SQL stored procedure `sp_KalkulerOppskrift` med moderne Python/FastAPI-kode for bedre vedlikeholdbarhet og utvidbarhet.
 
 ---
 
