@@ -50,6 +50,13 @@ from .orders import (
     get_test_orders,
     get_test_order_details,
 )
+from .order_status import (
+    TEST_ORDRESTATUS_PENDING,
+    TEST_ORDRESTATUS_PROCESSING,
+    TEST_ORDRESTATUS_COMPLETED,
+    TEST_ORDRESTATUS_CANCELLED,
+    get_test_order_statuses,
+)
 
 __all__ = [
     # Users
@@ -93,4 +100,10 @@ __all__ = [
     "TEST_ORDREDETALJ_COMPLETED",
     "get_test_orders",
     "get_test_order_details",
+    # Order Status
+    "TEST_ORDRESTATUS_PENDING",
+    "TEST_ORDRESTATUS_PROCESSING",
+    "TEST_ORDRESTATUS_COMPLETED",
+    "TEST_ORDRESTATUS_CANCELLED",
+    "get_test_order_statuses",
 ]
