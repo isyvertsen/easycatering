@@ -15,7 +15,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { AlertCircle, Bug, Sparkles, CheckCircle, Lightbulb, X, ImagePlus } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { AlertCircle, Bug, Sparkles, CheckCircle, Lightbulb, X, ImagePlus, Zap } from 'lucide-react'
 import { feedbackApi } from '@/lib/api/feedback'
 
 interface ReportIssueDialogProps {
@@ -48,6 +49,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
   const [createdIssues, setCreatedIssues] = useState<any[]>([])
   const [issueUrl, setIssueUrl] = useState('')
   const [loading, setLoading] = useState(false)
+  const [autoHandle, setAutoHandle] = useState(false)
 
   // Browser info
   const getBrowserInfo = () => {
@@ -118,6 +120,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
     setTargetRepositories([])
     setCreatedIssues([])
     setIssueUrl('')
+    setAutoHandle(false)
   }
 
   // Step 1: Type selection → Step 2: Input
@@ -239,6 +242,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
         aiImproved: improvedTitle !== title || improvedDescription !== description,
         targetRepositories: targetRepositories,
         screenshots: screenshots.map(s => s.dataUrl),
+        autoHandle: autoHandle,
       })
 
       if (result.success && result.issues && result.issues.length > 0) {
@@ -476,6 +480,24 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
                   </div>
                 </div>
               )}
+              <div className="flex items-center justify-between p-4 border rounded-md bg-blue-50/50">
+                <div className="flex items-center gap-3">
+                  <Zap className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <Label htmlFor="auto-handle" className="text-sm font-medium cursor-pointer">
+                      Automatisk håndtering
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      La Claude undersøke og implementere løsningen hvis risikoen er lav
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="auto-handle"
+                  checked={autoHandle}
+                  onCheckedChange={setAutoHandle}
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setStep('input')}>

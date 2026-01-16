@@ -25,7 +25,8 @@ class GitHubService:
         current_url: str,
         ai_improved: bool = False,
         target_repositories: Optional[List[str]] = None,  # ["backend"], ["frontend"], or ["backend", "frontend"]
-        screenshots: Optional[List[str]] = None  # Base64 encoded screenshots
+        screenshots: Optional[List[str]] = None,  # Base64 encoded screenshots
+        auto_handle: bool = False  # Request automatic handling by Claude
     ) -> Dict[str, Any]:
         """
         Create a GitHub issue with system metadata.
@@ -102,9 +103,35 @@ class GitHubService:
                     # GitHub supports inline images with base64 data URLs
                     screenshots_section += f"![Skjermbilde {idx}]({screenshot_data})\n\n"
 
+            # Add Claude auto-handle instructions if requested
+            auto_handle_section = ""
+            if auto_handle:
+                auto_handle_section = """
+
+---
+
+## 🤖 Automatisk håndtering
+
+@claude - Vennligst undersøk dette problemet og implementer en løsning hvis:
+1. Problemet er godt definert og forståelig
+2. Løsningen er relativt enkel og har lav risiko
+3. Det ikke krever større arkitekturendringer
+4. Du er trygg på at endringene ikke vil introdusere nye bugs
+
+Hvis problemet er for komplekst eller risikabelt, opprett en detaljert plan i stedet og be om godkjenning før implementering.
+
+**Prosedyre:**
+1. Undersøk kodebasen for å forstå problemet
+2. Vurder kompleksitet og risiko
+3. Hvis lav risiko: implementer løsning, test, og opprett PR
+4. Hvis høy risiko: lag detaljert plan og be om godkjenning først
+
+---
+"""
+
             issue_body = f"""## {type_label}
 
-{description}{scope_indicator}{screenshots_section}
+{description}{scope_indicator}{screenshots_section}{auto_handle_section}
 
 ## Systeminfo
 
