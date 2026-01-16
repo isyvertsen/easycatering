@@ -131,10 +131,7 @@ function RecipesPageContent() {
         description: `Oppskriften er kalkulert for ${antallPorsjoner} porsjoner`,
       })
       setCalculateDialogOpen(false)
-      // Delay refetch to allow dialog to fully close and cleanup
-      setTimeout(() => {
-        refetch()
-      }, 100)
+      refetch()
     } catch (err) {
       toast({
         title: "Feil",
@@ -261,8 +258,8 @@ function RecipesPageContent() {
       />
 
       {/* Calculate Dialog */}
-      <Dialog open={calculateDialogOpen} onOpenChange={handleDialogClose}>
-        <DialogContent>
+      <Dialog open={calculateDialogOpen} onOpenChange={handleDialogClose} modal={false}>
+        <DialogContent onPointerDownOutside={() => setCalculateDialogOpen(false)}>
           <DialogHeader>
             <DialogTitle>Kalkuler oppskrift</DialogTitle>
             <DialogDescription>
