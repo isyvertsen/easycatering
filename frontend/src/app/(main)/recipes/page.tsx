@@ -8,11 +8,22 @@ import { useRecipesList, useDeleteRecipe } from "@/hooks/useRecipes"
 import { Recipe } from "@/types/models"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { Calculator, FileText, Plus } from "lucide-react"
 import { ErrorDisplay, LoadingError } from "@/components/error/error-display"
 import { ErrorBoundary } from "@/components/error/error-boundary"
 import { toast } from "@/hooks/use-toast"
 import { getErrorMessage, getCrudErrorMessage } from "@/lib/error-utils"
+import { recipesApi } from "@/lib/api/recipes"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 const columns: DataTableColumn<Recipe>[] = [
   {
@@ -51,6 +62,11 @@ function RecipesPageContent() {
     limit: 20,
     search: "",
   })
+  const [calculateDialogOpen, setCalculateDialogOpen] = useState(false)
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null)
+  const [antallPorsjoner, setAntallPorsjoner] = useState<number>(1)
+  const [isCalculating, setIsCalculating] = useState(false)
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
 
   const { data, isLoading, error, refetch } = useRecipesList(params)
   const deleteMutation = useDeleteRecipe({
@@ -87,6 +103,67 @@ function RecipesPageContent() {
 
   const handleRetry = () => {
     refetch()
+  }
+
+  const handleCalculateClick = (recipe: Recipe) => {
+    setSelectedRecipe(recipe)
+    setAntallPorsjoner(recipe.antallporsjoner || 1)
+    setCalculateDialogOpen(true)
+  }
+
+  const handleCalculate = async () => {
+    if (!selectedRecipe) return
+
+    setIsCalculating(true)
+    try {
+      await recipesApi.calculateRecipe(selectedRecipe.kalkylekode, antallPorsjoner)
+      toast({
+        title: "Suksess",
+        description: `Oppskriften er kalkulert for ${antallPorsjoner} porsjoner`,
+      })
+      setCalculateDialogOpen(false)
+      refetch()
+    } catch (err) {
+      toast({
+        title: "Feil",
+        description: "Kunne ikke kalkulere oppskriften",
+        variant: "destructive",
+      })
+    } finally {
+      setIsCalculating(false)
+    }
+  }
+
+  const handleDownloadPDF = async (recipe: Recipe) => {
+    setIsDownloadingPDF(true)
+    try {
+      const blob = await recipesApi.downloadRecipeReport(recipe.kalkylekode)
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `oppskrift_${recipe.kalkylenavn?.replace(/\s+/g, '_') || 'rapport'}.pdf`
+      document.body.appendChild(a)
+      a.click()
+
+      // Cleanup
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
+      toast({
+        title: "Suksess",
+        description: "PDF-rapport lastet ned",
+      })
+    } catch (err) {
+      toast({
+        title: "Feil",
+        description: "Kunne ikke generere rapport",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDownloadingPDF(false)
+    }
   }
 
   // Show error state if there's an error loading recipes
@@ -141,7 +218,66 @@ function RecipesPageContent() {
         loading={isLoading}
         idField="kalkylekode"
         searchPlaceholder="Søk etter kode eller navn..."
+        customActions={(recipe) => (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleCalculateClick(recipe)}
+              disabled={isCalculating}
+              title="Kalkuler mengder"
+            >
+              <Calculator className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDownloadPDF(recipe)}
+              disabled={isDownloadingPDF}
+              title="Last ned PDF-rapport"
+            >
+              <FileText className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       />
+
+      {/* Calculate Dialog */}
+      <Dialog open={calculateDialogOpen} onOpenChange={setCalculateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Kalkuler oppskrift</DialogTitle>
+            <DialogDescription>
+              Beregn ingrediensmengder for {selectedRecipe?.kalkylenavn}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="portions">Antall porsjoner</Label>
+            <Input
+              id="portions"
+              type="number"
+              min="1"
+              value={antallPorsjoner}
+              onChange={(e) => setAntallPorsjoner(parseInt(e.target.value) || 1)}
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCalculateDialogOpen(false)}
+            >
+              Avbryt
+            </Button>
+            <Button
+              onClick={handleCalculate}
+              disabled={isCalculating}
+            >
+              {isCalculating ? "Kalkulerer..." : "Kalkuler"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
