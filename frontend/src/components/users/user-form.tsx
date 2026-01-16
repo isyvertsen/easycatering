@@ -64,6 +64,9 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
       )
   }, [employeesData?.items])
 
+  // Use bruker ID as key to force re-render when editing different users
+  const formKey = bruker?.id?.toString() || 'new'
+
   const form = useForm<BrukerFormValues>({
     resolver: zodResolver(brukerSchema),
     defaultValues: {
@@ -112,7 +115,7 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6" key={formKey}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
@@ -171,7 +174,11 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Rolle</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Velg rolle" />
@@ -196,39 +203,43 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
           <FormField
             control={form.control}
             name="ansattid"
-            render={({ field }) => (
-              <FormItem className="md:col-span-2">
-                <FormLabel>Tilknyttet ansatt</FormLabel>
-                <Select
-                  onValueChange={(value) =>
-                    field.onChange(value === "__none__" ? null : parseInt(value))
-                  }
-                  value={field.value?.toString() || "__none__"}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Velg ansatt (valgfritt)" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="__none__">Ingen tilknytning</SelectItem>
-                    {sortedEmployees.map((emp) => (
-                      <SelectItem
-                        key={emp.ansattid}
-                        value={emp.ansattid.toString()}
-                      >
-                        {emp.fornavn} {emp.etternavn}
-                        {emp.e_postjobb && ` (${emp.e_postjobb})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Koble brukerkontoen til en ansatt i systemet
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const selectValue = field.value?.toString() || "__none__"
+              return (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Tilknyttet ansatt</FormLabel>
+                  <Select
+                    onValueChange={(value) =>
+                      field.onChange(value === "__none__" ? null : parseInt(value))
+                    }
+                    value={selectValue}
+                    defaultValue={selectValue}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Velg ansatt (valgfritt)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="__none__">Ingen tilknytning</SelectItem>
+                      {sortedEmployees.map((emp) => (
+                        <SelectItem
+                          key={emp.ansattid}
+                          value={emp.ansattid.toString()}
+                        >
+                          {emp.fornavn} {emp.etternavn}
+                          {emp.e_postjobb && ` (${emp.e_postjobb})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Koble brukerkontoen til en ansatt i systemet
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )
+            }}
           />
 
           <FormField
