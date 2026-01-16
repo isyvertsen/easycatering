@@ -168,13 +168,26 @@ export default function AdminUsersPage() {
       updateMutation.mutate(
         { id: editingBruker.id, data },
         {
-          onSuccess: () => setIsFormOpen(false),
+          onSuccess: () => {
+            setIsFormOpen(false)
+            setEditingBruker(undefined)
+          },
         }
       )
     } else {
       createMutation.mutate(data as any, {
-        onSuccess: () => setIsFormOpen(false),
+        onSuccess: () => {
+          setIsFormOpen(false)
+          setEditingBruker(undefined)
+        },
       })
+    }
+  }
+
+  const handleDialogClose = (open: boolean) => {
+    setIsFormOpen(open)
+    if (!open) {
+      setEditingBruker(undefined)
     }
   }
 
@@ -210,7 +223,7 @@ export default function AdminUsersPage() {
         hideAddButton
       />
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <Dialog open={isFormOpen} onOpenChange={handleDialogClose}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>

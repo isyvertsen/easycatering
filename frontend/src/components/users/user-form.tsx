@@ -86,6 +86,16 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
         rolle: bruker.rolle || "bruker",
         is_active: bruker.is_active,
       })
+    } else {
+      // Reset to default values when creating new user
+      form.reset({
+        email: "",
+        full_name: "",
+        password: "",
+        ansattid: null,
+        rolle: "bruker",
+        is_active: true,
+      })
     }
   }, [bruker, form])
 
