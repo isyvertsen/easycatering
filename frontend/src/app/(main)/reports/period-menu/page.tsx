@@ -64,7 +64,7 @@ interface CustomerMenuReport {
 export default function PeriodMenuReportPage() {
   const [periods, setPeriods] = useState<Period[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState<string>("");
-  const [selectedMenuGroup, setSelectedMenuGroup] = useState<string>("");
+  const [selectedMenuGroup, setSelectedMenuGroup] = useState<string>("all");
   const [menuGroups, setMenuGroups] = useState<any[]>([]);
   const [reportData, setReportData] = useState<CustomerMenuReport[]>([]);
   const [loading, setLoading] = useState(false);
@@ -112,7 +112,7 @@ export default function PeriodMenuReportPage() {
     setLoading(true);
     try {
       const params: any = { periode_id: selectedPeriod };
-      if (selectedMenuGroup) {
+      if (selectedMenuGroup && selectedMenuGroup !== "all") {
         params.menu_group_id = selectedMenuGroup;
       }
 
@@ -143,7 +143,7 @@ export default function PeriodMenuReportPage() {
 
     try {
       const params: any = { periode_id: selectedPeriod };
-      if (selectedMenuGroup) {
+      if (selectedMenuGroup && selectedMenuGroup !== "all") {
         params.menu_group_id = selectedMenuGroup;
       }
 
@@ -242,7 +242,7 @@ export default function PeriodMenuReportPage() {
                   <SelectValue placeholder="All groups" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All groups</SelectItem>
+                  <SelectItem value="all">All groups</SelectItem>
                   {menuGroups.map((group) => (
                     <SelectItem key={group.gruppeid} value={group.gruppeid.toString()}>
                       {group.gruppe}

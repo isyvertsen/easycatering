@@ -406,7 +406,7 @@ async def get_customer_report(db: AsyncSession, period: str = "month") -> Custom
         KundegruppeModel.gruppe,
         func.count(func.distinct(KunderModel.kundeid)).label("customer_count")
     ).select_from(KunderModel).join(
-        KundegruppeModel, KunderModel.gruppeid == KundegruppeModel.gruppeid
+        KundegruppeModel, KunderModel.kundegruppe == KundegruppeModel.gruppeid
     ).where(
         KundegruppeModel.gruppe.isnot(None)
     ).group_by(KundegruppeModel.gruppe)
