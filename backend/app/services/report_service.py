@@ -34,10 +34,10 @@ class ReportService:
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            rightMargin=2*cm,
-            leftMargin=2*cm,
-            topMargin=2*cm,
-            bottomMargin=2*cm
+            rightMargin=1*cm,
+            leftMargin=1*cm,
+            topMargin=1*cm,
+            bottomMargin=1*cm
         )
 
         # Container for the 'Flowable' objects
@@ -81,7 +81,7 @@ class ReportService:
             ["Ordredato:", data.get('ordredato', '')],
             ["Leveringsdato:", data.get('leveringsdato', '')]
         ]
-        order_table = Table(order_details, colWidths=[4*cm, 12*cm])
+        order_table = Table(order_details, colWidths=[4*cm, 14*cm])
         order_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 11),
@@ -100,7 +100,7 @@ class ReportService:
             ["Adresse:", kunde.get('adresse', '')],
             ["Postnr/Sted:", f"{kunde.get('postnr', '')} {kunde.get('sted', '')}"]
         ]
-        customer_table = Table(customer_details, colWidths=[4*cm, 12*cm])
+        customer_table = Table(customer_details, colWidths=[4*cm, 14*cm])
         customer_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 11),
@@ -129,7 +129,7 @@ class ReportService:
             '', '', 'TOTAL:', f"kr {data.get('totalsum', '')}"
         ])
 
-        products_table = Table(products_data, colWidths=[8*cm, 3*cm, 2.5*cm, 2.5*cm])
+        products_table = Table(products_data, colWidths=[10*cm, 3*cm, 2.5*cm, 2.5*cm])
         products_table.setStyle(TableStyle([
             # Header row
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2c5282')),
@@ -211,10 +211,10 @@ class ReportService:
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            rightMargin=2*cm,
-            leftMargin=2*cm,
-            topMargin=2*cm,
-            bottomMargin=2*cm
+            rightMargin=1*cm,
+            leftMargin=1*cm,
+            topMargin=1*cm,
+            bottomMargin=1*cm
         )
 
         elements = []
@@ -251,7 +251,7 @@ class ReportService:
             ["Ordrenummer:", str(data.get('ordrenummer', ''))],
             ["Leveringsdato:", data.get('leveringsdato', '')]
         ]
-        delivery_table = Table(delivery_details, colWidths=[4*cm, 12*cm])
+        delivery_table = Table(delivery_details, colWidths=[4*cm, 14*cm])
         delivery_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 11),
@@ -270,7 +270,7 @@ class ReportService:
             ["Adresse:", kunde.get('adresse', '')],
             ["Postnr/Sted:", f"{kunde.get('postnr', '')} {kunde.get('sted', '')}"]
         ]
-        recipient_table = Table(recipient_details, colWidths=[4*cm, 12*cm])
+        recipient_table = Table(recipient_details, colWidths=[4*cm, 14*cm])
         recipient_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 11),
@@ -292,7 +292,7 @@ class ReportService:
                 ''  # Empty checkbox column
             ])
 
-        products_table = Table(products_data, colWidths=[10*cm, 3*cm, 3*cm])
+        products_table = Table(products_data, colWidths=[12*cm, 3*cm, 3*cm])
         products_table.setStyle(TableStyle([
             # Header row
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2c5282')),
@@ -332,7 +332,7 @@ class ReportService:
             [Paragraph("<font size=9>Navn og dato</font>", styles['Normal']),
              Paragraph("<font size=9>Navn og dato</font>", styles['Normal'])]
         ]
-        signature_table = Table(signature_data, colWidths=[8*cm, 8*cm], rowHeights=[None, 2*cm, None, None])
+        signature_table = Table(signature_data, colWidths=[9*cm, 9*cm], rowHeights=[None, 2*cm, None, None])
         signature_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('TOPPADDING', (0, 0), (-1, -1), 3),
@@ -541,10 +541,10 @@ class ReportService:
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            rightMargin=2*cm,
-            leftMargin=2*cm,
-            topMargin=2*cm,
-            bottomMargin=2*cm
+            rightMargin=1*cm,
+            leftMargin=1*cm,
+            topMargin=1*cm,
+            bottomMargin=1*cm
         )
 
         elements = []
@@ -589,7 +589,7 @@ class ReportService:
             ["Ansatt-ID:", str(kalkyle_info.get('ansattid', '') or '-')],
             ["Produksjonsmetode:", kalkyle_info.get('produksjonsmetode', '') or '-']
         ]
-        metadata_table = Table(metadata, colWidths=[4*cm, 12*cm])
+        metadata_table = Table(metadata, colWidths=[4*cm, 14*cm])
         metadata_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 11),
@@ -635,7 +635,7 @@ class ReportService:
 
         ingredients_table = Table(
             ingredients_data,
-            colWidths=[2*cm, 5*cm, 2.5*cm, 2*cm, 2.5*cm, 2.5*cm]
+            colWidths=[2*cm, 6.5*cm, 2.5*cm, 2*cm, 2.5*cm, 2.5*cm]
         )
         ingredients_table.setStyle(TableStyle([
             # Header row
