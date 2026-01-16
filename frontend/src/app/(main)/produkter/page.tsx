@@ -59,6 +59,42 @@ const columns: DataTableColumn<Produkt>[] = [
     sortable: true,
     render: (value) => value ? `${value.toFixed(2)} kr` : "-"
   },
+  {
+    key: "webshop",
+    label: "Webshop",
+    sortable: true,
+    render: (value) => {
+      return value ? (
+        <Badge variant="default" className="bg-green-500">
+          <CheckCircle className="h-3 w-3 mr-1" />
+          Ja
+        </Badge>
+      ) : (
+        <Badge variant="secondary">
+          <XCircle className="h-3 w-3 mr-1" />
+          Nei
+        </Badge>
+      )
+    }
+  },
+  {
+    key: "rett_komponent",
+    label: "Brukes i retter",
+    sortable: true,
+    render: (value) => {
+      return value ? (
+        <Badge variant="default" className="bg-blue-500">
+          <CheckCircle className="h-3 w-3 mr-1" />
+          Ja
+        </Badge>
+      ) : (
+        <Badge variant="outline">
+          <XCircle className="h-3 w-3 mr-1" />
+          Nei
+        </Badge>
+      )
+    }
+  },
 ]
 
 export default function ProdukterPage() {
@@ -242,6 +278,7 @@ export default function ProdukterPage() {
             ))}
           </>
         )}
+        enableEdit={false}
         enableDelete={false}
       />
 
