@@ -179,15 +179,8 @@ async def create_bruker(
                 detail="Ugyldig ansatt-ID"
             )
 
-        # Check if ansatt already has a user
-        existing_user = await db.execute(
-            select(User).where(User.ansattid == data.ansattid)
-        )
-        if existing_user.scalar_one_or_none():
-            raise HTTPException(
-                status_code=400,
-                detail="Denne ansatt har allerede en brukerkonto"
-            )
+        # NOTE: An employee can have multiple user accounts
+        # No need to validate uniqueness of ansattid
 
     # Create user
     user = User(
@@ -252,18 +245,8 @@ async def update_bruker(
                     detail="Ugyldig ansatt-ID"
                 )
 
-            # Check if ansatt already has another user
-            existing_user = await db.execute(
-                select(User).where(
-                    User.ansattid == data.ansattid,
-                    User.id != bruker_id
-                )
-            )
-            if existing_user.scalar_one_or_none():
-                raise HTTPException(
-                    status_code=400,
-                    detail="Denne ansatt har allerede en brukerkonto"
-                )
+            # NOTE: An employee can have multiple user accounts
+            # No need to validate uniqueness of ansattid
 
     # Update fields
     update_data = data.model_dump(exclude_unset=True)

@@ -1,15 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +15,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { DataTable, DataTableColumn } from '@/components/crud/data-table'
-import { UserForm, BrukerFormValues } from '@/components/users/user-form'
 import {
   useBrukereList,
   useCreateBruker,
@@ -47,8 +40,6 @@ export default function AdminUsersPage() {
   const deleteMutation = useDeleteBruker()
   const activateMutation = useActivateBruker()
 
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingBruker, setEditingBruker] = useState<Bruker | undefined>()
   const [deleteConfirm, setDeleteConfirm] = useState<Bruker | null>(null)
 
   const columns: DataTableColumn<Bruker>[] = [
@@ -132,15 +123,6 @@ export default function AdminUsersPage() {
     setParams((prev) => ({ ...prev, ...newParams }))
   }
 
-  const handleCreate = () => {
-    setEditingBruker(undefined)
-    setIsFormOpen(true)
-  }
-
-  const handleEdit = (bruker: Bruker) => {
-    setEditingBruker(bruker)
-    setIsFormOpen(true)
-  }
 
   const handleDelete = (id: string | number) => {
     const numericId = typeof id === 'string' ? parseInt(id, 10) : id
@@ -157,39 +139,6 @@ export default function AdminUsersPage() {
     }
   }
 
-  const handleFormSubmit = (formData: BrukerFormValues) => {
-    // Convert null to undefined for ansattid to match API types
-    const data = {
-      ...formData,
-      ansattid: formData.ansattid ?? undefined,
-    }
-
-    if (editingBruker) {
-      updateMutation.mutate(
-        { id: editingBruker.id, data },
-        {
-          onSuccess: () => {
-            setIsFormOpen(false)
-            setEditingBruker(undefined)
-          },
-        }
-      )
-    } else {
-      createMutation.mutate(data as any, {
-        onSuccess: () => {
-          setIsFormOpen(false)
-          setEditingBruker(undefined)
-        },
-      })
-    }
-  }
-
-  const handleDialogClose = (open: boolean) => {
-    setIsFormOpen(open)
-    if (!open) {
-      setEditingBruker(undefined)
-    }
-  }
 
   return (
     <div className="p-6 space-y-6">
@@ -200,14 +149,16 @@ export default function AdminUsersPage() {
             Administrer brukere og tilganger i systemet
           </p>
         </div>
-        <Button onClick={handleCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          Ny bruker
+        <Button asChild>
+          <Link href="/admin/users/new">
+            <Plus className="h-4 w-4 mr-2" />
+            Ny bruker
+          </Link>
         </Button>
       </div>
 
       <DataTable<Bruker>
-        tableName="admin/brukere"
+        tableName="admin/users"
         columns={columns}
         data={data?.items || []}
         total={data?.total || 0}
@@ -215,34 +166,13 @@ export default function AdminUsersPage() {
         pageSize={params.page_size || 20}
         totalPages={data?.total_pages || 1}
         onParamsChange={handleParamsChange}
-        onEdit={handleEdit}
         onDelete={handleDelete}
         loading={isLoading}
         idField="id"
         searchPlaceholder="Sok etter navn eller e-post..."
         hideAddButton
+        enableEdit={true}
       />
-
-      <Dialog open={isFormOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingBruker ? 'Rediger bruker' : 'Opprett ny bruker'}
-            </DialogTitle>
-            <DialogDescription>
-              {editingBruker
-                ? 'Oppdater informasjon om brukeren'
-                : 'Fyll inn informasjon for den nye brukeren'}
-            </DialogDescription>
-          </DialogHeader>
-          <UserForm
-            bruker={editingBruker}
-            onSubmit={handleFormSubmit}
-            onCancel={() => setIsFormOpen(false)}
-            loading={createMutation.isPending || updateMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
         <AlertDialogContent>
