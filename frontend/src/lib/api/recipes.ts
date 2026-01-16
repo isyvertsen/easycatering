@@ -79,5 +79,27 @@ export const recipesApi = {
   // Delete ingredient
   deleteIngredient: async (recipeId: number, ingredientId: number): Promise<void> => {
     await apiClient.delete(`/v1/oppskrifter/${recipeId}/detaljer/${ingredientId}`)
+  },
+
+  // Calculate recipe quantities for a given number of portions
+  calculateRecipe: async (recipeId: number, antallporsjoner: number): Promise<any> => {
+    const response = await apiClient.post(`/v1/oppskrifter/${recipeId}/kalkuler`, {
+      antallporsjoner
+    })
+    return response.data
+  },
+
+  // Download recipe report as PDF
+  downloadRecipeReport: async (recipeId: number, antallporsjoner?: number): Promise<Blob> => {
+    const params = new URLSearchParams()
+    if (antallporsjoner) {
+      params.append('antallporsjoner', antallporsjoner.toString())
+    }
+
+    const response = await apiClient.get(`/v1/oppskrifter/${recipeId}/rapport-pdf?${params}`, {
+      responseType: 'blob'
+    })
+
+    return response.data
   }
 }

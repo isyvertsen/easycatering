@@ -5,8 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calculator, ChefHat, Scale, Users, Printer } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Calculator, ChefHat, Scale, Users, Printer, FileText } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
+import { recipesApi } from "@/lib/api/recipes"
 
 interface KalkylePageProps {
   params: Promise<{ id: string }>
@@ -53,7 +57,11 @@ export default function KalkylePage({ params }: KalkylePageProps) {
   const [nutritionData, setNutritionData] = useState<NutritionResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [printLoading, setPrintLoading] = useState(false)
+  const [calculateLoading, setCalculateLoading] = useState(false)
+  const [reportLoading, setReportLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [antallPorsjoner, setAntallPorsjoner] = useState<number>(1)
+  const [calculateBeforeReport, setCalculateBeforeReport] = useState(false)
 
   const fetchNutrition = async () => {
     setLoading(true)
@@ -67,6 +75,55 @@ export default function KalkylePage({ params }: KalkylePageProps) {
       console.error("Error fetching nutrition:", err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const calculateRecipe = async () => {
+    setCalculateLoading(true)
+    setError(null)
+
+    try {
+      await recipesApi.calculateRecipe(parseInt(id), antallPorsjoner)
+      // Refresh nutrition data after calculating
+      await fetchNutrition()
+      alert(`Oppskriften er kalkulert for ${antallPorsjoner} porsjoner`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kunne ikke kalkulere oppskriften")
+      console.error("Error calculating recipe:", err)
+    } finally {
+      setCalculateLoading(false)
+    }
+  }
+
+  const downloadReport = async () => {
+    setReportLoading(true)
+    try {
+      const blob = await recipesApi.downloadRecipeReport(
+        parseInt(id),
+        calculateBeforeReport ? antallPorsjoner : undefined
+      )
+
+      // Create a download link
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `oppskrift_${nutritionData?.kalkylenavn.replace(/\s+/g, '_') || 'rapport'}.pdf`
+      document.body.appendChild(a)
+      a.click()
+
+      // Cleanup
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
+      // If we calculated before report, refresh nutrition data
+      if (calculateBeforeReport) {
+        await fetchNutrition()
+      }
+    } catch (err) {
+      console.error("Error downloading report:", err)
+      alert("Kunne ikke generere rapport. Vennligst prøv igjen.")
+    } finally {
+      setReportLoading(false)
     }
   }
 
@@ -184,6 +241,72 @@ export default function KalkylePage({ params }: KalkylePageProps) {
           </Button>
         </div>
       </div>
+
+      {/* Calculate and Report Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Calculator className="h-5 w-5" />
+            Kalkulering og Rapport
+          </CardTitle>
+          <CardDescription>
+            Kalkuler mengder for et bestemt antall porsjoner og generer detaljert PDF-rapport
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Input for number of portions */}
+            <div className="flex items-end gap-4">
+              <div className="flex-1">
+                <Label htmlFor="antallporsjoner">Antall porsjoner</Label>
+                <Input
+                  id="antallporsjoner"
+                  type="number"
+                  min="1"
+                  value={antallPorsjoner}
+                  onChange={(e) => setAntallPorsjoner(parseInt(e.target.value) || 1)}
+                  className="mt-1"
+                />
+              </div>
+              <Button
+                onClick={calculateRecipe}
+                disabled={calculateLoading}
+                className="min-w-[120px]"
+              >
+                <Calculator className="h-4 w-4 mr-2" />
+                {calculateLoading ? "Kalkulerer..." : "Kalkuler"}
+              </Button>
+            </div>
+
+            {/* Report download section */}
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="calculate-before-report"
+                  checked={calculateBeforeReport}
+                  onCheckedChange={(checked) => setCalculateBeforeReport(checked as boolean)}
+                />
+                <label
+                  htmlFor="calculate-before-report"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Kalkuler for {antallPorsjoner} porsjoner før generering
+                </label>
+              </div>
+
+              <Button
+                onClick={downloadReport}
+                disabled={reportLoading}
+                variant="outline"
+                className="w-full"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                {reportLoading ? "Genererer rapport..." : "Last ned rapport (PDF)"}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Data Quality Badge */}
       <Card>

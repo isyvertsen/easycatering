@@ -522,6 +522,165 @@ class ReportService:
         buffer.seek(0)
         return buffer.getvalue()
 
+    async def generate_recipe_report_pdf(
+        self,
+        kalkyle_info: Dict[str, Any],
+        ingredienser: list[Dict[str, Any]]
+    ) -> bytes:
+        """
+        Generate detailed recipe report PDF.
+
+        Args:
+            kalkyle_info: Dictionary with recipe information
+            ingredienser: List of ingredients with details
+
+        Returns:
+            PDF file as bytes
+        """
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=2*cm,
+            leftMargin=2*cm,
+            topMargin=2*cm,
+            bottomMargin=2*cm
+        )
+
+        elements = []
+        styles = getSampleStyleSheet()
+
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=20,
+            textColor=colors.HexColor('#2c5282'),
+            spaceAfter=20,
+            alignment=1,  # Center
+        )
+
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=13,
+            textColor=colors.HexColor('#2c5282'),
+            spaceAfter=12,
+            borderWidth=2,
+            borderColor=colors.HexColor('#2c5282'),
+            borderPadding=6,
+        )
+
+        normal_style = styles['Normal']
+        normal_style.fontSize = 11
+
+        # Header
+        elements.append(Paragraph(f"OPPSKRIFT: {kalkyle_info.get('kalkylenavn', '')}", title_style))
+        elements.append(Spacer(1, 1*cm))
+
+        # Metadata section
+        elements.append(Paragraph("Oppskriftsdetaljer", heading_style))
+        metadata = [
+            ["Kalkylekode:", str(kalkyle_info.get('kalkylekode', ''))],
+            ["Antall porsjoner:", str(kalkyle_info.get('antallporsjoner', ''))],
+            ["Referanseporsjon:", kalkyle_info.get('refporsjon', '') or '-'],
+            ["Opprettet dato:", str(kalkyle_info.get('opprettetdato', '') or '-')],
+            ["Revidert dato:", str(kalkyle_info.get('revidertdato', '') or '-')],
+            ["Leveringsdato:", str(kalkyle_info.get('leveringsdato', '') or '-')],
+            ["Ansatt-ID:", str(kalkyle_info.get('ansattid', '') or '-')],
+            ["Produksjonsmetode:", kalkyle_info.get('produksjonsmetode', '') or '-']
+        ]
+        metadata_table = Table(metadata, colWidths=[4*cm, 12*cm])
+        metadata_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        elements.append(metadata_table)
+        elements.append(Spacer(1, 1*cm))
+
+        # Information section (if text exists)
+        if kalkyle_info.get('informasjon') or kalkyle_info.get('brukestil') or kalkyle_info.get('merknad'):
+            elements.append(Paragraph("Tilleggsinformasjon", heading_style))
+
+            if kalkyle_info.get('informasjon'):
+                elements.append(Paragraph(f"<b>Informasjon:</b> {kalkyle_info['informasjon']}", normal_style))
+                elements.append(Spacer(1, 0.3*cm))
+
+            if kalkyle_info.get('brukestil'):
+                elements.append(Paragraph(f"<b>Brukes til:</b> {kalkyle_info['brukestil']}", normal_style))
+                elements.append(Spacer(1, 0.3*cm))
+
+            if kalkyle_info.get('merknad'):
+                elements.append(Paragraph(f"<b>Merknad:</b> {kalkyle_info['merknad']}", normal_style))
+
+            elements.append(Spacer(1, 1*cm))
+
+        # Ingredients section
+        elements.append(Paragraph("Ingrediensliste (sortert etter Lager-ID)", heading_style))
+
+        # Ingredients table
+        ingredients_data = [["Lager-ID", "Produktnavn", "Porsjonsmengde", "Enhet", "Total mengde", "Visningsenhet"]]
+
+        for ing in ingredienser:
+            ingredients_data.append([
+                str(ing.get('lagerid', '')),
+                ing.get('produktnavn', ''),
+                str(ing.get('porsjonsmengde', '')),
+                ing.get('enhet', ''),
+                f"{ing.get('totmeng', 0):.2f}",
+                ing.get('visningsenhet', '')
+            ])
+
+        ingredients_table = Table(
+            ingredients_data,
+            colWidths=[2*cm, 5*cm, 2.5*cm, 2*cm, 2.5*cm, 2.5*cm]
+        )
+        ingredients_table.setStyle(TableStyle([
+            # Header row
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2c5282')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('ALIGN', (0, 0), (-1, 0), 'LEFT'),
+
+            # Data rows
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9f9f9')]),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+
+            # Alignment
+            ('ALIGN', (2, 1), (2, -1), 'RIGHT'),  # Porsjonsmengde
+            ('ALIGN', (4, 1), (4, -1), 'RIGHT'),  # Total mengde
+
+            # All rows
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        elements.append(ingredients_table)
+
+        # Footer
+        elements.append(Spacer(1, 2*cm))
+        footer_style = ParagraphStyle(
+            'Footer',
+            parent=styles['Normal'],
+            fontSize=9,
+            textColor=colors.HexColor('#666666'),
+        )
+        from datetime import datetime
+        elements.append(Paragraph(f"Generert: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}", footer_style))
+        elements.append(Paragraph("Larvik Kommune Catering", footer_style))
+
+        # Build PDF
+        doc.build(elements)
+
+        buffer.seek(0)
+        return buffer.getvalue()
+
     async def generate_pdf_from_docx(
         self,
         template_name: str,
