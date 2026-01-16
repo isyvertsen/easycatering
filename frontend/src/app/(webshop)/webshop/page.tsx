@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useWebshopProducts } from "@/hooks/useWebshop"
 import { useCart } from "@/contexts/CartContext"
 import { Input } from "@/components/ui/input"
@@ -32,6 +32,9 @@ export default function WebshopPage() {
   const [page, setPage] = useState(1)
   const [cartOpen, setCartOpen] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  const [allProducts, setAllProducts] = useState<any[]>([])
+  const [hasMore, setHasMore] = useState(true)
+  const observerTarget = useRef<HTMLDivElement>(null)
 
   // Load view preference from localStorage
   useEffect(() => {
@@ -58,6 +61,48 @@ export default function WebshopPage() {
     page,
     page_size: 20,
   })
+
+  // Reset products when search or sort changes
+  useEffect(() => {
+    setPage(1)
+    setAllProducts([])
+    setHasMore(true)
+  }, [searchTerm, sortBy, sortOrder])
+
+  // Accumulate products when new data arrives
+  useEffect(() => {
+    if (data && data.items) {
+      if (page === 1) {
+        setAllProducts(data.items)
+      } else {
+        setAllProducts((prev) => [...prev, ...data.items])
+      }
+      setHasMore(page < data.total_pages)
+    }
+  }, [data, page])
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          setPage((p) => p + 1)
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    const currentTarget = observerTarget.current
+    if (currentTarget) {
+      observer.observe(currentTarget)
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget)
+      }
+    }
+  }, [hasMore, isLoading])
 
   return (
     <div className="container mx-auto py-6 px-4">
@@ -176,49 +221,41 @@ export default function WebshopPage() {
           )}
 
           {/* Product Grid/List */}
-          {data && data.items.length > 0 && (
+          {allProducts.length > 0 && (
             <>
               {viewMode === "grid" ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {data.items.map((product) => (
+                  {allProducts.map((product) => (
                     <ProductCard key={product.produktid} product={product} />
                   ))}
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {data.items.map((product) => (
+                  {allProducts.map((product) => (
                     <ProductListItem key={product.produktid} product={product} />
                   ))}
                 </div>
               )}
 
-              {/* Pagination */}
-              {data.total_pages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-8">
-                  <Button
-                    variant="outline"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                  >
-                    Forrige
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    Side {page} av {data.total_pages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    onClick={() => setPage((p) => Math.min(data.total_pages, p + 1))}
-                    disabled={page === data.total_pages}
-                  >
-                    Neste
-                  </Button>
-                </div>
-              )}
+              {/* Infinite Scroll Trigger */}
+              <div ref={observerTarget} className="h-20 flex items-center justify-center mt-8">
+                {isLoading && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
+                    <span>Laster flere produkter...</span>
+                  </div>
+                )}
+                {!hasMore && allProducts.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Alle produkter er lastet ({allProducts.length} totalt)
+                  </p>
+                )}
+              </div>
             </>
           )}
 
           {/* No Results */}
-          {data && data.items.length === 0 && (
+          {!isLoading && allProducts.length === 0 && (
             <div className="text-center py-12">
               <p className="text-muted-foreground">
                 Ingen produkter funnet.
