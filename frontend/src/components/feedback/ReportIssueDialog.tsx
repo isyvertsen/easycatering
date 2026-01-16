@@ -323,32 +323,38 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Beskrivelse</Label>
-                <div {...getRootProps()} className={`relative ${isDragActive ? 'ring-2 ring-blue-500 rounded-lg' : ''}`}>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  onPaste={handlePaste}
+                  placeholder={
+                    issueType === 'bug'
+                      ? 'Hva skjedde? Hva forventet du? Hvordan reprodusere?'
+                      : 'Hva skal funksjonen gjøre? Hvorfor trengs den?'
+                  }
+                  className="min-h-[150px]"
+                />
+
+                {/* Drop zone for images */}
+                <div
+                  {...getRootProps()}
+                  className={`relative border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
+                    isDragActive
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-muted-foreground/25 bg-muted/20 hover:border-muted-foreground/50'
+                  }`}
+                >
                   <input {...getInputProps()} />
-                  <Textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    onPaste={handlePaste}
-                    placeholder={
-                      issueType === 'bug'
-                        ? 'Hva skjedde? Hva forventet du? Hvordan reprodusere?'
-                        : 'Hva skal funksjonen gjøre? Hvorfor trengs den?'
-                    }
-                    className="min-h-[150px]"
-                  />
-                  {isDragActive && (
-                    <div className="absolute inset-0 bg-blue-50 bg-opacity-90 flex items-center justify-center rounded-lg pointer-events-none">
-                      <div className="text-blue-600 font-medium">
-                        Slipp bildet her...
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <ImagePlus className="h-4 w-4" />
+                    {isDragActive ? (
+                      <span className="font-medium text-blue-600">Slipp bildet her...</span>
+                    ) : (
+                      <span>Lim inn skjermbilde (Ctrl+V) eller dra og slipp bilder her</span>
+                    )}
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <ImagePlus className="h-3 w-3" />
-                  Lim inn skjermbilde (Ctrl+V) eller dra og slipp bilder her
-                </p>
               </div>
 
               {/* Screenshots preview */}
