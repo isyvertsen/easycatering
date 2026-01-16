@@ -187,8 +187,9 @@ Kalkuleringsfunksjonaliteten lar deg automatisk beregne ingrediensmengder og pri
 ### Slik kalkulerer du en oppskrift
 
 1. **Åpne oppskriften**
-   - Naviger til oppskriften du vil kalkulere
-   - Du finner kalkuleringsverktøyet på oppskriftsdetaljsiden
+   - Gå til **Oppskrifter** i menyen
+   - Klikk på oppskriften du vil kalkulere for å åpne redigeringssiden
+   - Du finner kalkuleringsverktøyet i høyre kolonne under "Kalkulering og Rapport"
 
 2. **Kalkuler mengder**
    - Finn seksjonen **"Kalkulering og Rapport"**
@@ -221,10 +222,11 @@ Generer en detaljert PDF-rapport av oppskriften, perfekt for utskrift og bruk i 
 ### Slik laster du ned en rapport
 
 1. **Åpne oppskriften**
-   - Naviger til oppskriften
+   - Gå til **Oppskrifter** i menyen
+   - Klikk på oppskriften du vil laste ned rapport for
 
 2. **Velg rapportalternativer**
-   - Finn seksjonen **"Kalkulering og Rapport"**
+   - Finn seksjonen **"Kalkulering og Rapport"** i høyre kolonne
    - **Valgfritt**: Huk av for "Kalkuler for X porsjoner før generering"
      - Dette kalkulerer oppskriften automatisk før PDF-en genereres
      - Nyttig hvis du vil ha rapporten for et spesifikt antall porsjoner
