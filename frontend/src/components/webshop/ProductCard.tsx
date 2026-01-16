@@ -49,8 +49,8 @@ function ProductCardComponent({ product }: ProductCardProps) {
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow">
       <CardHeader className="pb-3">
-        {/* Placeholder for product image */}
-        <div className="aspect-square bg-muted rounded-md flex items-center justify-center mb-3">
+        {/* Placeholder for product image - hidden on mobile */}
+        <div className="hidden md:flex aspect-square bg-muted rounded-md items-center justify-center mb-3">
           <Package className="h-12 w-12 text-muted-foreground" />
         </div>
         <h3 className="font-semibold text-base md:text-lg md:line-clamp-2" title={product.produktnavn}>
