@@ -24,7 +24,8 @@ class GitHubService:
         browser_info: str,
         current_url: str,
         ai_improved: bool = False,
-        target_repositories: Optional[List[str]] = None  # ["backend"], ["frontend"], or ["backend", "frontend"]
+        target_repositories: Optional[List[str]] = None,  # ["backend"], ["frontend"], or ["backend", "frontend"]
+        screenshots: Optional[List[str]] = None  # Base64 encoded screenshots
     ) -> Dict[str, Any]:
         """
         Create a GitHub issue with system metadata.
@@ -93,9 +94,17 @@ class GitHubService:
             else:
                 scope_indicator = ""
 
+            # Add screenshots section if provided
+            screenshots_section = ""
+            if screenshots and len(screenshots) > 0:
+                screenshots_section = "\n\n## Skjermbilder\n\n"
+                for idx, screenshot_data in enumerate(screenshots, 1):
+                    # GitHub supports inline images with base64 data URLs
+                    screenshots_section += f"![Skjermbilde {idx}]({screenshot_data})\n\n"
+
             issue_body = f"""## {type_label}
 
-{description}{scope_indicator}
+{description}{scope_indicator}{screenshots_section}
 
 ## Systeminfo
 

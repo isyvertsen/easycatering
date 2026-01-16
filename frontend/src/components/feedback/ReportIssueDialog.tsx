@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
+import { useDropzone } from 'react-dropzone'
 import {
   Dialog,
   DialogContent,
@@ -14,12 +15,19 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { AlertCircle, Bug, Sparkles, CheckCircle, Lightbulb } from 'lucide-react'
+import { AlertCircle, Bug, Sparkles, CheckCircle, Lightbulb, X, ImagePlus } from 'lucide-react'
 import { feedbackApi } from '@/lib/api/feedback'
 
 interface ReportIssueDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+}
+
+interface Screenshot {
+  id: string
+  dataUrl: string
+  name: string
+  size: number
 }
 
 type Step = 'type-selection' | 'input' | 'follow-up' | 'review' | 'success'
@@ -30,6 +38,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
   const [issueType, setIssueType] = useState<'bug' | 'feature'>('bug')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [screenshots, setScreenshots] = useState<Screenshot[]>([])
   const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({})
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([])
   const [improvedTitle, setImprovedTitle] = useState('')
@@ -47,12 +56,60 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
     return `${ua.includes('Chrome') ? 'Chrome' : ua.includes('Firefox') ? 'Firefox' : ua.includes('Safari') ? 'Safari' : 'Unknown'} på ${platform}`
   }
 
+  // Handle file drop
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    acceptedFiles.forEach((file) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const newScreenshot: Screenshot = {
+          id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          dataUrl: reader.result as string,
+          name: file.name,
+          size: file.size,
+        }
+        setScreenshots((prev) => [...prev, newScreenshot])
+      }
+      reader.readAsDataURL(file)
+    })
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
+    },
+    multiple: true,
+    noClick: true,  // Don't open file dialog on click, only on drop
+  })
+
+  // Handle paste
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile()
+        if (file) {
+          onDrop([file])
+        }
+      }
+    }
+  }, [onDrop])
+
+  // Remove screenshot
+  const removeScreenshot = (id: string) => {
+    setScreenshots((prev) => prev.filter((img) => img.id !== id))
+  }
+
   // Reset dialog
   const resetDialog = () => {
     setStep('type-selection')
     setIssueType('bug')
     setTitle('')
     setDescription('')
+    setScreenshots([])
     setFollowUpAnswers({})
     setFollowUpQuestions([])
     setImprovedTitle('')
@@ -84,6 +141,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
         type: issueType,
         title,
         description,
+        screenshots: screenshots.map(s => s.dataUrl),
       })
 
       toast.success('Analyse fullført!', { id: 'analyze' })
@@ -137,6 +195,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
         title,
         description,
         answers: followUpAnswers,
+        screenshots: screenshots.map(s => s.dataUrl),
       })
 
       toast.success('Analyse fullført!', { id: 'reanalyze' })
@@ -179,6 +238,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
         currentUrl: typeof window !== 'undefined' ? window.location.href : '',
         aiImproved: improvedTitle !== title || improvedDescription !== description,
         targetRepositories: targetRepositories,
+        screenshots: screenshots.map(s => s.dataUrl),
       })
 
       if (result.success && result.issues && result.issues.length > 0) {
@@ -259,18 +319,68 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Beskrivelse</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder={
-                    issueType === 'bug'
-                      ? 'Hva skjedde? Hva forventet du? Hvordan reprodusere?'
-                      : 'Hva skal funksjonen gjøre? Hvorfor trengs den?'
-                  }
-                  className="min-h-[150px]"
-                />
+                <div {...getRootProps()} className={`relative ${isDragActive ? 'ring-2 ring-blue-500 rounded-lg' : ''}`}>
+                  <input {...getInputProps()} />
+                  <Textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    onPaste={handlePaste}
+                    placeholder={
+                      issueType === 'bug'
+                        ? 'Hva skjedde? Hva forventet du? Hvordan reprodusere?'
+                        : 'Hva skal funksjonen gjøre? Hvorfor trengs den?'
+                    }
+                    className="min-h-[150px]"
+                  />
+                  {isDragActive && (
+                    <div className="absolute inset-0 bg-blue-50 bg-opacity-90 flex items-center justify-center rounded-lg pointer-events-none">
+                      <div className="text-blue-600 font-medium">
+                        Slipp bildet her...
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <ImagePlus className="h-3 w-3" />
+                  Lim inn skjermbilde (Ctrl+V) eller dra og slipp bilder her
+                </p>
               </div>
+
+              {/* Screenshots preview */}
+              {screenshots.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Skjermbilder ({screenshots.length})</Label>
+                  <div className="space-y-2">
+                    {screenshots.map((screenshot) => (
+                      <div
+                        key={screenshot.id}
+                        className="flex items-center gap-3 p-2 border rounded-lg bg-card"
+                      >
+                        <img
+                          src={screenshot.dataUrl}
+                          alt={screenshot.name}
+                          className="w-16 h-16 object-cover rounded border"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{screenshot.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(screenshot.size / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => removeScreenshot(screenshot.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setStep('type-selection')}>
@@ -351,6 +461,21 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
                   <p className="text-sm whitespace-pre-wrap">{improvedDescription}</p>
                 </div>
               </div>
+              {screenshots.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Skjermbilder ({screenshots.length})</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {screenshots.map((screenshot) => (
+                      <img
+                        key={screenshot.id}
+                        src={screenshot.dataUrl}
+                        alt={screenshot.name}
+                        className="w-full h-32 object-cover rounded border"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setStep('input')}>

@@ -5,6 +5,7 @@ export interface AnalyzeRequest {
   title: string
   description: string
   answers?: Record<string, string>
+  screenshots?: string[]  // Base64 encoded images
 }
 
 export interface AnalyzeResponse {
@@ -28,6 +29,7 @@ export interface CreateIssueRequest {
   currentUrl: string
   aiImproved?: boolean
   targetRepositories?: string[]
+  screenshots?: string[]  // Base64 encoded images
 }
 
 export interface IssueInfo {
