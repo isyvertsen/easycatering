@@ -26,9 +26,22 @@ class ProdukterBase(BaseSchema):
     lagerid: Optional[float] = None
     utregningsfaktor: Optional[float] = Field(None, ge=0)
     utregnetpris: Optional[float] = Field(None, ge=0)
-    visningsnavn: Optional[str] = Field(None, max_length=200)
-    visningsnavn2: Optional[str] = Field(None, max_length=200)
+    visningsnavn: Optional[str] = Field(None, max_length=50)
+    visningsnavn2: Optional[str] = Field(None, max_length=50)
     rett_komponent: Optional[bool] = None
+
+    @field_validator('visningsnavn', 'visningsnavn2', mode='before')
+    @classmethod
+    def truncate_visningsnavn(cls, v):
+        """Truncate visningsnavn to max 50 characters."""
+        if v is None or v == '':
+            return v
+
+        # Convert to string and truncate if too long
+        s = str(v)
+        if len(s) > 50:
+            return s[:50]
+        return s
 
     @field_validator('ean_kode', mode='before')
     @classmethod
