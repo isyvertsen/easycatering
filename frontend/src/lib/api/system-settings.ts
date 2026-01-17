@@ -38,6 +38,10 @@ export interface UserKundegruppeFilterResponse {
   gruppe_ids: number[]
 }
 
+export interface WebshopOnlyRoleResponse {
+  role: string | null
+}
+
 export const systemSettingsApi = {
   /**
    * Hent alle systeminnstillinger (kun admin)
@@ -99,6 +103,28 @@ export const systemSettingsApi = {
   updateUserKundegruppeFilter: async (gruppeIds: number[]): Promise<UserKundegruppeFilterResponse> => {
     const response = await apiClient.put('/v1/system-settings/user-kundegruppe-filter', {
       gruppe_ids: gruppeIds
+    })
+    return response.data
+  },
+
+  /**
+   * Hent rollen som kun har tilgang til webshop
+   *
+   * Backend endpoint: GET /api/v1/system-settings/webshop-only-role
+   */
+  getWebshopOnlyRole: async (): Promise<WebshopOnlyRoleResponse> => {
+    const response = await apiClient.get('/v1/system-settings/webshop-only-role')
+    return response.data
+  },
+
+  /**
+   * Oppdater rollen som kun har tilgang til webshop (kun admin)
+   *
+   * Backend endpoint: PUT /api/v1/system-settings/webshop-only-role
+   */
+  updateWebshopOnlyRole: async (role: string | null): Promise<WebshopOnlyRoleResponse> => {
+    const response = await apiClient.put('/v1/system-settings/webshop-only-role', {
+      role: role
     })
     return response.data
   }

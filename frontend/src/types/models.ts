@@ -266,8 +266,7 @@ export interface Bruker {
   email: string
   full_name: string
   ansattid?: number
-  kundeid?: number
-  kundeids?: number[]
+  kundeids?: number[]  // Customer IDs (via junction table)
   rolle: string
   is_active: boolean
   is_superuser: boolean
@@ -283,8 +282,7 @@ export interface BrukerCreate {
   full_name: string
   password: string
   ansattid?: number
-  kundeid?: number
-  kundeids?: number[]
+  kundeids?: number[]  // Customer IDs (via junction table)
   rolle?: string
   is_active?: boolean
 }
@@ -294,8 +292,7 @@ export interface BrukerUpdate {
   full_name?: string
   password?: string
   ansattid?: number | null
-  kundeid?: number | null
-  kundeids?: number[]
+  kundeids?: number[]  // Customer IDs (via junction table)
   rolle?: string
   is_active?: boolean
 }

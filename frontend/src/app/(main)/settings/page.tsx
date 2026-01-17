@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useBackendHealth } from "@/hooks/useBackendHealth"
 import { WebshopCategoryOrderSettings } from "@/components/settings/WebshopCategoryOrderSettings"
 import { UserKundegruppeFilterSettings } from "@/components/settings/UserKundegruppeFilterSettings"
+import { WebshopOnlyRoleSettings } from "@/components/settings/WebshopOnlyRoleSettings"
 import { systemSettingsApi, FeatureFlags } from "@/lib/api/system-settings"
 import { Badge } from "@/components/ui/badge"
 
@@ -608,6 +609,9 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="security" className="space-y-4">
+          {/* Webshop-only Role Settings */}
+          <WebshopOnlyRoleSettings />
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

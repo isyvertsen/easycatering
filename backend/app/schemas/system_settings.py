@@ -39,3 +39,13 @@ class UserKundegruppeFilterResponse(BaseModel):
 class UserKundegruppeFilterUpdate(BaseModel):
     """Request schema for updating user kundegruppe filter."""
     gruppe_ids: List[int]
+
+
+class WebshopOnlyRoleResponse(BaseModel):
+    """Response schema for webshop-only role setting."""
+    role: Optional[str] = None
+
+
+class WebshopOnlyRoleUpdate(BaseModel):
+    """Request schema for updating webshop-only role."""
+    role: Optional[str] = None

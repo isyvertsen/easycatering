@@ -11,6 +11,10 @@ interface CartContextType {
   isSaving: boolean
   isSynced: boolean
   lastSaved: Date | null
+  /** Current customer ID for this cart */
+  kundeid: number | null
+  /** Set the customer ID for this cart (changes cart context) */
+  setKundeid: (kundeid: number | null) => void
   addItem: (item: Omit<CartItem, 'antall'> & { antall?: number }) => void
   removeItem: (produktid: number) => void
   updateQuantity: (produktid: number, antall: number) => void
@@ -24,6 +28,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 
 const CART_STORAGE_KEY = 'webshop-cart'
 const DRAFT_ORDER_ID_KEY = 'webshop-draft-order-id'
+const SELECTED_KUNDE_KEY = 'webshop-selected-kundeid'
 const SAVE_DEBOUNCE_MS = 1000 // Wait 1 second before saving
 
 // Validate cart item from localStorage
@@ -56,6 +61,7 @@ function validateCartItems(data: unknown): CartItem[] {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [draftOrderId, setDraftOrderId] = useState<number | null>(null)
+  const [kundeid, setKundeidState] = useState<number | null>(null)
   const [isHydrated, setIsHydrated] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isSynced, setIsSynced] = useState(false)
@@ -72,6 +78,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stored = localStorage.getItem(CART_STORAGE_KEY)
     const storedDraftId = localStorage.getItem(DRAFT_ORDER_ID_KEY)
+    const storedKundeid = localStorage.getItem(SELECTED_KUNDE_KEY)
 
     if (stored) {
       try {
@@ -95,6 +102,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       } else {
         console.warn('Invalid draft order ID in localStorage, ignoring')
         localStorage.removeItem(DRAFT_ORDER_ID_KEY)
+      }
+    }
+
+    if (storedKundeid) {
+      const kundeIdNum = parseInt(storedKundeid, 10)
+      if (!isNaN(kundeIdNum) && kundeIdNum > 0) {
+        setKundeidState(kundeIdNum)
+      } else {
+        localStorage.removeItem(SELECTED_KUNDE_KEY)
       }
     }
 
@@ -134,7 +150,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         pris: item.pris
       }))
 
-      const draft = await webshopApi.updateDraftOrder(ordrelinjer)
+      const draft = await webshopApi.updateDraftOrder(ordrelinjer, kundeid ?? undefined)
       setDraftOrderId(draft.ordreid)
       setIsSynced(true)
       setLastSaved(new Date())
@@ -145,7 +161,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setIsSaving(false)
       pendingSaveRef.current = false
     }
-  }, [isLoggedIn])
+  }, [isLoggedIn, kundeid])
 
   // Debounced save
   const debouncedSave = useCallback((cartItems: CartItem[]) => {
@@ -166,7 +182,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!isLoggedIn) return
 
     try {
-      const draft = await webshopApi.getDraftOrder()
+      const draft = await webshopApi.getDraftOrder(kundeid ?? undefined)
       if (draft && draft.ordrelinjer.length > 0) {
         // Convert backend order lines to cart items
         // Backend returns produktnavn/visningsnavn directly on line
@@ -186,7 +202,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to load draft order', error)
     }
-  }, [isLoggedIn])
+  }, [isLoggedIn, kundeid])
 
   // Load draft order when user logs in
   useEffect(() => {
@@ -234,7 +250,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (isLoggedIn) {
         if (newItems.length === 0 && draftOrderId) {
           // Delete draft order if cart is empty
-          webshopApi.deleteDraftOrder(draftOrderId).catch(console.error)
+          webshopApi.deleteDraftOrder(draftOrderId, kundeid ?? undefined).catch(console.error)
           setDraftOrderId(null)
           setIsSynced(true)
         } else {
@@ -277,7 +293,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     // Delete draft order from backend
     if (isLoggedIn && draftOrderId) {
-      webshopApi.deleteDraftOrder(draftOrderId).catch(console.error)
+      webshopApi.deleteDraftOrder(draftOrderId, kundeid ?? undefined).catch(console.error)
     }
 
     // Clear localStorage explicitly
@@ -289,6 +305,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setIsSynced(true)
     setLastSaved(null)
   }
+
+  // Set selected customer and persist to localStorage
+  const setKundeid = useCallback((newKundeid: number | null) => {
+    setKundeidState(newKundeid)
+    if (newKundeid) {
+      localStorage.setItem(SELECTED_KUNDE_KEY, newKundeid.toString())
+    } else {
+      localStorage.removeItem(SELECTED_KUNDE_KEY)
+    }
+    // When customer changes, clear the cart to load new customer's draft
+    setItems([])
+    setDraftOrderId(null)
+    setIsSynced(false)
+  }, [])
 
   const getTotalItems = useCallback(() => {
     return items.reduce((sum, item) => sum + item.antall, 0)
@@ -305,6 +335,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     isSaving,
     isSynced,
     lastSaved,
+    kundeid,
+    setKundeid,
     addItem,
     removeItem,
     updateQuantity,
@@ -318,6 +350,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     isSaving,
     isSynced,
     lastSaved,
+    kundeid,
+    setKundeid,
     addItem,
     removeItem,
     updateQuantity,

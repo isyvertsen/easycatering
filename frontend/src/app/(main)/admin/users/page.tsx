@@ -72,11 +72,18 @@ export default function AdminUsersPage() {
       key: 'rolle',
       label: 'Rolle',
       sortable: true,
-      render: (value) => (
-        <Badge variant={value === 'admin' ? 'default' : 'secondary'}>
-          {value === 'admin' ? 'Administrator' : 'Bruker'}
-        </Badge>
-      ),
+      render: (value) => {
+        const rolleLabels: Record<string, string> = {
+          admin: 'Administrator',
+          bruker: 'Bruker',
+          webshop: 'Webshop',
+        }
+        return (
+          <Badge variant={value === 'admin' ? 'default' : value === 'webshop' ? 'outline' : 'secondary'}>
+            {rolleLabels[value] || value}
+          </Badge>
+        )
+      },
     },
     {
       key: 'is_active',

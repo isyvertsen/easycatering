@@ -90,3 +90,40 @@ export function useUpdateUserKundegruppeFilter() {
     },
   })
 }
+
+/**
+ * Hent rollen som kun har tilgang til webshop
+ */
+export function useWebshopOnlyRole() {
+  return useQuery({
+    queryKey: ['system-settings', 'webshop-only-role'],
+    queryFn: () => systemSettingsApi.getWebshopOnlyRole(),
+    staleTime: 5 * 60 * 1000, // 5 minutter
+  })
+}
+
+/**
+ * Oppdater rollen som kun har tilgang til webshop
+ */
+export function useUpdateWebshopOnlyRole() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: (role: string | null) => systemSettingsApi.updateWebshopOnlyRole(role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['system-settings', 'webshop-only-role'] })
+      toast({
+        title: 'Lagret',
+        description: 'Webshop-rollen er oppdatert',
+      })
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Feil',
+        description: error.response?.data?.detail || 'Kunne ikke lagre webshop-rolle',
+        variant: 'destructive',
+      })
+    },
+  })
+}

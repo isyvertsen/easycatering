@@ -165,12 +165,22 @@ class WebshopBatchApproveResponse(BaseSchema):
 # Webshop access check
 # =============================================================================
 
+class WebshopKundeInfo(BaseSchema):
+    """Customer info for webshop access."""
+    kundeid: int
+    kunde_navn: str
+    kundegruppe_navn: Optional[str] = None
+    has_webshop_access: bool
+
+
 class WebshopAccessResponse(BaseSchema):
     """Response for webshop access check."""
     has_access: bool
     kunde_navn: Optional[str] = None
     kundegruppe_navn: Optional[str] = None
+    kundeid: Optional[int] = None  # Active customer ID
     message: Optional[str] = None
+    available_kunder: Optional[List[WebshopKundeInfo]] = None  # All linked customers
 
 
 # =============================================================================

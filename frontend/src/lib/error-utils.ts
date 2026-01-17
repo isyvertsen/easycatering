@@ -148,12 +148,40 @@ export function getCrudErrorMessage(
   return operationMessage
 }
 
-export function logError(error: Error, context?: string) {
+export function logError(error: unknown, context?: string) {
   const timestamp = new Date().toISOString()
+
+  // Extract error details from various error types
+  let message = 'Unknown error'
+  let stack: string | undefined
+  let responseData: unknown
+  let status: number | undefined
+
+  if (error instanceof Error) {
+    message = error.message
+    stack = error.stack
+  }
+
+  // Handle axios errors
+  if (error && typeof error === 'object') {
+    const axiosError = error as { response?: { data?: unknown; status?: number }; message?: string }
+    if (axiosError.response?.data) {
+      responseData = axiosError.response.data
+    }
+    if (axiosError.response?.status) {
+      status = axiosError.response.status
+    }
+    if (axiosError.message) {
+      message = axiosError.message
+    }
+  }
+
   const errorDetails = {
     timestamp,
-    message: error.message,
-    stack: error.stack,
+    message,
+    stack,
+    status,
+    responseData,
     context,
     url: typeof window !== 'undefined' ? window.location.href : 'server',
     userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'server',
@@ -162,7 +190,7 @@ export function logError(error: Error, context?: string) {
   if (process.env.NODE_ENV === 'development') {
     console.error('[ERROR]', errorDetails)
   } else {
-    console.error(`[${timestamp}] ${context || 'Error'}: ${error.message}`)
+    console.error(`[${timestamp}] ${context || 'Error'}: ${message}`)
   }
 
   if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {

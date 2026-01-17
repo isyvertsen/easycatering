@@ -457,6 +457,8 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(AddMultiLevelGtinToTblprodukter())
         migration_runner.add_migration(BackfillGtinFromMatinfo())
         migration_runner.add_migration(CreateUserKunderJunctionTable())
+        migration_runner.add_migration(AddSequenceToTblansatte())
+        migration_runner.add_migration(DropKundeidFromUsers())
     return migration_runner
 
 
@@ -1327,6 +1329,39 @@ class BackfillGtinFromMatinfo(Migration):
             """))
 
 
+class AddSequenceToTblansatte(Migration):
+    """Add sequence for ansattid in tblansatte."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260117_006_ansatte_sequence",
+            description="Add auto-increment sequence to tblansatte.ansattid"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Create sequence starting from max id + 1
+            await conn.execute(text("""
+                DO $$
+                DECLARE
+                    max_id BIGINT;
+                BEGIN
+                    SELECT COALESCE(MAX(ansattid), 0) + 1 INTO max_id FROM tblansatte;
+
+                    -- Create sequence if not exists
+                    IF NOT EXISTS (SELECT 1 FROM pg_sequences WHERE schemaname = 'public' AND sequencename = 'tblansatte_ansattid_seq') THEN
+                        EXECUTE format('CREATE SEQUENCE tblansatte_ansattid_seq START WITH %s', max_id);
+                    END IF;
+                END $$
+            """))
+
+            # Set column default to use sequence
+            await conn.execute(text("""
+                ALTER TABLE tblansatte
+                ALTER COLUMN ansattid SET DEFAULT nextval('tblansatte_ansattid_seq')
+            """))
+
+
 class CreateUserKunderJunctionTable(Migration):
     """Create junction table for user-customer many-to-many relationship."""
 
@@ -1355,6 +1390,38 @@ class CreateUserKunderJunctionTable(Migration):
             """))
             await conn.execute(text("""
                 CREATE INDEX IF NOT EXISTS idx_user_kunder_kundeid ON user_kunder(kundeid)
+            """))
+
+
+class DropKundeidFromUsers(Migration):
+    """Remove legacy kundeid column from users table.
+
+    Now using user_kunder junction table for user-customer relationships.
+    """
+
+    def __init__(self):
+        super().__init__(
+            version="20260117_007_drop_users_kundeid",
+            description="Remove legacy kundeid column from users table"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Drop the foreign key constraint first (if exists)
+            await conn.execute(text("""
+                ALTER TABLE users
+                DROP CONSTRAINT IF EXISTS users_kundeid_fkey
+            """))
+
+            # Drop the index (if exists)
+            await conn.execute(text("""
+                DROP INDEX IF EXISTS ix_users_kundeid
+            """))
+
+            # Drop the column
+            await conn.execute(text("""
+                ALTER TABLE users
+                DROP COLUMN IF EXISTS kundeid
             """))
 
 
