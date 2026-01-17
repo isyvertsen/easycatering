@@ -9,7 +9,7 @@ from app.api.v1 import (
     graphql_endpoint,
     report_generator, documentation, documentation_chat, bruker, periode_view,
     bestilling_skjema, bestilling_registrer, activity_logs, app_logs, plukking, cron,
-    webshop, varebok, system_settings, workflow
+    webshop, varebok, system_settings, workflow, etiketter
 )
 from app.api.v1.endpoints import matinfo_sync, matinfo_tracker, ngdata_sync, vetduat_sync, hybrid_sync
 
@@ -28,6 +28,7 @@ api_router.include_router(cron.router)
 api_router.include_router(documentation.router, prefix="/documentation", tags=["documentation"])
 api_router.include_router(documentation_chat.router, prefix="/documentation", tags=["documentation-chat"])
 api_router.include_router(ean_management.router, prefix="/ean-management", tags=["ean-management"])
+api_router.include_router(etiketter.router, prefix="/etiketter", tags=["etiketter"])
 api_router.include_router(feedback.router, prefix="/feedback", tags=["feedback"])
 api_router.include_router(graphql_endpoint.router, prefix="/graphql", tags=["graphql"])
 api_router.include_router(hybrid_sync.router, prefix="/hybrid-sync", tags=["hybrid-sync"])

@@ -100,7 +100,8 @@ const navigationGroups: NavGroup[] = [
       { name: "Kunder", href: "/customers", icon: Users },
       { name: "Kundegrupper", href: "/kundegrupper", icon: Users },
       { name: "Leveranser", href: "/deliveries", icon: Truck },
-      { name: "Etiketter", href: "/labels", icon: Tag },
+      { name: "Leveringsetiketter", href: "/etiketter", icon: Printer },
+      { name: "Etikettmaler", href: "/labels", icon: Tag },
     ]
   },
   {
