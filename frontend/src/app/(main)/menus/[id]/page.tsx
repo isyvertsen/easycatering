@@ -14,7 +14,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ArrowLeft, Save } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { ArrowLeft, Save, Plus, Trash2, Search } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { api } from "@/lib/api"
 
@@ -30,6 +46,10 @@ export default function MenuDetailPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [menuGroups, setMenuGroups] = useState<any[]>([])
+  const [menuProducts, setMenuProducts] = useState<any[]>([])
+  const [availableProducts, setAvailableProducts] = useState<any[]>([])
+  const [productSearch, setProductSearch] = useState("")
+  const [addProductDialogOpen, setAddProductDialogOpen] = useState(false)
   const [formData, setFormData] = useState<MenuFormData>({
     beskrivelse: "",
     menygruppe: null,
@@ -42,10 +62,17 @@ export default function MenuDetailPage() {
     fetchMenuGroups()
     if (!isNew) {
       fetchMenu()
+      fetchMenuProducts()
     } else {
       setLoading(false)
     }
   }, [params.id])
+
+  useEffect(() => {
+    if (addProductDialogOpen) {
+      fetchAvailableProducts()
+    }
+  }, [addProductDialogOpen])
 
   const fetchMenuGroups = async () => {
     try {
@@ -74,6 +101,66 @@ export default function MenuDetailPage() {
       router.push("/menus")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchMenuProducts = async () => {
+    if (!menuId) return
+    try {
+      const response = await api.get(`/v1/meny-produkt/details?meny_id=${menuId}`)
+      setMenuProducts(response.data)
+    } catch (error) {
+      console.error("Failed to fetch menu products:", error)
+    }
+  }
+
+  const fetchAvailableProducts = async () => {
+    try {
+      const response = await api.get("/v1/produkter?page_size=1000&aktiv=true")
+      setAvailableProducts(response.data.items || response.data)
+    } catch (error) {
+      console.error("Failed to fetch products:", error)
+    }
+  }
+
+  const handleAddProduct = async (produktId: number) => {
+    if (!menuId) return
+    try {
+      await api.post("/v1/meny-produkt/", {
+        menyid: menuId,
+        produktid: produktId,
+      })
+      toast({
+        title: "Success",
+        description: "Product added to menu",
+      })
+      fetchMenuProducts()
+      setAddProductDialogOpen(false)
+      setProductSearch("")
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.detail || "Failed to add product",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleRemoveProduct = async (produktId: number) => {
+    if (!menuId) return
+    try {
+      await api.delete(`/v1/meny-produkt/?meny_id=${menuId}&produkt_id=${produktId}`)
+      toast({
+        title: "Success",
+        description: "Product removed from menu",
+      })
+      fetchMenuProducts()
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.detail || "Failed to remove product",
+        variant: "destructive",
+      })
     }
   }
 
@@ -190,6 +277,120 @@ export default function MenuDetailPage() {
           </form>
         </CardContent>
       </Card>
+
+      {!isNew && (
+        <Card className="mt-6">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Menu Products</CardTitle>
+              <Dialog open={addProductDialogOpen} onOpenChange={setAddProductDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Product
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Add Product to Menu</DialogTitle>
+                    <DialogDescription>
+                      Search and select products to add to this menu
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search products..."
+                        value={productSearch}
+                        onChange={(e) => setProductSearch(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    <div className="border rounded-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Product Name</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead className="w-[100px]">Action</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {availableProducts
+                            .filter((p) =>
+                              p.produktnavn?.toLowerCase().includes(productSearch.toLowerCase())
+                            )
+                            .filter((p) =>
+                              !menuProducts.some((mp) => mp.produktid === p.produktid)
+                            )
+                            .slice(0, 50)
+                            .map((product) => (
+                              <TableRow key={product.produktid}>
+                                <TableCell>{product.produktnavn}</TableCell>
+                                <TableCell>{product.kategori?.kategorinavn || "-"}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleAddProduct(product.produktid)}
+                                  >
+                                    Add
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {menuProducts.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground">
+                No products added to this menu yet. Click "Add Product" to get started.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead className="w-[100px]">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {menuProducts.map((menuProduct) => (
+                    <TableRow key={menuProduct.produktid}>
+                      <TableCell>{menuProduct.produkt?.produktnavn || "Unknown"}</TableCell>
+                      <TableCell>
+                        {menuProduct.produkt?.kategori?.kategorinavn || "-"}
+                      </TableCell>
+                      <TableCell>
+                        {menuProduct.produkt?.pris
+                          ? `kr ${menuProduct.produkt.pris.toFixed(2)}`
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleRemoveProduct(menuProduct.produktid)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
