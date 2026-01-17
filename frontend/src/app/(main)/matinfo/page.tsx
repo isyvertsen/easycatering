@@ -92,11 +92,12 @@ export default function MatinfoPage() {
     page: 1,
     size: 20,
   })
+  const [enableStatsQueries, setEnableStatsQueries] = useState(false)
 
   // Data hooks
   const { data, isLoading } = useMatinfoProducts(params)
-  const { data: updatedGtins, isLoading: loadingUpdated } = useUpdatedGtins(7)
-  const { data: newProducts, isLoading: loadingNew } = useNewProducts(30)
+  const { data: updatedGtins, isLoading: loadingUpdated } = useUpdatedGtins(7, enableStatsQueries)
+  const { data: newProducts, isLoading: loadingNew } = useNewProducts(30, enableStatsQueries)
 
   // Mutation hooks
   const deleteMutation = useDeleteMatinfoProduct()
@@ -126,6 +127,7 @@ export default function MatinfoPage() {
   }
 
   const handleSync = () => {
+    setEnableStatsQueries(true)
     syncMutation.mutate(7)
   }
 

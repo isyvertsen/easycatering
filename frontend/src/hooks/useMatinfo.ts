@@ -47,17 +47,19 @@ export function useLinkedProduct(gtin: string | undefined) {
 }
 
 // Sync hooks
-export function useUpdatedGtins(daysBack = 7) {
+export function useUpdatedGtins(daysBack = 7, enabled = false) {
   return useQuery({
     queryKey: ['matinfo-updated-gtins', daysBack],
     queryFn: () => matinfoApi.sync.getUpdatedGtins(daysBack),
+    enabled,
   })
 }
 
-export function useNewProducts(daysBack = 30) {
+export function useNewProducts(daysBack = 30, enabled = false) {
   return useQuery({
     queryKey: ['matinfo-new-products', daysBack],
     queryFn: () => matinfoApi.sync.getNewProducts(daysBack),
+    enabled,
   })
 }
 
