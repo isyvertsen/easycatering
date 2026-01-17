@@ -213,7 +213,6 @@ async def create_bruker(
         full_name=data.full_name,
         hashed_password=get_password_hash(data.password),
         ansattid=data.ansattid,
-        kundeid=data.kundeid,
         rolle=data.rolle,
         is_active=data.is_active,
     )

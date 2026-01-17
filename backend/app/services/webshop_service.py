@@ -5,7 +5,7 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple, Dict
 
-from sqlalchemy import select, func, and_, String, text
+from sqlalchemy import select, func, and_, or_, String, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -14,7 +14,7 @@ from app.models.kunder import Kunder
 from app.models.kunde_gruppe import Kundegruppe
 from app.models.ordrer import Ordrer
 from app.models.ordredetaljer import Ordredetaljer
-from app.domain.entities.user import User
+from app.domain.entities.user import User, user_kunder
 from app.services.order_status_service import OrderStatusService, OrderStatusError
 from app.services.system_settings_service import SystemSettingsService
 from app.core.cache import cache_get, cache_set, cache_delete, CACHE_TTL_MEDIUM
@@ -29,6 +29,7 @@ from app.schemas.webshop import (
     WebshopOrderListResponse,
     WebshopOrderByTokenResponse,
     WebshopAccessResponse,
+    WebshopKundeInfo,
     WebshopDraftOrder,
     WebshopDraftOrderLineUpdate,
 )
@@ -90,48 +91,108 @@ class WebshopService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def check_webshop_access(self, user: User) -> WebshopAccessResponse:
-        """Check if user has webshop access through their customer group."""
-        if not user.kundeid:
+    async def get_user_kundeid(self, user: User, selected_kundeid: Optional[int] = None) -> Optional[int]:
+        """Get the active kundeid for a user.
+
+        If selected_kundeid is provided and user has access to it, returns that.
+        Otherwise returns the first kundeid found with webshop access.
+        """
+        access = await self.check_webshop_access(user, selected_kundeid=selected_kundeid)
+        return access.kundeid
+
+    async def check_webshop_access(self, user: User, selected_kundeid: Optional[int] = None) -> WebshopAccessResponse:
+        """Check if user has webshop access through their customer group.
+
+        Uses the user_kunder junction table for user-customer relationships.
+
+        Args:
+            user: The user to check access for
+            selected_kundeid: Optional specific customer to use (must be in user's linked customers)
+        """
+        # Get customer IDs from junction table
+        junction_query = select(user_kunder.c.kundeid).where(user_kunder.c.user_id == user.id)
+        junction_result = await self.db.execute(junction_query)
+        kunde_ids = {row[0] for row in junction_result}
+
+        if not kunde_ids:
             return WebshopAccessResponse(
                 has_access=False,
                 message="Bruker er ikke knyttet til en kunde"
             )
 
-        # Get customer with customer group
+        # Validate selected_kundeid if provided
+        if selected_kundeid and selected_kundeid not in kunde_ids:
+            return WebshopAccessResponse(
+                has_access=False,
+                message="Du har ikke tilgang til denne kunden"
+            )
+
+        # Get all customers with their customer groups
         query = (
             select(Kunder)
             .options(selectinload(Kunder.gruppe))
-            .where(Kunder.kundeid == user.kundeid)
+            .where(Kunder.kundeid.in_(kunde_ids))
         )
         result = await self.db.execute(query)
-        kunde = result.scalar_one_or_none()
+        kunder = result.scalars().all()
 
-        if not kunde:
+        if not kunder:
             return WebshopAccessResponse(
                 has_access=False,
-                message="Kunde ikke funnet"
+                message="Ingen av de tilknyttede kundene ble funnet"
             )
 
-        if not kunde.gruppe:
+        # Build list of available customers and check webshop access
+        available_kunder: List[WebshopKundeInfo] = []
+        first_with_access: Optional[Kunder] = None
+        selected_kunde: Optional[Kunder] = None
+
+        for kunde in kunder:
+            has_webshop = bool(kunde.gruppe and kunde.gruppe.webshop)
+
+            available_kunder.append(WebshopKundeInfo(
+                kundeid=kunde.kundeid,
+                kunde_navn=kunde.kundenavn or f"Kunde {kunde.kundeid}",
+                kundegruppe_navn=kunde.gruppe.gruppe if kunde.gruppe else None,
+                has_webshop_access=has_webshop
+            ))
+
+            # Track first customer with webshop access
+            if has_webshop and not first_with_access:
+                first_with_access = kunde
+
+            # Check if this is the selected customer
+            if selected_kundeid and kunde.kundeid == selected_kundeid:
+                selected_kunde = kunde
+
+        # If no customer has webshop access
+        if not first_with_access:
             return WebshopAccessResponse(
                 has_access=False,
-                kunde_navn=kunde.kundenavn,
-                message="Kunde har ingen kundegruppe"
+                message="Ingen av de tilknyttede kundene har webshop-tilgang",
+                available_kunder=available_kunder
             )
 
-        if not kunde.gruppe.webshop:
-            return WebshopAccessResponse(
-                has_access=False,
-                kunde_navn=kunde.kundenavn,
-                kundegruppe_navn=kunde.gruppe.gruppe,
-                message="Kundegruppen har ikke webshop-tilgang"
-            )
+        # Use selected customer if provided and has webshop access
+        active_kunde = first_with_access
+        if selected_kunde:
+            has_selected_webshop = bool(selected_kunde.gruppe and selected_kunde.gruppe.webshop)
+            if has_selected_webshop:
+                active_kunde = selected_kunde
+            else:
+                return WebshopAccessResponse(
+                    has_access=False,
+                    message="Den valgte kunden har ikke webshop-tilgang",
+                    available_kunder=available_kunder
+                )
 
+        # Return access granted with the active customer
         return WebshopAccessResponse(
             has_access=True,
-            kunde_navn=kunde.kundenavn,
-            kundegruppe_navn=kunde.gruppe.gruppe
+            kundeid=active_kunde.kundeid,
+            kunde_navn=active_kunde.kundenavn,
+            kundegruppe_navn=active_kunde.gruppe.gruppe if active_kunde.gruppe else None,
+            available_kunder=available_kunder if len(available_kunder) > 1 else None
         )
 
     async def get_products(
@@ -421,11 +482,26 @@ class WebshopService:
     async def create_order(
         self,
         user: User,
-        order_data: WebshopOrderCreate
+        order_data: WebshopOrderCreate,
+        kundeid: Optional[int] = None
     ) -> WebshopOrderCreateResponse:
-        """Create a new webshop order."""
+        """Create a new webshop order.
+
+        Args:
+            user: The user placing the order
+            order_data: Order details
+            kundeid: Customer ID (required, from access check)
+        """
+        # Use provided kundeid or get from junction table
+        active_kundeid = kundeid
+        if not active_kundeid:
+            active_kundeid = await self.get_user_kundeid(user)
+
+        if not active_kundeid:
+            raise ValueError("Bruker er ikke knyttet til en kunde")
+
         # Get customer info
-        query = select(Kunder).where(Kunder.kundeid == user.kundeid)
+        query = select(Kunder).where(Kunder.kundeid == active_kundeid)
         result = await self.db.execute(query)
         kunde = result.scalar_one_or_none()
 
@@ -434,7 +510,7 @@ class WebshopService:
 
         # Create order
         new_order = Ordrer(
-            kundeid=user.kundeid,
+            kundeid=active_kundeid,
             kundenavn=kunde.kundenavn,
             ordredato=datetime.utcnow(),
             leveringsdato=order_data.leveringsdato,
@@ -491,10 +567,27 @@ class WebshopService:
         user: User,
         page: int = 1,
         page_size: int = 20,
-        ordrestatusid: Optional[int] = None
+        ordrestatusid: Optional[int] = None,
+        kundeid: Optional[int] = None
     ) -> WebshopOrderListResponse:
-        """Get orders for the current user's customer."""
-        query = select(Ordrer).where(Ordrer.kundeid == user.kundeid)
+        """Get orders for the current user's customer.
+
+        Args:
+            user: The user requesting orders
+            page: Page number
+            page_size: Items per page
+            ordrestatusid: Optional status filter
+            kundeid: Customer ID (from access check)
+        """
+        # Use provided kundeid or get from junction table
+        active_kundeid = kundeid
+        if not active_kundeid:
+            active_kundeid = await self.get_user_kundeid(user)
+
+        if not active_kundeid:
+            return WebshopOrderListResponse(items=[], total=0, page=page, page_size=page_size, total_pages=0)
+
+        query = select(Ordrer).where(Ordrer.kundeid == active_kundeid)
 
         if ordrestatusid:
             query = query.where(Ordrer.ordrestatusid == ordrestatusid)
@@ -537,17 +630,31 @@ class WebshopService:
             total_pages=total_pages
         )
 
-    async def get_order(self, order_id: int, user: User) -> Optional[WebshopOrderDetail]:
-        """Get a single order with details."""
+    async def get_order(self, order_id: int, user: User, kundeid: Optional[int] = None) -> Optional[WebshopOrderDetail]:
+        """Get a single order with details.
+
+        Args:
+            order_id: The order ID to retrieve
+            user: The requesting user
+            kundeid: Optional customer ID for access check
+        """
         query = (
             select(Ordrer)
             .options(selectinload(Ordrer.detaljer).selectinload(Ordredetaljer.produkt))
             .where(Ordrer.ordreid == order_id)
         )
 
-        # If not admin, only allow access to own orders
+        # If not admin, only allow access to own orders (using junction table)
         if user.rolle != "admin":
-            query = query.where(Ordrer.kundeid == user.kundeid)
+            # Get all customer IDs for this user from junction table
+            junction_query = select(user_kunder.c.kundeid).where(user_kunder.c.user_id == user.id)
+            junction_result = await self.db.execute(junction_query)
+            user_kunde_ids = {row[0] for row in junction_result}
+
+            if user_kunde_ids:
+                query = query.where(Ordrer.kundeid.in_(user_kunde_ids))
+            else:
+                return None  # User has no linked customers
 
         result = await self.db.execute(query)
         order = result.scalar_one_or_none()
@@ -855,17 +962,29 @@ class WebshopService:
     # Draft order methods (auto-save)
     # =========================================================================
 
-    async def get_draft_order(self, user: User) -> Optional[WebshopDraftOrder]:
+    async def get_draft_order(self, user: User, kundeid: Optional[int] = None) -> Optional[WebshopDraftOrder]:
         """Get the current draft order (status 10) for user's customer.
 
         Returns None if no draft order exists.
+
+        Args:
+            user: The user requesting the draft
+            kundeid: Customer ID (from access check)
         """
+        # Use provided kundeid or get from junction table
+        active_kundeid = kundeid
+        if not active_kundeid:
+            active_kundeid = await self.get_user_kundeid(user)
+
+        if not active_kundeid:
+            return None
+
         query = (
             select(Ordrer)
             .options(selectinload(Ordrer.detaljer).selectinload(Ordredetaljer.produkt))
             .where(
                 and_(
-                    Ordrer.kundeid == user.kundeid,
+                    Ordrer.kundeid == active_kundeid,
                     Ordrer.ordrestatusid == 10  # Startet
                 )
             )
@@ -909,15 +1028,29 @@ class WebshopService:
     async def create_or_update_draft_order(
         self,
         user: User,
-        ordrelinjer: List[WebshopDraftOrderLineUpdate]
+        ordrelinjer: List[WebshopDraftOrderLineUpdate],
+        kundeid: Optional[int] = None
     ) -> WebshopDraftOrder:
         """Create or update a draft order with the given order lines.
 
         If a draft order exists, update its lines.
         If no draft order exists, create one with status 10 (Startet).
+
+        Args:
+            user: The user creating/updating the draft
+            ordrelinjer: Order lines to set
+            kundeid: Customer ID (from access check)
         """
+        # Use provided kundeid or get from junction table
+        active_kundeid = kundeid
+        if not active_kundeid:
+            active_kundeid = await self.get_user_kundeid(user)
+
+        if not active_kundeid:
+            raise ValueError("Bruker er ikke knyttet til en kunde")
+
         # Get customer info
-        query = select(Kunder).where(Kunder.kundeid == user.kundeid)
+        query = select(Kunder).where(Kunder.kundeid == active_kundeid)
         result = await self.db.execute(query)
         kunde = result.scalar_one_or_none()
 
@@ -927,7 +1060,7 @@ class WebshopService:
         # Check for existing draft order
         draft_query = select(Ordrer).where(
             and_(
-                Ordrer.kundeid == user.kundeid,
+                Ordrer.kundeid == active_kundeid,
                 Ordrer.ordrestatusid == 10
             )
         )
@@ -937,7 +1070,7 @@ class WebshopService:
         if not order:
             # Create new draft order
             order = Ordrer(
-                kundeid=user.kundeid,
+                kundeid=active_kundeid,
                 kundenavn=kunde.kundenavn,
                 ordredato=datetime.utcnow(),
                 ordrestatusid=10,  # Startet
@@ -1009,15 +1142,28 @@ class WebshopService:
             total_sum=total_sum
         )
 
-    async def delete_draft_order(self, user: User, order_id: int) -> bool:
+    async def delete_draft_order(self, user: User, order_id: int, kundeid: Optional[int] = None) -> bool:
         """Delete a draft order.
 
         Only works for orders with status 10 belonging to the user's customer.
+
+        Args:
+            user: The user deleting the draft
+            order_id: The order ID to delete
+            kundeid: Customer ID (from access check)
         """
+        # Use provided kundeid or get from junction table
+        active_kundeid = kundeid
+        if not active_kundeid:
+            active_kundeid = await self.get_user_kundeid(user)
+
+        if not active_kundeid:
+            return False
+
         query = select(Ordrer).where(
             and_(
                 Ordrer.ordreid == order_id,
-                Ordrer.kundeid == user.kundeid,
+                Ordrer.kundeid == active_kundeid,
                 Ordrer.ordrestatusid == 10
             )
         )
@@ -1044,7 +1190,8 @@ class WebshopService:
         user: User,
         order_id: int,
         leveringsdato: Optional[datetime] = None,
-        informasjon: Optional[str] = None
+        informasjon: Optional[str] = None,
+        kundeid: Optional[int] = None
     ) -> Optional[WebshopOrder]:
         """Submit a draft order (change status from 10 to 15).
 
@@ -1053,11 +1200,26 @@ class WebshopService:
         The delivery date is always in the next week.
 
         Returns the updated order or None if not found.
+
+        Args:
+            user: The user submitting the draft
+            order_id: The draft order ID
+            leveringsdato: Optional delivery date
+            informasjon: Optional order information
+            kundeid: Customer ID (from access check)
         """
+        # Use provided kundeid or get from junction table
+        active_kundeid = kundeid
+        if not active_kundeid:
+            active_kundeid = await self.get_user_kundeid(user)
+
+        if not active_kundeid:
+            return None
+
         query = select(Ordrer).where(
             and_(
                 Ordrer.ordreid == order_id,
-                Ordrer.kundeid == user.kundeid,
+                Ordrer.kundeid == active_kundeid,
                 Ordrer.ordrestatusid == 10
             )
         )
@@ -1069,7 +1231,7 @@ class WebshopService:
 
         # If no delivery date provided, calculate from customer's leveringsdag
         if leveringsdato is None:
-            kunde_query = select(Kunder).where(Kunder.kundeid == user.kundeid)
+            kunde_query = select(Kunder).where(Kunder.kundeid == active_kundeid)
             kunde_result = await self.db.execute(kunde_query)
             kunde = kunde_result.scalar_one_or_none()
 

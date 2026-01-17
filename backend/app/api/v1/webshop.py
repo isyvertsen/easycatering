@@ -36,6 +36,7 @@ router = APIRouter()
 
 @router.get("/tilgang", response_model=WebshopAccessResponse)
 async def check_webshop_access(
+    kundeid: Optional[int] = Query(None, description="Selected customer ID (for users with multiple customers)"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -43,15 +44,19 @@ async def check_webshop_access(
     Check if current user has webshop access.
 
     Access is granted if:
-    - User is linked to a customer (kundeid)
+    - User is linked to a customer via user_kunder junction table
     - Customer belongs to a customer group with webshop=true
+
+    If the user is linked to multiple customers, the response includes
+    'available_kunder' list for customer selection.
     """
     service = WebshopService(db)
-    return await service.check_webshop_access(current_user)
+    return await service.check_webshop_access(current_user, selected_kundeid=kundeid)
 
 
 @router.get("/default-leveringsdato")
 async def get_default_delivery_date(
+    kundeid: Optional[int] = Query(None, description="Selected customer ID"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -70,13 +75,17 @@ async def get_default_delivery_date(
     from sqlalchemy import select
     from app.models.kunder import Kunder
 
-    if not current_user.kundeid:
+    # Check webshop access with selected customer
+    service = WebshopService(db)
+    access = await service.check_webshop_access(current_user, selected_kundeid=kundeid)
+
+    if not access.has_access or not access.kundeid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Bruker er ikke knyttet til en kunde"
+            detail=access.message or "Bruker er ikke knyttet til en kunde"
         )
 
-    query = select(Kunder).where(Kunder.kundeid == current_user.kundeid)
+    query = select(Kunder).where(Kunder.kundeid == access.kundeid)
     result = await db.execute(query)
     kunde = result.scalar_one_or_none()
 
@@ -119,6 +128,7 @@ async def get_default_delivery_date(
 
 @router.get("/produkter", response_model=WebshopProductListResponse)
 async def list_webshop_products(
+    kundeid: Optional[int] = Query(None, description="Selected customer ID"),
     search: Optional[str] = Query(None, max_length=200, description="Search in product name"),
     kategori_id: Optional[int] = Query(None, description="Filter by category"),
     page: int = Query(1, ge=1, description="Page number"),
@@ -139,9 +149,9 @@ async def list_webshop_products(
     2. Category order - configured in system settings
     3. Alphabetically by product name
     """
-    # Check webshop access
+    # Check webshop access with selected customer
     service = WebshopService(db)
-    access = await service.check_webshop_access(current_user)
+    access = await service.check_webshop_access(current_user, selected_kundeid=kundeid)
 
     if not access.has_access:
         raise HTTPException(
@@ -156,7 +166,7 @@ async def list_webshop_products(
         page_size=page_size,
         sort_by=sort_by,
         sort_order=sort_order,
-        customer_id=current_user.kundeid,
+        customer_id=access.kundeid,
         smart_sort=smart_sort
     )
 
@@ -164,14 +174,15 @@ async def list_webshop_products(
 @router.get("/produkter/{product_id}", response_model=WebshopProduct)
 async def get_webshop_product(
     product_id: int,
+    kundeid: Optional[int] = Query(None, description="Selected customer ID"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """Get a single webshop product."""
     service = WebshopService(db)
 
-    # Check webshop access
-    access = await service.check_webshop_access(current_user)
+    # Check webshop access with selected customer
+    access = await service.check_webshop_access(current_user, selected_kundeid=kundeid)
     if not access.has_access:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -195,6 +206,7 @@ async def get_webshop_product(
 @router.post("/ordre", response_model=WebshopOrderCreateResponse)
 async def create_webshop_order(
     order_data: WebshopOrderCreate,
+    kundeid: Optional[int] = Query(None, description="Selected customer ID"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -205,8 +217,8 @@ async def create_webshop_order(
     """
     service = WebshopService(db)
 
-    # Check webshop access
-    access = await service.check_webshop_access(current_user)
+    # Check webshop access with selected customer
+    access = await service.check_webshop_access(current_user, selected_kundeid=kundeid)
     if not access.has_access:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -220,7 +232,7 @@ async def create_webshop_order(
         )
 
     try:
-        return await service.create_order(current_user, order_data)
+        return await service.create_order(current_user, order_data, kundeid=access.kundeid)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -230,6 +242,7 @@ async def create_webshop_order(
 
 @router.get("/mine-ordre", response_model=WebshopOrderListResponse)
 async def list_my_orders(
+    kundeid: Optional[int] = Query(None, description="Selected customer ID"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     ordrestatusid: Optional[int] = Query(None, description="Filter by status"),
@@ -239,8 +252,8 @@ async def list_my_orders(
     """Get orders for the current user's customer."""
     service = WebshopService(db)
 
-    # Check webshop access
-    access = await service.check_webshop_access(current_user)
+    # Check webshop access with selected customer
+    access = await service.check_webshop_access(current_user, selected_kundeid=kundeid)
     if not access.has_access:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -251,7 +264,8 @@ async def list_my_orders(
         current_user,
         page=page,
         page_size=page_size,
-        ordrestatusid=ordrestatusid
+        ordrestatusid=ordrestatusid,
+        kundeid=access.kundeid
     )
 
 
@@ -517,6 +531,7 @@ async def cancel_order(
 
 @router.get("/draft-ordre", response_model=Optional[WebshopDraftOrder])
 async def get_draft_order(
+    kundeid: Optional[int] = Query(None, description="Selected customer ID"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -528,20 +543,21 @@ async def get_draft_order(
     """
     service = WebshopService(db)
 
-    # Check webshop access
-    access = await service.check_webshop_access(current_user)
+    # Check webshop access with selected customer
+    access = await service.check_webshop_access(current_user, selected_kundeid=kundeid)
     if not access.has_access:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=access.message or "Ingen webshop-tilgang"
         )
 
-    return await service.get_draft_order(current_user)
+    return await service.get_draft_order(current_user, kundeid=access.kundeid)
 
 
 @router.put("/draft-ordre", response_model=WebshopDraftOrder)
 async def update_draft_order(
     draft_data: WebshopDraftOrderUpdate,
+    kundeid: Optional[int] = Query(None, description="Selected customer ID"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -553,8 +569,8 @@ async def update_draft_order(
     """
     service = WebshopService(db)
 
-    # Check webshop access
-    access = await service.check_webshop_access(current_user)
+    # Check webshop access with selected customer
+    access = await service.check_webshop_access(current_user, selected_kundeid=kundeid)
     if not access.has_access:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -564,7 +580,8 @@ async def update_draft_order(
     try:
         return await service.create_or_update_draft_order(
             current_user,
-            draft_data.ordrelinjer
+            draft_data.ordrelinjer,
+            kundeid=access.kundeid
         )
     except ValueError as e:
         raise HTTPException(
@@ -576,6 +593,7 @@ async def update_draft_order(
 @router.delete("/draft-ordre/{order_id}")
 async def delete_draft_order(
     order_id: int,
+    kundeid: Optional[int] = Query(None, description="Selected customer ID"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -586,7 +604,10 @@ async def delete_draft_order(
     """
     service = WebshopService(db)
 
-    success = await service.delete_draft_order(current_user, order_id)
+    # Check webshop access with selected customer
+    access = await service.check_webshop_access(current_user, selected_kundeid=kundeid)
+
+    success = await service.delete_draft_order(current_user, order_id, kundeid=access.kundeid)
 
     if not success:
         raise HTTPException(
@@ -697,6 +718,7 @@ async def cancel_my_order(
 @router.post("/draft-ordre/{order_id}/submit", response_model=WebshopOrderCreateResponse)
 async def submit_draft_order(
     order_id: int,
+    kundeid: Optional[int] = Query(None, description="Selected customer ID"),
     leveringsdato: Optional[str] = Query(None, description="Delivery date (YYYY-MM-DD)"),
     informasjon: Optional[str] = Query(None, description="Additional information"),
     db: AsyncSession = Depends(get_db),
@@ -711,8 +733,8 @@ async def submit_draft_order(
 
     service = WebshopService(db)
 
-    # Check webshop access
-    access = await service.check_webshop_access(current_user)
+    # Check webshop access with selected customer
+    access = await service.check_webshop_access(current_user, selected_kundeid=kundeid)
     if not access.has_access:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -734,7 +756,8 @@ async def submit_draft_order(
         current_user,
         order_id,
         leveringsdato=lev_dato,
-        informasjon=informasjon
+        informasjon=informasjon,
+        kundeid=access.kundeid
     )
 
     if not order:

@@ -19,6 +19,8 @@ import { Product, Order, OrderLine } from '@/types/models'
  * Filtrerer produkter hvor webshop=true og utgatt=false
  */
 export interface WebshopProductListParams {
+  /** Selected customer ID (for users with multiple customers) */
+  kundeid?: number
   /** Søketekst - søker i produktnavn, visningsnavn, beskrivelse */
   search?: string
   /** Kategori-ID for filtrering */
@@ -104,6 +106,8 @@ export interface WebshopOrderCreateResponse {
  * Henter ordrer for innlogget bruker
  */
 export interface WebshopMyOrdersParams {
+  /** Selected customer ID (for users with multiple customers) */
+  kundeid?: number
   /** Side-nummer */
   page?: number
   /** Antall ordre per side */
@@ -224,13 +228,25 @@ export interface DraftOrder {
  * - rolle="admin" for godkjenningsendepunkter
  */
 /**
+ * Customer info for webshop access
+ */
+export interface WebshopKundeInfo {
+  kundeid: number
+  kunde_navn: string
+  kundegruppe_navn?: string
+  has_webshop_access: boolean
+}
+
+/**
  * Response for webshop access check
  */
 export interface WebshopAccessResponse {
   has_access: boolean
   kunde_navn?: string
   kundegruppe_navn?: string
+  kundeid?: number  // Active customer ID
   message?: string
+  available_kunder?: WebshopKundeInfo[]  // All linked customers (when user has multiple)
 }
 
 export const webshopApi = {
@@ -242,9 +258,14 @@ export const webshopApi = {
    * Sjekk om bruker har webshop-tilgang
    *
    * Backend endpoint: GET /api/v1/webshop/tilgang
+   * @param kundeid Optional selected customer ID (for users with multiple customers)
    */
-  checkAccess: async (): Promise<WebshopAccessResponse> => {
-    const response = await apiClient.get('/v1/webshop/tilgang')
+  checkAccess: async (kundeid?: number): Promise<WebshopAccessResponse> => {
+    const queryParams = new URLSearchParams()
+    if (kundeid) queryParams.append('kundeid', kundeid.toString())
+    const queryString = queryParams.toString()
+    const url = queryString ? `/v1/webshop/tilgang?${queryString}` : '/v1/webshop/tilgang'
+    const response = await apiClient.get(url)
     return response.data
   },
 
@@ -252,9 +273,14 @@ export const webshopApi = {
    * Hent standard leveringsdato basert på kundens foretrukne leveringsdag
    *
    * Backend endpoint: GET /api/v1/webshop/default-leveringsdato
+   * @param kundeid Optional selected customer ID (for users with multiple customers)
    */
-  getDefaultDeliveryDate: async (): Promise<DefaultDeliveryDateResponse> => {
-    const response = await apiClient.get('/v1/webshop/default-leveringsdato')
+  getDefaultDeliveryDate: async (kundeid?: number): Promise<DefaultDeliveryDateResponse> => {
+    const queryParams = new URLSearchParams()
+    if (kundeid) queryParams.append('kundeid', kundeid.toString())
+    const queryString = queryParams.toString()
+    const url = queryString ? `/v1/webshop/default-leveringsdato?${queryString}` : '/v1/webshop/default-leveringsdato'
+    const response = await apiClient.get(url)
     return response.data
   },
 
@@ -297,6 +323,7 @@ export const webshopApi = {
   getProducts: async (params?: WebshopProductListParams): Promise<WebshopProductListResponse> => {
     const queryParams = new URLSearchParams()
 
+    if (params?.kundeid) queryParams.append('kundeid', params.kundeid.toString())
     if (params?.search) queryParams.append('search', params.search)
     if (params?.kategori_id) queryParams.append('kategori_id', params.kategori_id.toString())
     if (params?.page) queryParams.append('page', params.page.toString())
@@ -319,9 +346,14 @@ export const webshopApi = {
    * Backend endpoint: GET /api/v1/webshop/produkter/:id
    *
    * Forventet backend-respons: Product objekt (må ha webshop=true)
+   * @param kundeid Optional selected customer ID (for users with multiple customers)
    */
-  getProduct: async (id: number): Promise<Product> => {
-    const response = await apiClient.get(`/v1/webshop/produkter/${id}`)
+  getProduct: async (id: number, kundeid?: number): Promise<Product> => {
+    const queryParams = new URLSearchParams()
+    if (kundeid) queryParams.append('kundeid', kundeid.toString())
+    const queryString = queryParams.toString()
+    const url = queryString ? `/v1/webshop/produkter/${id}?${queryString}` : `/v1/webshop/produkter/${id}`
+    const response = await apiClient.get(url)
     return response.data
   },
 
@@ -348,9 +380,14 @@ export const webshopApi = {
    *   "message": "Ordre opprettet. E-postbekreftelse sendt.",
    *   "email_token": "token_string"
    * }
+   * @param kundeid Optional selected customer ID (for users with multiple customers)
    */
-  createOrder: async (data: WebshopOrderCreateData): Promise<WebshopOrderCreateResponse> => {
-    const response = await apiClient.post('/v1/webshop/ordre', data)
+  createOrder: async (data: WebshopOrderCreateData, kundeid?: number): Promise<WebshopOrderCreateResponse> => {
+    const queryParams = new URLSearchParams()
+    if (kundeid) queryParams.append('kundeid', kundeid.toString())
+    const queryString = queryParams.toString()
+    const url = queryString ? `/v1/webshop/ordre?${queryString}` : '/v1/webshop/ordre'
+    const response = await apiClient.post(url, data)
     return response.data
   },
 
@@ -376,6 +413,7 @@ export const webshopApi = {
   getMyOrders: async (params?: WebshopMyOrdersParams): Promise<WebshopMyOrdersResponse> => {
     const queryParams = new URLSearchParams()
 
+    if (params?.kundeid) queryParams.append('kundeid', params.kundeid.toString())
     if (params?.page) queryParams.append('page', params.page.toString())
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString())
     if (params?.ordrestatusid) queryParams.append('ordrestatusid', params.ordrestatusid.toString())
@@ -551,9 +589,14 @@ export const webshopApi = {
    *
    * Backend endpoint: GET /api/v1/webshop/draft-ordre
    * Returns the draft order (status 10) with all lines, or null if none exists
+   * @param kundeid Optional selected customer ID (for users with multiple customers)
    */
-  getDraftOrder: async (): Promise<DraftOrder | null> => {
-    const response = await apiClient.get('/v1/webshop/draft-ordre')
+  getDraftOrder: async (kundeid?: number): Promise<DraftOrder | null> => {
+    const queryParams = new URLSearchParams()
+    if (kundeid) queryParams.append('kundeid', kundeid.toString())
+    const queryString = queryParams.toString()
+    const url = queryString ? `/v1/webshop/draft-ordre?${queryString}` : '/v1/webshop/draft-ordre'
+    const response = await apiClient.get(url)
     return response.data
   },
 
@@ -562,9 +605,14 @@ export const webshopApi = {
    *
    * Backend endpoint: PUT /api/v1/webshop/draft-ordre
    * Creates a new draft order or updates existing one with the provided lines
+   * @param kundeid Optional selected customer ID (for users with multiple customers)
    */
-  updateDraftOrder: async (ordrelinjer: DraftOrderLine[]): Promise<DraftOrder> => {
-    const response = await apiClient.put('/v1/webshop/draft-ordre', {
+  updateDraftOrder: async (ordrelinjer: DraftOrderLine[], kundeid?: number): Promise<DraftOrder> => {
+    const queryParams = new URLSearchParams()
+    if (kundeid) queryParams.append('kundeid', kundeid.toString())
+    const queryString = queryParams.toString()
+    const url = queryString ? `/v1/webshop/draft-ordre?${queryString}` : '/v1/webshop/draft-ordre'
+    const response = await apiClient.put(url, {
       ordrelinjer
     })
     return response.data
@@ -574,9 +622,14 @@ export const webshopApi = {
    * Delete draft order
    *
    * Backend endpoint: DELETE /api/v1/webshop/draft-ordre/:id
+   * @param kundeid Optional selected customer ID (for users with multiple customers)
    */
-  deleteDraftOrder: async (orderId: number): Promise<{ message: string }> => {
-    const response = await apiClient.delete(`/v1/webshop/draft-ordre/${orderId}`)
+  deleteDraftOrder: async (orderId: number, kundeid?: number): Promise<{ message: string }> => {
+    const queryParams = new URLSearchParams()
+    if (kundeid) queryParams.append('kundeid', kundeid.toString())
+    const queryString = queryParams.toString()
+    const url = queryString ? `/v1/webshop/draft-ordre/${orderId}?${queryString}` : `/v1/webshop/draft-ordre/${orderId}`
+    const response = await apiClient.delete(url)
     return response.data
   },
 
@@ -584,13 +637,16 @@ export const webshopApi = {
    * Submit draft order (status 10 -> 15)
    *
    * Backend endpoint: POST /api/v1/webshop/draft-ordre/:id/submit
+   * @param kundeid Optional selected customer ID (for users with multiple customers)
    */
   submitDraftOrder: async (
     orderId: number,
     leveringsdato?: string,
-    informasjon?: string
+    informasjon?: string,
+    kundeid?: number
   ): Promise<WebshopOrderCreateResponse> => {
     const queryParams = new URLSearchParams()
+    if (kundeid) queryParams.append('kundeid', kundeid.toString())
     if (leveringsdato) queryParams.append('leveringsdato', leveringsdato)
     if (informasjon) queryParams.append('informasjon', informasjon)
 

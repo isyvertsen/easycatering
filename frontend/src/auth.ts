@@ -42,6 +42,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             email: credentials.email as string,
             accessToken: data.access_token,
             refreshToken: data.refresh_token,
+            rolle: data.rolle,
           }
         } catch (error) {
           return null
@@ -70,6 +71,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const data = await response.json()
           user.accessToken = data.access_token
           user.refreshToken = data.refresh_token
+          user.rolle = data.rolle
         } catch (error) {
           console.error('[Google Auth] Exception:', error)
           return false
@@ -83,6 +85,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.accessToken = user.accessToken
         token.refreshToken = user.refreshToken
         token.id = user.id
+        token.rolle = user.rolle
         // Set token expiry time (30 minutes from now based on backend config)
         token.accessTokenExpires = Date.now() + 30 * 60 * 1000
       }
@@ -112,6 +115,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           ...token,
           accessToken: refreshedTokens.access_token,
           refreshToken: refreshedTokens.refresh_token,
+          rolle: refreshedTokens.rolle || token.rolle, // Keep existing rolle if not returned
           accessTokenExpires: Date.now() + 30 * 60 * 1000,
         }
       } catch (error) {
@@ -127,6 +131,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.accessToken = token.accessToken as string
       session.refreshToken = token.refreshToken as string
       session.user.id = token.id as string
+      session.user.rolle = token.rolle as string | undefined
       session.error = token.error as string | undefined
       return session
     },

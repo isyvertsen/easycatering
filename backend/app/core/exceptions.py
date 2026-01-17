@@ -160,12 +160,12 @@ async def database_exception_handler(request: Request, exc: IntegrityError) -> J
             }
         )
     
-    # Generic database error
+    # Generic database error - include details for debugging
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
             "error": "Database feil oppstod",
-            "details": {},
+            "details": {"database_error": error_msg},
             "type": "DatabaseError"
         }
     )

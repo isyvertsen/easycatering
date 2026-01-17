@@ -10,6 +10,10 @@ import { useToast } from '@/hooks/use-toast'
 
 /**
  * React Query hooks for Webshop
+ *
+ * NOTE: Most hooks now accept an optional `kundeid` parameter to support
+ * users with access to multiple customers. Use the `useWebshopCustomer` hook
+ * from `@/contexts/WebshopCustomerContext` to get the currently selected customer.
  */
 
 // ============================================================================
@@ -18,11 +22,12 @@ import { useToast } from '@/hooks/use-toast'
 
 /**
  * Sjekk webshop-tilgang for innlogget bruker
+ * @param kundeid Optional selected customer ID (for users with multiple customers)
  */
-export function useWebshopAccess() {
+export function useWebshopAccess(kundeid?: number) {
   return useQuery({
-    queryKey: ['webshop', 'access'],
-    queryFn: () => webshopApi.checkAccess(),
+    queryKey: ['webshop', 'access', kundeid],
+    queryFn: () => webshopApi.checkAccess(kundeid),
     staleTime: 5 * 60 * 1000, // 5 minutter
     retry: false,
   })
@@ -30,11 +35,12 @@ export function useWebshopAccess() {
 
 /**
  * Hent standard leveringsdato basert på kundens leveringsdag
+ * @param kundeid Optional selected customer ID (for users with multiple customers)
  */
-export function useDefaultDeliveryDate() {
+export function useDefaultDeliveryDate(kundeid?: number) {
   return useQuery({
-    queryKey: ['webshop', 'default-delivery-date'],
-    queryFn: () => webshopApi.getDefaultDeliveryDate(),
+    queryKey: ['webshop', 'default-delivery-date', kundeid],
+    queryFn: () => webshopApi.getDefaultDeliveryDate(kundeid),
     staleTime: 5 * 60 * 1000, // 5 minutter
   })
 }
@@ -45,6 +51,7 @@ export function useDefaultDeliveryDate() {
 
 /**
  * Hent webshop-produkter med filtrering og paginering
+ * The params can include kundeid for users with multiple customers
  */
 export function useWebshopProducts(params?: WebshopProductListParams) {
   return useQuery({
@@ -56,11 +63,12 @@ export function useWebshopProducts(params?: WebshopProductListParams) {
 
 /**
  * Hent enkelt webshop-produkt
+ * @param kundeid Optional selected customer ID (for users with multiple customers)
  */
-export function useWebshopProduct(id: number | null) {
+export function useWebshopProduct(id: number | null, kundeid?: number) {
   return useQuery({
-    queryKey: ['webshop', 'product', id],
-    queryFn: () => webshopApi.getProduct(id!),
+    queryKey: ['webshop', 'product', id, kundeid],
+    queryFn: () => webshopApi.getProduct(id!, kundeid),
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
   })
@@ -72,13 +80,14 @@ export function useWebshopProduct(id: number | null) {
 
 /**
  * Opprett ny webshop-ordre
+ * @param kundeid Optional selected customer ID (for users with multiple customers)
  */
-export function useCreateWebshopOrder() {
+export function useCreateWebshopOrder(kundeid?: number) {
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
   return useMutation({
-    mutationFn: (data: WebshopOrderCreateData) => webshopApi.createOrder(data),
+    mutationFn: (data: WebshopOrderCreateData) => webshopApi.createOrder(data, kundeid),
     onSuccess: (data) => {
       // Invalidate my orders query
       queryClient.invalidateQueries({ queryKey: ['webshop', 'my-orders'] })
@@ -100,6 +109,7 @@ export function useCreateWebshopOrder() {
 
 /**
  * Hent mine webshop-ordrer
+ * The params can include kundeid for users with multiple customers
  */
 export function useMyWebshopOrders(params?: WebshopMyOrdersParams) {
   return useQuery({

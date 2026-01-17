@@ -34,6 +34,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
+import { CustomerSelector } from "@/components/webshop/CustomerSelector"
 
 interface NavItem {
   name: string
@@ -110,9 +111,10 @@ function MobileNav() {
 
 interface WebshopNavProps {
   kundeNavn?: string
+  showCustomerSelector?: boolean
 }
 
-export function WebshopNav({ kundeNavn }: WebshopNavProps) {
+export function WebshopNav({ kundeNavn, showCustomerSelector = false }: WebshopNavProps) {
   const pathname = usePathname()
   const { data: session } = useSession()
   const { getTotalItems } = useCart()
@@ -128,11 +130,15 @@ export function WebshopNav({ kundeNavn }: WebshopNavProps) {
             <Store className="h-6 w-6 text-primary" />
             <span className="font-bold">Webshop</span>
           </Link>
-          {kundeNavn && (
+          {showCustomerSelector ? (
+            <div className="hidden sm:block ml-2">
+              <CustomerSelector />
+            </div>
+          ) : kundeNavn ? (
             <span className="hidden sm:inline text-sm text-muted-foreground ml-2">
               | {kundeNavn}
             </span>
-          )}
+          ) : null}
         </div>
 
         {/* Center: Desktop navigation */}

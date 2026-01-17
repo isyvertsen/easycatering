@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useWebshopProducts } from "@/hooks/useWebshop"
 import { useCart } from "@/contexts/CartContext"
+import { useWebshopCustomer } from "@/contexts/WebshopCustomerContext"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, ShoppingCart, Filter, LayoutGrid, List, X, SlidersHorizontal } from "lucide-react"
@@ -62,8 +63,10 @@ export default function WebshopPage() {
   }
 
   const { getTotalItems } = useCart()
+  const { selectedKundeid } = useWebshopCustomer()
 
   const { data, isLoading, error } = useWebshopProducts({
+    kundeid: selectedKundeid ?? undefined,
     search: searchTerm,
     sort_by: sortBy,
     sort_order: sortOrder,
@@ -71,12 +74,12 @@ export default function WebshopPage() {
     page_size: 20,
   })
 
-  // Reset products when search or sort changes
+  // Reset products when search, sort, or customer changes
   useEffect(() => {
     setPage(1)
     setAllProducts([])
     setHasMore(true)
-  }, [searchTerm, sortBy, sortOrder])
+  }, [searchTerm, sortBy, sortOrder, selectedKundeid])
 
   // Accumulate products when new data arrives
   useEffect(() => {

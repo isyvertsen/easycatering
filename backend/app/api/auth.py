@@ -78,11 +78,12 @@ async def login(
     # Create tokens
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
-    
+
     return Token(
         access_token=access_token,
         refresh_token=refresh_token,
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convert to seconds
+        rolle=user.rolle,
     )
 
 
@@ -114,11 +115,12 @@ async def refresh_token(
     # Create new tokens
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
-    
+
     return Token(
         access_token=access_token,
         refresh_token=refresh_token,
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convert to seconds
+        rolle=user.rolle,
     )
 
 
@@ -190,6 +192,7 @@ async def google_auth(
         access_token=access_token,
         refresh_token=refresh_token,
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convert to seconds
+        rolle=user.rolle,
     )
 
 

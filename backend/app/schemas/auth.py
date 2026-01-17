@@ -9,6 +9,7 @@ class Token(BaseModel):
     token_type: str = "bearer"
     expires_in: int
     refresh_token: Optional[str] = None
+    rolle: Optional[str] = None  # User's role for redirect logic
 
 
 class TokenRefresh(BaseModel):

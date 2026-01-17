@@ -38,14 +38,8 @@ class User(Base):
     ansattid = Column(BigInteger, ForeignKey("tblansatte.ansattid"), nullable=True, index=True)
     rolle = Column(String(50), default="bruker", index=True)  # bruker, admin, etc.
 
-    # Link to customer (for webshop users)
-    kundeid = Column(BigInteger, ForeignKey("tblkunder.kundeid"), nullable=True, index=True)
-
     # Relationship to Ansatte
     ansatt = relationship("Ansatte", back_populates="bruker", lazy="joined")
-
-    # Relationship to single Kunde (legacy, for webshop access)
-    kunde = relationship("Kunder", foreign_keys=[kundeid], lazy="joined")
 
     # Many-to-many relationship to Kunder (for webshop users with access to multiple customers)
     kunder = relationship("Kunder", secondary=user_kunder, lazy="selectin")

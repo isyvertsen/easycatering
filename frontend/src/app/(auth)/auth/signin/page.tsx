@@ -1,9 +1,36 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { signIn, getSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { ChefHat } from 'lucide-react'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+
+// Check if user role should be redirected to webshop
+async function getRedirectUrl(accessToken: string, userRolle?: string): Promise<string> {
+  if (!userRolle) return '/'
+
+  try {
+    const response = await fetch(`${API_URL}/v1/system-settings/webshop-only-role`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      if (data.role && data.role === userRolle) {
+        return '/webshop'
+      }
+    }
+  } catch (error) {
+    console.error('Error checking webshop-only role:', error)
+  }
+
+  return '/'
+}
 
 export default function SignInPage() {
   const [email, setEmail] = useState('')
@@ -26,8 +53,14 @@ export default function SignInPage() {
       if (result?.error) {
         setError('Ugyldig e-post eller passord')
       } else {
+        // Get the session to check user role
+        const session = await getSession()
+        const redirectUrl = await getRedirectUrl(
+          session?.accessToken || '',
+          session?.user?.rolle
+        )
         // Full page reload to ensure session is properly loaded
-        window.location.href = '/'
+        window.location.href = redirectUrl
       }
     } catch (error) {
       setError('Noe gikk galt. Prøv igjen.')
@@ -36,9 +69,11 @@ export default function SignInPage() {
     }
   }
 
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     setIsLoading(true)
-    signIn('google', { callbackUrl: '/' })
+    // For Google sign-in, we use a callback URL that will handle the redirect
+    // The callback will be processed in a separate effect after redirect
+    signIn('google', { callbackUrl: '/auth/redirect' })
   }
 
   return (

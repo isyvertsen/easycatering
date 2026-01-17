@@ -202,3 +202,35 @@ class SystemSettingsService:
             user_id,
             "Kundegruppe-IDer som vises i bruker-tilknytning (tom = vis alle)"
         )
+
+    async def get_webshop_only_role(self) -> Optional[str]:
+        """Get the role that should only have access to webshop.
+
+        Users with this role will be redirected to webshop on login
+        and will not have access to the main admin application.
+
+        Returns:
+            Role name (e.g., "webshop") or None if not set
+        """
+        return await self.get("webshop_only_role", None)
+
+    async def set_webshop_only_role(
+        self,
+        role: Optional[str],
+        user_id: Optional[int] = None
+    ) -> bool:
+        """Set the webshop-only role.
+
+        Args:
+            role: Role name (e.g., "webshop") or None to disable
+            user_id: ID of user making the change
+
+        Returns:
+            True if successful
+        """
+        return await self.set(
+            "webshop_only_role",
+            role,
+            user_id,
+            "Rolle som kun har tilgang til webshop (omdirigeres ved innlogging)"
+        )

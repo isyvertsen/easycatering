@@ -52,6 +52,7 @@ interface UserFormProps {
 const ROLLER = [
   { value: "bruker", label: "Bruker" },
   { value: "admin", label: "Administrator" },
+  { value: "webshop", label: "Webshop" },
 ]
 
 export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps) {

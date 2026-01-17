@@ -9,7 +9,7 @@ class Ansatte(Base):
     """Employee table (tblansatte)."""
     __tablename__ = "tblansatte"
 
-    ansattid = Column(BigInteger, primary_key=True, index=True)
+    ansattid = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
     fornavn = Column(Text)
     etternavn = Column(Text)
     tittel = Column(Text)
