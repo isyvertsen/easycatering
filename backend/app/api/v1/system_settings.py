@@ -12,6 +12,8 @@ from app.schemas.system_settings import (
     SystemSettingsListResponse,
     WebshopCategoryOrderResponse,
     WebshopCategoryOrderUpdate,
+    UserKundegruppeFilterResponse,
+    UserKundegruppeFilterUpdate,
 )
 from app.core.config import settings
 from pydantic import BaseModel
@@ -115,3 +117,45 @@ async def get_feature_flags(
         ai_label_generator=settings.FEATURE_AI_LABEL_GENERATOR,
         ai_chatbot=settings.FEATURE_AI_CHATBOT,
     )
+
+
+@router.get("/user-kundegruppe-filter", response_model=UserKundegruppeFilterResponse)
+async def get_user_kundegruppe_filter(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Hent kundegruppe-filter for bruker-tilknytning.
+
+    Returnerer en liste med kundegruppe-IDer som skal vises i
+    "Tilknyttede kunder"-listen i bruker-skjemaet.
+    Tom liste betyr at alle aktive kunder vises.
+    """
+    require_admin(current_user)
+
+    service = SystemSettingsService(db)
+    gruppe_ids = await service.get_user_kundegruppe_filter()
+
+    return UserKundegruppeFilterResponse(gruppe_ids=gruppe_ids)
+
+
+@router.put("/user-kundegruppe-filter", response_model=UserKundegruppeFilterResponse)
+async def update_user_kundegruppe_filter(
+    data: UserKundegruppeFilterUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Oppdater kundegruppe-filter for bruker-tilknytning (kun admin).
+
+    Angi hvilke kundegrupper som skal vises i "Tilknyttede kunder"-listen.
+    Tom liste betyr at alle aktive kunder vises.
+    """
+    require_admin(current_user)
+
+    service = SystemSettingsService(db)
+    await service.set_user_kundegruppe_filter(data.gruppe_ids, current_user.id)
+
+    logger.info(f"User {current_user.email} updated user kundegruppe filter to {data.gruppe_ids}")
+
+    return UserKundegruppeFilterResponse(gruppe_ids=data.gruppe_ids)

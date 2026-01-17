@@ -30,6 +30,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { useBackendHealth } from "@/hooks/useBackendHealth"
 import { WebshopCategoryOrderSettings } from "@/components/settings/WebshopCategoryOrderSettings"
+import { UserKundegruppeFilterSettings } from "@/components/settings/UserKundegruppeFilterSettings"
 import { systemSettingsApi, FeatureFlags } from "@/lib/api/system-settings"
 import { Badge } from "@/components/ui/badge"
 
@@ -535,6 +536,9 @@ export default function SettingsPage() {
 
           {/* Webshop Category Order Settings */}
           <WebshopCategoryOrderSettings />
+
+          {/* User Kundegruppe Filter Settings */}
+          <UserKundegruppeFilterSettings />
 
           <Card>
             <CardHeader>

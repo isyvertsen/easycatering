@@ -173,3 +173,32 @@ class SystemSettingsService:
             user_id,
             "Kategori-IDer i visningsrekkefølge for webshop smart sortering"
         )
+
+    async def get_user_kundegruppe_filter(self) -> List[int]:
+        """Get the kundegruppe IDs to show in user form customer selection.
+
+        Returns:
+            List of kundegruppe IDs to filter by (empty = show all)
+        """
+        return await self.get("user_kundegruppe_filter", [])
+
+    async def set_user_kundegruppe_filter(
+        self,
+        gruppe_ids: List[int],
+        user_id: Optional[int] = None
+    ) -> bool:
+        """Set the kundegruppe filter for user form.
+
+        Args:
+            gruppe_ids: List of kundegruppe IDs to show
+            user_id: ID of user making the change
+
+        Returns:
+            True if successful
+        """
+        return await self.set(
+            "user_kundegruppe_filter",
+            gruppe_ids,
+            user_id,
+            "Kundegruppe-IDer som vises i bruker-tilknytning (tom = vis alle)"
+        )

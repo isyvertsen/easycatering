@@ -256,17 +256,25 @@ export interface AnsattInfo {
   e_postjobb?: string
 }
 
+export interface KundeInfo {
+  kundeid: number
+  kundenavn?: string
+}
+
 export interface Bruker {
   id: number
   email: string
   full_name: string
   ansattid?: number
+  kundeid?: number
+  kundeids?: number[]
   rolle: string
   is_active: boolean
   is_superuser: boolean
   created_at?: string
   updated_at?: string
   ansatt?: AnsattInfo
+  kunder?: KundeInfo[]
 }
 
 export interface BrukerCreate {
@@ -274,6 +282,8 @@ export interface BrukerCreate {
   full_name: string
   password: string
   ansattid?: number
+  kundeid?: number
+  kundeids?: number[]
   rolle?: string
   is_active?: boolean
 }
@@ -283,6 +293,8 @@ export interface BrukerUpdate {
   full_name?: string
   password?: string
   ansattid?: number | null
+  kundeid?: number | null
+  kundeids?: number[]
   rolle?: string
   is_active?: boolean
 }

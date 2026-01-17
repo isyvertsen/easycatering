@@ -53,3 +53,40 @@ export function useUpdateWebshopCategoryOrder() {
     },
   })
 }
+
+/**
+ * Hent kundegruppe-filter for bruker-tilknytning
+ */
+export function useUserKundegruppeFilter() {
+  return useQuery({
+    queryKey: ['system-settings', 'user-kundegruppe-filter'],
+    queryFn: () => systemSettingsApi.getUserKundegruppeFilter(),
+    staleTime: 5 * 60 * 1000, // 5 minutter
+  })
+}
+
+/**
+ * Oppdater kundegruppe-filter for bruker-tilknytning
+ */
+export function useUpdateUserKundegruppeFilter() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: (gruppeIds: number[]) => systemSettingsApi.updateUserKundegruppeFilter(gruppeIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['system-settings', 'user-kundegruppe-filter'] })
+      toast({
+        title: 'Lagret',
+        description: 'Kundegruppe-filteret er oppdatert',
+      })
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Feil',
+        description: error.response?.data?.detail || 'Kunne ikke lagre kundegruppe-filter',
+        variant: 'destructive',
+      })
+    },
+  })
+}

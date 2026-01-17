@@ -29,3 +29,13 @@ class WebshopCategoryOrderResponse(BaseModel):
 class WebshopCategoryOrderUpdate(BaseModel):
     """Request schema for updating webshop category order."""
     category_ids: List[int]
+
+
+class UserKundegruppeFilterResponse(BaseModel):
+    """Response schema for user kundegruppe filter."""
+    gruppe_ids: List[int]
+
+
+class UserKundegruppeFilterUpdate(BaseModel):
+    """Request schema for updating user kundegruppe filter."""
+    gruppe_ids: List[int]

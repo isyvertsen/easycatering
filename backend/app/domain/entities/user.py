@@ -2,10 +2,21 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
 
 from app.infrastructure.database.session import Base
+
+
+# Association table for user-customer many-to-many relationship
+user_kunder = Table(
+    'user_kunder',
+    Base.metadata,
+    Column('id', Integer, primary_key=True),
+    Column('user_id', Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
+    Column('kundeid', BigInteger, ForeignKey('tblkunder.kundeid', ondelete='CASCADE'), nullable=False),
+    Column('created_at', DateTime, default=datetime.utcnow),
+)
 
 
 class User(Base):
@@ -33,5 +44,8 @@ class User(Base):
     # Relationship to Ansatte
     ansatt = relationship("Ansatte", back_populates="bruker", lazy="joined")
 
-    # Relationship to Kunde (for webshop access)
+    # Relationship to single Kunde (legacy, for webshop access)
     kunde = relationship("Kunder", foreign_keys=[kundeid], lazy="joined")
+
+    # Many-to-many relationship to Kunder (for webshop users with access to multiple customers)
+    kunder = relationship("Kunder", secondary=user_kunder, lazy="selectin")

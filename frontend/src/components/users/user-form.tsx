@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Form,
   FormControl,
@@ -25,12 +26,16 @@ import {
 } from "@/components/ui/select"
 import { Bruker } from "@/types/models"
 import { useEmployeesList } from "@/hooks/useEmployees"
+import { useCustomersList } from "@/hooks/useCustomers"
+import { useQuery } from "@tanstack/react-query"
+import { systemSettingsApi } from "@/lib/api/system-settings"
 
 const brukerSchema = z.object({
   email: z.string().email("Ugyldig e-postadresse"),
   full_name: z.string().min(1, "Navn er påkrevd"),
   password: z.string().min(8, "Passord må være minst 8 tegn").optional().or(z.literal("")),
   ansattid: z.coerce.number().optional().nullable(),
+  kundeids: z.array(z.number()).optional(),
   rolle: z.string().default("bruker"),
   is_active: z.boolean().default(true),
 })
@@ -51,6 +56,14 @@ const ROLLER = [
 
 export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps) {
   const { data: employeesData } = useEmployeesList({ page_size: 1000 })
+  const { data: customersData } = useCustomersList({ page_size: 1000 })
+
+  // Fetch kundegruppe filter setting
+  const { data: kundegruppeFilter } = useQuery({
+    queryKey: ['system-settings', 'user-kundegruppe-filter'],
+    queryFn: () => systemSettingsApi.getUserKundegruppeFilter(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
 
   const sortedEmployees = useMemo(() => {
     if (!employeesData?.items) return []
@@ -64,6 +77,26 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
       )
   }, [employeesData?.items])
 
+  // Filter to only active customers, optionally by kundegruppe, and sort by name
+  const sortedCustomers = useMemo(() => {
+    if (!customersData?.items) return []
+    const allowedGrupper = kundegruppeFilter?.gruppe_ids || []
+
+    return [...customersData.items]
+      .filter(kunde => {
+        // Must be active
+        if (kunde.kundeinaktiv || kunde.avsluttet) return false
+        // If filter is set, only show customers in those groups
+        if (allowedGrupper.length > 0) {
+          return kunde.kundegruppe != null && allowedGrupper.includes(kunde.kundegruppe)
+        }
+        return true
+      })
+      .sort((a, b) =>
+        (a.kundenavn || '').localeCompare(b.kundenavn || '', 'no')
+      )
+  }, [customersData?.items, kundegruppeFilter?.gruppe_ids])
+
   // Use bruker ID as key to force re-render when editing different users
   const formKey = bruker?.id?.toString() || 'new'
 
@@ -74,6 +107,7 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
       full_name: "",
       password: "",
       ansattid: null,
+      kundeids: [],
       rolle: "bruker",
       is_active: true,
     },
@@ -81,11 +115,14 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
 
   useEffect(() => {
     if (bruker) {
+      // Extract kundeids from kunder relationship
+      const kundeids = bruker.kunder?.map(k => k.kundeid) || []
       form.reset({
         email: bruker.email,
         full_name: bruker.full_name,
         password: "",
         ansattid: bruker.ansattid || null,
+        kundeids: kundeids,
         rolle: bruker.rolle || "bruker",
         is_active: bruker.is_active,
       })
@@ -96,6 +133,7 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
         full_name: "",
         password: "",
         ansattid: null,
+        kundeids: [],
         rolle: "bruker",
         is_active: true,
       })
@@ -227,6 +265,58 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
                   <FormDescription>
                     Koble brukerkontoen til en ansatt i systemet
                   </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )
+            }}
+          />
+
+          <FormField
+            control={form.control}
+            name="kundeids"
+            render={({ field }) => {
+              const selectedIds = field.value || []
+              return (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Tilknyttede kunder</FormLabel>
+                  <FormDescription className="mb-2">
+                    Velg hvilke kunder denne brukeren kan bestille på vegne av (for webshop-brukere)
+                  </FormDescription>
+                  <FormControl>
+                    <div className="max-h-48 overflow-y-auto rounded-md border border-input p-3 space-y-2">
+                      {sortedCustomers.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Ingen aktive kunder funnet</p>
+                      ) : (
+                        sortedCustomers.map((kunde) => (
+                          <div key={kunde.kundeid} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`kunde-${kunde.kundeid}`}
+                              checked={selectedIds.includes(kunde.kundeid)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  field.onChange([...selectedIds, kunde.kundeid])
+                                } else {
+                                  field.onChange(selectedIds.filter(id => id !== kunde.kundeid))
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor={`kunde-${kunde.kundeid}`}
+                              className="text-sm cursor-pointer flex-1"
+                            >
+                              {kunde.kundenavn}
+                              {kunde.avdeling && ` - ${kunde.avdeling}`}
+                            </label>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </FormControl>
+                  {selectedIds.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {selectedIds.length} kunde{selectedIds.length > 1 ? 'r' : ''} valgt
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )
