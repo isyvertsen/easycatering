@@ -44,6 +44,7 @@ export interface EtikettParams {
   til_dato: string
   sone_id?: number
   rute?: number
+  ordrestatus?: number
 }
 
 export const etiketterApi = {
@@ -53,6 +54,7 @@ export const etiketterApi = {
     queryParams.append('til_dato', params.til_dato)
     if (params.sone_id) queryParams.append('sone_id', params.sone_id.toString())
     if (params.rute) queryParams.append('rute', params.rute.toString())
+    if (params.ordrestatus) queryParams.append('ordrestatus', params.ordrestatus.toString())
 
     const response = await apiClient.get(`/v1/etiketter/?${queryParams.toString()}`)
     return response.data

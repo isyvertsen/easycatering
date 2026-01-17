@@ -3,11 +3,12 @@
 import { useState, useRef } from "react"
 import { format, startOfWeek, endOfWeek, addDays } from "date-fns"
 import { nb } from "date-fns/locale"
-import { Calendar as CalendarIcon, Printer, Package, MapPin, User, Utensils } from "lucide-react"
+import { Calendar as CalendarIcon, Printer, Package, MapPin, User, Utensils, ListFilter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useEtiketter } from "@/hooks/useEtiketter"
 import { EtikettKunde, EtikettParams } from "@/lib/api/etiketter"
 import { cn } from "@/lib/utils"
@@ -89,6 +90,7 @@ export default function EtiketterPage() {
   const today = new Date()
   const [fraDato, setFraDato] = useState<Date>(startOfWeek(today, { weekStartsOn: 1 }))
   const [tilDato, setTilDato] = useState<Date>(endOfWeek(today, { weekStartsOn: 1 }))
+  const [ordrestatus, setOrdrestatus] = useState<number>(35)
   const [params, setParams] = useState<EtikettParams | null>(null)
   const printRef = useRef<HTMLDivElement>(null)
 
@@ -98,6 +100,7 @@ export default function EtiketterPage() {
     setParams({
       fra_dato: formatDate(fraDato),
       til_dato: formatDate(tilDato),
+      ordrestatus: ordrestatus,
     })
   }
 
@@ -196,6 +199,33 @@ export default function EtiketterPage() {
                     />
                   </PopoverContent>
                 </Popover>
+              </div>
+
+              {/* Ordrestatus */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Ordrestatus</label>
+                <Select
+                  value={ordrestatus.toString()}
+                  onValueChange={(value) => setOrdrestatus(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <ListFilter className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Velg status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10 - Startet</SelectItem>
+                    <SelectItem value="15">15 - Bestilt</SelectItem>
+                    <SelectItem value="20">20 - Godkjent</SelectItem>
+                    <SelectItem value="25">25 - Plukkliste</SelectItem>
+                    <SelectItem value="30">30 - Plukket</SelectItem>
+                    <SelectItem value="35">35 - Pakkliste</SelectItem>
+                    <SelectItem value="40">40 - Levert</SelectItem>
+                    <SelectItem value="80">80 - Godkjent mottaker</SelectItem>
+                    <SelectItem value="85">85 - Fakturert</SelectItem>
+                    <SelectItem value="90">90 - Sendt regnskap</SelectItem>
+                    <SelectItem value="95">95 - Kreditert</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <Button onClick={handleSearch} disabled={isLoading}>
