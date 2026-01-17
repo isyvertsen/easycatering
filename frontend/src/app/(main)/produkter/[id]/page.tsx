@@ -158,11 +158,41 @@ export default function EditProduktPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="ean_kode">GTIN/EAN-kode</Label>
+                  <Label htmlFor="ean_kode">GTIN/EAN-kode (Basis)</Label>
                   <Input
                     id="ean_kode"
                     value={formData.ean_kode || ""}
                     onChange={(e) => handleChange("ean_kode", e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="gtin_fpak">GTIN F-pak (Forbrukerpakk)</Label>
+                  <Input
+                    id="gtin_fpak"
+                    value={formData.gtin_fpak || ""}
+                    onChange={(e) => handleChange("gtin_fpak", e.target.value)}
+                    placeholder="GTIN for forbrukerenhet"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="gtin_dpak">GTIN D-pak (Distribusjonspakk)</Label>
+                  <Input
+                    id="gtin_dpak"
+                    value={formData.gtin_dpak || ""}
+                    onChange={(e) => handleChange("gtin_dpak", e.target.value)}
+                    placeholder="GTIN for grossistenhet"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="gtin_pall">GTIN Pall</Label>
+                  <Input
+                    id="gtin_pall"
+                    value={formData.gtin_pall || ""}
+                    onChange={(e) => handleChange("gtin_pall", e.target.value)}
+                    placeholder="GTIN for pallenivå"
                   />
                 </div>
 

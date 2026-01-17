@@ -34,6 +34,8 @@ class RecipeProduct(BaseModel):
     produktid: int
     produktnavn: Optional[str] = None
     ean_kode: Optional[str] = None
+    gtin_fpak: Optional[str] = None
+    gtin_dpak: Optional[str] = None
     leverandorsproduktnr: Optional[str] = None
     recipe_count: int = Field(..., description="Number of recipes using this product")
 

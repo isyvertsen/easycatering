@@ -28,10 +28,11 @@ const columns: DataTableColumn<Produkt>[] = [
   },
   {
     key: "ean_kode",
-    label: "GTIN/EAN",
+    label: "GTIN",
     sortable: true,
     render: (value, row) => {
-      if (!value) {
+      const hasAnyGtin = value || (row as any).gtin_fpak || (row as any).gtin_dpak
+      if (!hasAnyGtin) {
         return (
           <div className="flex items-center gap-2">
             <XCircle className="h-4 w-4 text-red-500" />
@@ -39,11 +40,14 @@ const columns: DataTableColumn<Produkt>[] = [
           </div>
         )
       }
-      const formatted = formatGtin(value)
       return (
-        <div className="flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-green-500" />
-          <code className="text-sm font-mono">{formatted}</code>
+        <div className="flex items-start gap-2">
+          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+          <div className="space-y-0.5 text-xs font-mono">
+            {value && <div className="text-muted-foreground">Basis: {formatGtin(value)}</div>}
+            {(row as any).gtin_fpak && <div>F-pak: {formatGtin((row as any).gtin_fpak)}</div>}
+            {(row as any).gtin_dpak && <div>D-pak: {formatGtin((row as any).gtin_dpak)}</div>}
+          </div>
         </div>
       )
     }

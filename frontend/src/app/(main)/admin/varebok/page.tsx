@@ -404,7 +404,7 @@ export default function VarebokMatchingPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Produkt</TableHead>
-                        <TableHead>EAN</TableHead>
+                        <TableHead>GTIN</TableHead>
                         <TableHead>Leverandornr</TableHead>
                         <TableHead className="text-right">Oppskrifter</TableHead>
                         <TableHead>Status</TableHead>
@@ -421,8 +421,13 @@ export default function VarebokMatchingPage() {
                           <TableCell className="font-medium">
                             {product.produktnavn || '-'}
                           </TableCell>
-                          <TableCell className="font-mono text-sm">
-                            {product.ean_kode || '-'}
+                          <TableCell className="font-mono text-xs">
+                            <div className="space-y-0.5">
+                              {product.ean_kode && <div className="text-muted-foreground">Basis: {product.ean_kode}</div>}
+                              {(product as any).gtin_fpak && <div>F-pak: {(product as any).gtin_fpak}</div>}
+                              {(product as any).gtin_dpak && <div>D-pak: {(product as any).gtin_dpak}</div>}
+                              {!product.ean_kode && !(product as any).gtin_fpak && !(product as any).gtin_dpak && <div>-</div>}
+                            </div>
                           </TableCell>
                           <TableCell className="font-mono text-sm">
                             {product.leverandorsproduktnr || '-'}
@@ -601,8 +606,16 @@ export default function VarebokMatchingPage() {
                       <span className="font-medium">{selectedProduct.produktnavn || '-'}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">EAN:</span>{' '}
+                      <span className="text-muted-foreground">EAN (Basis):</span>{' '}
                       <span className="font-mono">{selectedProduct.ean_kode || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">GTIN F-pak:</span>{' '}
+                      <span className="font-mono">{(selectedProduct as any).gtin_fpak || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">GTIN D-pak:</span>{' '}
+                      <span className="font-mono">{(selectedProduct as any).gtin_dpak || '-'}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Leverandornr:</span>{' '}
@@ -640,7 +653,10 @@ export default function VarebokMatchingPage() {
                                 Varenr: <span className="font-mono">{match.varebok_product.varenummer}</span>
                               </div>
                               <div>
-                                EAN: <span className="font-mono">{match.varebok_product.ean_f_pakn || match.varebok_product.ean_d_pakn || '-'}</span>
+                                GTIN F-pak: <span className="font-mono">{match.varebok_product.ean_f_pakn || '-'}</span>
+                              </div>
+                              <div>
+                                GTIN D-pak: <span className="font-mono">{match.varebok_product.ean_d_pakn || '-'}</span>
                               </div>
                               {match.varebok_product.leverandor_navn && (
                                 <div>Leverandor: {match.varebok_product.leverandor_navn}</div>

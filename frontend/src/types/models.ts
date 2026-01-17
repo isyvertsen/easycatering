@@ -170,6 +170,12 @@ export interface Product {
   bestillingsgrense?: number
   bestillingsmengde?: number
   ean_kode?: string
+
+  // Multi-level GTINs
+  gtin_fpak?: string
+  gtin_dpak?: string
+  gtin_pall?: string
+
   utgatt?: boolean
   oppdatert?: boolean
   webshop?: boolean
