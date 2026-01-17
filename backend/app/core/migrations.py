@@ -452,6 +452,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(AddPerformanceIndexes())
         migration_runner.add_migration(CreateSystemSettingsTable())
         migration_runner.add_migration(AddWebshopSortingIndexes())
+        migration_runner.add_migration(MakeMenygruppeNullable())
     return migration_runner
 
 
@@ -1210,6 +1211,24 @@ class AddWebshopSortingIndexes(Migration):
                 CREATE INDEX IF NOT EXISTS idx_ordrer_kundeid_ordredato_status
                 ON tblordrer(kundeid, ordredato)
                 WHERE ordrestatusid NOT IN (98, 99)
+            """))
+
+
+class MakeMenygruppeNullable(Migration):
+    """Make menygruppe column nullable in tblmeny table."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260117_001_menygruppe_nullable",
+            description="Make menygruppe column nullable to allow menu creation without group"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Make menygruppe column nullable
+            await conn.execute(text("""
+                ALTER TABLE tblmeny
+                ALTER COLUMN menygruppe DROP NOT NULL
             """))
 
 
