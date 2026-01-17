@@ -95,11 +95,26 @@ async def create_meny(
     db: AsyncSession = Depends(get_db),
 ) -> Meny:
     """Create a new menu."""
-    meny = MenyModel(**meny_data.model_dump())
-    db.add(meny)
-    await db.commit()
-    await db.refresh(meny)
-    return meny
+    try:
+        meny = MenyModel(**meny_data.model_dump())
+        db.add(meny)
+        await db.commit()
+        await db.refresh(meny)
+        return meny
+    except Exception as e:
+        await db.rollback()
+        # Check if it's a foreign key constraint error
+        error_str = str(e).lower()
+        if "foreign key" in error_str or "menygruppe" in error_str:
+            raise HTTPException(
+                status_code=400,
+                detail="Ugyldig menygruppe. Velg en gyldig menygruppe fra listen."
+            )
+        # Generic database error
+        raise HTTPException(
+            status_code=500,
+            detail=f"Kunne ikke opprette meny: {str(e)}"
+        )
 
 
 @router.put("/{meny_id}", response_model=Meny)
@@ -114,17 +129,32 @@ async def update_meny(
         select(MenyModel).where(MenyModel.menyid == meny_id)
     )
     meny = result.scalar_one_or_none()
-    
+
     if not meny:
         raise HTTPException(status_code=404, detail="Meny ikke funnet")
-    
-    update_data = meny_data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(meny, field, value)
-    
-    await db.commit()
-    await db.refresh(meny)
-    return meny
+
+    try:
+        update_data = meny_data.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(meny, field, value)
+
+        await db.commit()
+        await db.refresh(meny)
+        return meny
+    except Exception as e:
+        await db.rollback()
+        # Check if it's a foreign key constraint error
+        error_str = str(e).lower()
+        if "foreign key" in error_str or "menygruppe" in error_str:
+            raise HTTPException(
+                status_code=400,
+                detail="Ugyldig menygruppe. Velg en gyldig menygruppe fra listen."
+            )
+        # Generic database error
+        raise HTTPException(
+            status_code=500,
+            detail=f"Kunne ikke oppdatere meny: {str(e)}"
+        )
 
 
 @router.delete("/{meny_id}")
@@ -138,11 +168,25 @@ async def delete_meny(
         select(MenyModel).where(MenyModel.menyid == meny_id)
     )
     meny = result.scalar_one_or_none()
-    
+
     if not meny:
         raise HTTPException(status_code=404, detail="Meny ikke funnet")
-    
-    await db.delete(meny)
-    await db.commit()
-    
-    return {"message": "Meny slettet"}
+
+    try:
+        await db.delete(meny)
+        await db.commit()
+        return {"message": "Meny slettet"}
+    except Exception as e:
+        await db.rollback()
+        # Check if it's a foreign key constraint error (menu is referenced elsewhere)
+        error_str = str(e).lower()
+        if "foreign key" in error_str or "constraint" in error_str:
+            raise HTTPException(
+                status_code=400,
+                detail="Kan ikke slette menyen. Den er i bruk i perioder eller ordrer."
+            )
+        # Generic database error
+        raise HTTPException(
+            status_code=500,
+            detail=f"Kunne ikke slette meny: {str(e)}"
+        )
