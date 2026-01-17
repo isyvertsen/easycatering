@@ -160,7 +160,7 @@ async def get_product_matches(
     # Get the product
     from sqlalchemy import text
     result = await db.execute(
-        text("SELECT produktid, produktnavn, ean_kode, leverandorsproduktnr FROM tblprodukter WHERE produktid = :pid"),
+        text("SELECT produktid, produktnavn, ean_kode, gtin_fpak, gtin_dpak, leverandorsproduktnr FROM tblprodukter WHERE produktid = :pid"),
         {"pid": produktid}
     )
     row = result.fetchone()
@@ -173,6 +173,8 @@ async def get_product_matches(
         produktid=row.produktid,
         produktnavn=row.produktnavn,
         ean_kode=row.ean_kode,
+        gtin_fpak=row.gtin_fpak,
+        gtin_dpak=row.gtin_dpak,
         leverandorsproduktnr=row.leverandorsproduktnr,
         recipe_count=0,  # Not relevant for single product lookup
     )

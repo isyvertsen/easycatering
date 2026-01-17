@@ -199,11 +199,13 @@ class VarebokMatcherService:
                 p.produktid,
                 p.produktnavn,
                 p.ean_kode,
+                p.gtin_fpak,
+                p.gtin_dpak,
                 p.leverandorsproduktnr,
                 COUNT(DISTINCT kd.kalkylekode) as recipe_count
             FROM tblprodukter p
             INNER JOIN tbl_rpkalkyledetaljer kd ON kd.produktid = p.produktid
-            GROUP BY p.produktid, p.produktnavn, p.ean_kode, p.leverandorsproduktnr
+            GROUP BY p.produktid, p.produktnavn, p.ean_kode, p.gtin_fpak, p.gtin_dpak, p.leverandorsproduktnr
             ORDER BY recipe_count DESC
         """)
 
@@ -215,6 +217,8 @@ class VarebokMatcherService:
                 produktid=row.produktid,
                 produktnavn=row.produktnavn,
                 ean_kode=row.ean_kode,
+                gtin_fpak=row.gtin_fpak,
+                gtin_dpak=row.gtin_dpak,
                 leverandorsproduktnr=row.leverandorsproduktnr,
                 recipe_count=row.recipe_count,
             )
@@ -348,6 +352,14 @@ class VarebokMatcherService:
                 row = result.fetchone()
                 old_ean = row.ean_kode if row else None
                 changes["ean_kode"] = (old_ean, new_ean)
+
+            # Update multi-level GTINs from Varebok
+            if vb.ean_f_pakn:
+                updates.append("gtin_fpak = :gtin_fpak")
+                params["gtin_fpak"] = vb.ean_f_pakn
+            if vb.ean_d_pakn:
+                updates.append("gtin_dpak = :gtin_dpak")
+                params["gtin_dpak"] = vb.ean_d_pakn
 
         if update_name:
             updates.append("produktnavn = :produktnavn")

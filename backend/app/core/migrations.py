@@ -454,6 +454,8 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(AddWebshopSortingIndexes())
         migration_runner.add_migration(MakeMenygruppeNullable())
         migration_runner.add_migration(AddSequenceToTblmeny())
+        migration_runner.add_migration(AddMultiLevelGtinToTblprodukter())
+        migration_runner.add_migration(BackfillGtinFromMatinfo())
     return migration_runner
 
 
@@ -1263,6 +1265,64 @@ class AddSequenceToTblmeny(Migration):
             await conn.execute(text("""
                 ALTER TABLE tblmeny
                 ALTER COLUMN menyid SET DEFAULT nextval('tblmeny_menyid_seq')
+            """))
+
+
+class AddMultiLevelGtinToTblprodukter(Migration):
+    """Add F-pak, D-pak, and Pall GTIN columns to tblprodukter."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260117_003_multi_level_gtin",
+            description="Add F-pak, D-pak, and Pall GTIN columns to tblprodukter"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Add columns
+            await conn.execute(text("""
+                ALTER TABLE tblprodukter
+                ADD COLUMN IF NOT EXISTS gtin_fpak VARCHAR(20),
+                ADD COLUMN IF NOT EXISTS gtin_dpak VARCHAR(20),
+                ADD COLUMN IF NOT EXISTS gtin_pall VARCHAR(20)
+            """))
+
+            # Add partial indexes (only index non-null values)
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_tblprodukter_gtin_fpak
+                ON tblprodukter(gtin_fpak) WHERE gtin_fpak IS NOT NULL
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_tblprodukter_gtin_dpak
+                ON tblprodukter(gtin_dpak) WHERE gtin_dpak IS NOT NULL
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_tblprodukter_gtin_pall
+                ON tblprodukter(gtin_pall) WHERE gtin_pall IS NOT NULL
+            """))
+
+
+class BackfillGtinFromMatinfo(Migration):
+    """Backfill F-pak, D-pak, Pall GTINs from matinfo_products."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260117_004_backfill_gtin_from_matinfo",
+            description="Backfill F-pak, D-pak, Pall GTINs from matinfo_products"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Update products that have matching Matinfo data via ean_kode
+            await conn.execute(text("""
+                UPDATE tblprodukter p
+                SET
+                    gtin_fpak = m.fpakk,
+                    gtin_dpak = m.dpakk,
+                    gtin_pall = m.pall
+                FROM matinfo_products m
+                WHERE p.ean_kode = m.gtin
+                  AND (m.fpakk IS NOT NULL OR m.dpakk IS NOT NULL OR m.pall IS NOT NULL)
             """))
 
 

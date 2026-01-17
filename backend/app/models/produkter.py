@@ -1,5 +1,5 @@
 """Product model (tblprodukter)."""
-from sqlalchemy import Column, BigInteger, Boolean, Float, Text, ForeignKey
+from sqlalchemy import Column, BigInteger, Boolean, Float, Text, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from app.infrastructure.database.session import Base
@@ -23,6 +23,12 @@ class Produkter(Base):
     bestillingsgrense = Column(Float)
     bestillingsmengde = Column(Float)
     ean_kode = Column(Text)
+
+    # Multi-level GTINs
+    gtin_fpak = Column(String(20), nullable=True, index=True)  # F-pak (Forbrukerpakk)
+    gtin_dpak = Column(String(20), nullable=True, index=True)  # D-pak (Distribusjonspakk)
+    gtin_pall = Column(String(20), nullable=True, index=True)  # Pall
+
     utgatt = Column(Boolean)
     oppdatert = Column(Boolean)
     webshop = Column(Boolean)

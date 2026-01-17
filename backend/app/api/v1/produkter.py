@@ -521,3 +521,33 @@ async def get_matinfo_suggestions(
     await cache_set(cache_key, json.dumps([r.model_dump() for r in results]), CACHE_TTL_MEDIUM)
 
     return results
+
+@router.get("/by-gtin/{gtin}", response_model=Produkter)
+async def get_product_by_any_gtin(
+    gtin: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Produkter:
+    """
+    Find product by any GTIN level (ean_kode, gtin_fpak, gtin_dpak, gtin_pall).
+
+    Searches across all GTIN fields to find a matching product.
+    Useful for barcode scanning that might return different GTIN levels.
+    """
+    # Build query to search all GTIN fields
+    stmt = select(ProdukterModel).where(
+        or_(
+            ProdukterModel.ean_kode == gtin,
+            ProdukterModel.gtin_fpak == gtin,
+            ProdukterModel.gtin_dpak == gtin,
+            ProdukterModel.gtin_pall == gtin,
+        )
+    )
+
+    result = await db.execute(stmt)
+    produkt = result.scalar_one_or_none()
+
+    if not produkt:
+        raise HTTPException(status_code=404, detail=f"Produkt med GTIN {gtin} ikke funnet")
+
+    return produkt
