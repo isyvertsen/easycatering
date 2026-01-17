@@ -1,4 +1,5 @@
 """Menu API endpoints."""
+import logging
 from typing import List, Optional
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +10,8 @@ from app.api.deps import get_db, get_current_user
 from app.domain.entities.user import User
 from app.models.meny import Meny as MenyModel
 from app.schemas.meny import Meny, MenyCreate, MenyUpdate
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -95,22 +98,34 @@ async def create_meny(
     db: AsyncSession = Depends(get_db),
 ) -> Meny:
     """Create a new menu."""
+    logger.info(f"Creating menu with data: {meny_data.model_dump()}")
     try:
         meny = MenyModel(**meny_data.model_dump())
         db.add(meny)
         await db.commit()
         await db.refresh(meny)
+        logger.info(f"Successfully created menu with ID: {meny.menyid}")
         return meny
     except Exception as e:
         await db.rollback()
+        # Log the full error with stack trace
+        logger.error(
+            f"Failed to create menu. Data: {meny_data.model_dump()}, "
+            f"Error type: {type(e).__name__}, Error: {str(e)}",
+            exc_info=True
+        )
+
         # Check if it's a foreign key constraint error
         error_str = str(e).lower()
         if "foreign key" in error_str or "menygruppe" in error_str:
+            logger.warning(f"Foreign key constraint violation. Menygruppe: {meny_data.menygruppe}")
             raise HTTPException(
                 status_code=400,
                 detail="Ugyldig menygruppe. Velg en gyldig menygruppe fra listen."
             )
-        # Generic database error
+
+        # Log and return generic database error
+        logger.error(f"Database error during menu creation: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Kunne ikke opprette meny: {str(e)}"
@@ -125,12 +140,14 @@ async def update_meny(
     db: AsyncSession = Depends(get_db),
 ) -> Meny:
     """Update a menu."""
+    logger.info(f"Updating menu ID {meny_id} with data: {meny_data.model_dump(exclude_unset=True)}")
     result = await db.execute(
         select(MenyModel).where(MenyModel.menyid == meny_id)
     )
     meny = result.scalar_one_or_none()
 
     if not meny:
+        logger.warning(f"Menu ID {meny_id} not found for update")
         raise HTTPException(status_code=404, detail="Meny ikke funnet")
 
     try:
@@ -140,17 +157,28 @@ async def update_meny(
 
         await db.commit()
         await db.refresh(meny)
+        logger.info(f"Successfully updated menu ID {meny_id}")
         return meny
     except Exception as e:
         await db.rollback()
+        # Log the full error with stack trace
+        logger.error(
+            f"Failed to update menu ID {meny_id}. Data: {update_data}, "
+            f"Error type: {type(e).__name__}, Error: {str(e)}",
+            exc_info=True
+        )
+
         # Check if it's a foreign key constraint error
         error_str = str(e).lower()
         if "foreign key" in error_str or "menygruppe" in error_str:
+            logger.warning(f"Foreign key constraint violation on update. Menygruppe: {update_data.get('menygruppe')}")
             raise HTTPException(
                 status_code=400,
                 detail="Ugyldig menygruppe. Velg en gyldig menygruppe fra listen."
             )
+
         # Generic database error
+        logger.error(f"Database error during menu update: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Kunne ikke oppdatere meny: {str(e)}"
@@ -164,28 +192,41 @@ async def delete_meny(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Delete a menu."""
+    logger.info(f"Attempting to delete menu ID {meny_id}")
     result = await db.execute(
         select(MenyModel).where(MenyModel.menyid == meny_id)
     )
     meny = result.scalar_one_or_none()
 
     if not meny:
+        logger.warning(f"Menu ID {meny_id} not found for deletion")
         raise HTTPException(status_code=404, detail="Meny ikke funnet")
 
     try:
         await db.delete(meny)
         await db.commit()
+        logger.info(f"Successfully deleted menu ID {meny_id}")
         return {"message": "Meny slettet"}
     except Exception as e:
         await db.rollback()
+        # Log the full error with stack trace
+        logger.error(
+            f"Failed to delete menu ID {meny_id}. "
+            f"Error type: {type(e).__name__}, Error: {str(e)}",
+            exc_info=True
+        )
+
         # Check if it's a foreign key constraint error (menu is referenced elsewhere)
         error_str = str(e).lower()
         if "foreign key" in error_str or "constraint" in error_str:
+            logger.warning(f"Cannot delete menu ID {meny_id} - referenced by other entities")
             raise HTTPException(
                 status_code=400,
                 detail="Kan ikke slette menyen. Den er i bruk i perioder eller ordrer."
             )
+
         # Generic database error
+        logger.error(f"Database error during menu deletion: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Kunne ikke slette meny: {str(e)}"
