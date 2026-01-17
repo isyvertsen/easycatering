@@ -34,6 +34,10 @@ export interface FeatureFlags {
   ai_chatbot: boolean
 }
 
+export interface UserKundegruppeFilterResponse {
+  gruppe_ids: number[]
+}
+
 export const systemSettingsApi = {
   /**
    * Hent alle systeminnstillinger (kun admin)
@@ -74,6 +78,28 @@ export const systemSettingsApi = {
    */
   getFeatureFlags: async (): Promise<FeatureFlags> => {
     const response = await apiClient.get('/v1/system-settings/feature-flags')
+    return response.data
+  },
+
+  /**
+   * Hent kundegruppe-filter for bruker-tilknytning
+   *
+   * Backend endpoint: GET /api/v1/system-settings/user-kundegruppe-filter
+   */
+  getUserKundegruppeFilter: async (): Promise<UserKundegruppeFilterResponse> => {
+    const response = await apiClient.get('/v1/system-settings/user-kundegruppe-filter')
+    return response.data
+  },
+
+  /**
+   * Oppdater kundegruppe-filter for bruker-tilknytning (kun admin)
+   *
+   * Backend endpoint: PUT /api/v1/system-settings/user-kundegruppe-filter
+   */
+  updateUserKundegruppeFilter: async (gruppeIds: number[]): Promise<UserKundegruppeFilterResponse> => {
+    const response = await apiClient.put('/v1/system-settings/user-kundegruppe-filter', {
+      gruppe_ids: gruppeIds
+    })
     return response.data
   }
 }

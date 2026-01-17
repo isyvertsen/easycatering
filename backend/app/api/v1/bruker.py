@@ -10,6 +10,7 @@ from app.api.deps import get_current_active_user, get_db
 from app.core.security import get_password_hash
 from app.domain.entities.user import User
 from app.models.ansatte import Ansatte
+from app.models.kunder import Kunder
 from app.schemas.bruker import (
     Bruker,
     BrukerCreate,
@@ -46,8 +47,11 @@ async def get_brukere(
     """Get all users with pagination, search and filtering."""
     require_admin(current_user)
 
-    # Base query with eager loading of ansatt
-    query = select(User).options(selectinload(User.ansatt))
+    # Base query with eager loading of ansatt and kunder
+    query = select(User).options(
+        selectinload(User.ansatt),
+        selectinload(User.kunder)
+    )
     count_query = select(func.count()).select_from(User)
 
     # Apply search filter
@@ -113,7 +117,10 @@ async def get_bruker(
 
     result = await db.execute(
         select(User)
-        .options(selectinload(User.ansatt))
+        .options(
+            selectinload(User.ansatt),
+            selectinload(User.kunder)
+        )
         .where(User.id == bruker_id)
     )
     user = result.scalar_one_or_none()
@@ -135,7 +142,10 @@ async def get_bruker_by_ansatt(
 
     result = await db.execute(
         select(User)
-        .options(selectinload(User.ansatt))
+        .options(
+            selectinload(User.ansatt),
+            selectinload(User.kunder)
+        )
         .where(User.ansattid == ansattid)
     )
     user = result.scalar_one_or_none()
@@ -182,23 +192,47 @@ async def create_bruker(
         # NOTE: An employee can have multiple user accounts
         # No need to validate uniqueness of ansattid
 
+    # Validate and fetch kunder if kundeids provided
+    kunder_to_add = []
+    if data.kundeids:
+        for kundeid in data.kundeids:
+            kunde_result = await db.execute(
+                select(Kunder).where(Kunder.kundeid == kundeid)
+            )
+            kunde = kunde_result.scalar_one_or_none()
+            if not kunde:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Ugyldig kunde-ID: {kundeid}"
+                )
+            kunder_to_add.append(kunde)
+
     # Create user
     user = User(
         email=data.email,
         full_name=data.full_name,
         hashed_password=get_password_hash(data.password),
         ansattid=data.ansattid,
+        kundeid=data.kundeid,
         rolle=data.rolle,
         is_active=data.is_active,
     )
+
+    # Add kunder to user
+    for kunde in kunder_to_add:
+        user.kunder.append(kunde)
+
     db.add(user)
     await db.commit()
     await db.refresh(user)
 
-    # Reload with ansatt relationship
+    # Reload with relationships
     result = await db.execute(
         select(User)
-        .options(selectinload(User.ansatt))
+        .options(
+            selectinload(User.ansatt),
+            selectinload(User.kunder)
+        )
         .where(User.id == user.id)
     )
     return result.scalar_one()
@@ -215,7 +249,9 @@ async def update_bruker(
     require_admin(current_user)
 
     result = await db.execute(
-        select(User).where(User.id == bruker_id)
+        select(User)
+        .options(selectinload(User.kunder))
+        .where(User.id == bruker_id)
     )
     user = result.scalar_one_or_none()
 
@@ -257,16 +293,42 @@ async def update_bruker(
         if password:
             user.hashed_password = get_password_hash(password)
 
+    # Handle kundeids separately (many-to-many relationship)
+    if "kundeids" in update_data:
+        kundeids = update_data.pop("kundeids")
+        if kundeids is not None:
+            # Validate and fetch new kunder
+            new_kunder = []
+            for kundeid in kundeids:
+                kunde_result = await db.execute(
+                    select(Kunder).where(Kunder.kundeid == kundeid)
+                )
+                kunde = kunde_result.scalar_one_or_none()
+                if not kunde:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Ugyldig kunde-ID: {kundeid}"
+                    )
+                new_kunder.append(kunde)
+
+            # Replace existing kunder
+            user.kunder.clear()
+            for kunde in new_kunder:
+                user.kunder.append(kunde)
+
     for field, value in update_data.items():
         setattr(user, field, value)
 
     await db.commit()
     await db.refresh(user)
 
-    # Reload with ansatt relationship
+    # Reload with relationships
     result = await db.execute(
         select(User)
-        .options(selectinload(User.ansatt))
+        .options(
+            selectinload(User.ansatt),
+            selectinload(User.kunder)
+        )
         .where(User.id == user.id)
     )
     return result.scalar_one()

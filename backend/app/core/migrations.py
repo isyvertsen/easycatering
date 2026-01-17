@@ -456,6 +456,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(AddSequenceToTblmeny())
         migration_runner.add_migration(AddMultiLevelGtinToTblprodukter())
         migration_runner.add_migration(BackfillGtinFromMatinfo())
+        migration_runner.add_migration(CreateUserKunderJunctionTable())
     return migration_runner
 
 
@@ -1323,6 +1324,37 @@ class BackfillGtinFromMatinfo(Migration):
                 FROM matinfo_products m
                 WHERE p.ean_kode = m.gtin
                   AND (m.fpakk IS NOT NULL OR m.dpakk IS NOT NULL OR m.pall IS NOT NULL)
+            """))
+
+
+class CreateUserKunderJunctionTable(Migration):
+    """Create junction table for user-customer many-to-many relationship."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260117_005_user_kunder_junction",
+            description="Create user_kunder junction table for many-to-many relationship"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Create user_kunder junction table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS user_kunder (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    kundeid BIGINT NOT NULL REFERENCES tblkunder(kundeid) ON DELETE CASCADE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT uq_user_kunde UNIQUE(user_id, kundeid)
+                )
+            """))
+
+            # Create indexes for faster lookups
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_user_kunder_user_id ON user_kunder(user_id)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_user_kunder_kundeid ON user_kunder(kundeid)
             """))
 
 

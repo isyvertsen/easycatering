@@ -1,6 +1,6 @@
 """Bruker (user) schemas."""
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -15,12 +15,19 @@ class AnsattInfo(BaseSchema):
     e_postjobb: Optional[str] = None
 
 
+class KundeInfo(BaseSchema):
+    """Nested schema for customer info in user responses."""
+    kundeid: int
+    kundenavn: Optional[str] = None
+
+
 class BrukerBase(BaseSchema):
     """Base schema for users."""
     email: EmailStr
     full_name: str = Field(..., min_length=1)
     ansattid: Optional[int] = None
     kundeid: Optional[int] = None
+    kundeids: Optional[List[int]] = None
     rolle: str = Field(default="bruker")
     is_active: bool = True
 
@@ -36,6 +43,7 @@ class BrukerUpdate(BaseModel):
     full_name: Optional[str] = None
     ansattid: Optional[int] = None
     kundeid: Optional[int] = None
+    kundeids: Optional[List[int]] = None
     rolle: Optional[str] = None
     is_active: Optional[bool] = None
     password: Optional[str] = Field(None, min_length=8)
@@ -55,6 +63,7 @@ class Bruker(BrukerBase):
 class BrukerMedAnsatt(Bruker):
     """Schema for user responses with employee info."""
     ansatt: Optional[AnsattInfo] = None
+    kunder: Optional[List[KundeInfo]] = None
 
 
 class BrukerListResponse(BaseSchema):
