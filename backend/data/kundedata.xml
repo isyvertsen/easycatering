@@ -1,0 +1,1867 @@
+UPDATE MY_TABLE SET [] = N'
+<KundeID>326</KundeID>
+<Kundenavn>TW Tjølling dagsenter E</Kundenavn>
+<LøpeNr>1</LøpeNr>
+<Adresse>LKC Vikingveien</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3274</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>1</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<E-post>hanne.tangen@larvik.kommune.no</E-post>
+<KundeGruppe>4</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<MenyGruppeID>1</MenyGruppeID>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABee50=</SSMA_TimeStamp>
+<KundeID>343</KundeID>
+<Kundenavn>TW Stavern Farrisringen middag</Kundenavn>
+<Merknad>1 minus grøt</Merknad>
+<Adresse>Brunlaveien 11</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3290</PostNR>
+<Sted>STAVERN</Sted>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<E-post>rakel.kristiansen@larvik.kommune.no</E-post>
+<KundeGruppe>4</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2018-03-01T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABee54=</SSMA_TimeStamp>
+<KundeID>344</KundeID>
+<Kundenavn>Frøytunet Dagsenter</Kundenavn>
+<Avdeling>344240</Avdeling>
+<BestillerNr>70006</BestillerNr>
+<Adresse>Oberst Perers vei 65</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3256</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>2</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<MenyGruppeID>1</MenyGruppeID>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABee58=</SSMA_TimeStamp>
+<KundeID>345</KundeID>
+<Kundenavn>TW Søbakken Dagsenter middag</Kundenavn>
+<Avdeling>345241</Avdeling>
+<Adresse>Lundesvingen 14</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3294</PostNR>
+<Sted>HELGEROA</Sted>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeGruppe>4</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2018-03-01T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABee6A=</SSMA_TimeStamp>
+<KundeID>406</KundeID>
+<Kundenavn>Futejordet Kvelde DS middag</Kundenavn>
+<Adresse>Futestien</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3282</PostNR>
+<Sted>Kvelde</Sted>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<E-post>Wivi.Ann.Roed.Pedersen@larvik.kommune.no#mailto:Wivi.Ann.Roed.Pedersen@larvik.kommune.no#</E-post>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<SjåførPåRute>1</SjåførPåRute>
+<Diett>0</Diett>
+<InnDato>2020-10-27T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1HlzYiJxrEQ_okmZIX93dtohvCEVgJXKJeznlTcj_7xA</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw6ks=</SSMA_TimeStamp>
+<KundeID>411</KundeID>
+<Kundenavn>Tjølling sykehjem Dagsenter 2</Kundenavn>
+<Avdeling>411287</Avdeling>
+<Telefonnummer>98 23 12 10</Telefonnummer>
+<BestillerNr>70006</BestillerNr>
+<Adresse>Håkestadveien 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3280</PostNR>
+<Sted>TJODALYNG</Sted>
+<VelgSone>23</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>hege.letting@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-01-01T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABagG0=</SSMA_TimeStamp>
+<KundeID>412</KundeID>
+<Kundenavn>Bøkesenteret avd Dagsenter</Kundenavn>
+<Avdeling>412288</Avdeling>
+<Telefonnummer>98 23 12 50</Telefonnummer>
+<BestillerNr>70006</BestillerNr>
+<Adresse>Badeparken 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3256</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>1</VelgSone>
+<Leveringsdag>1</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-01-01T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAAA8H5o=</SSMA_TimeStamp>
+<KundeID>413</KundeID>
+<Kundenavn>Bøkesenteret avd kafeteria</Kundenavn>
+<Telefonnummer>98 23 12 03</Telefonnummer>
+<BestillerNr>73033</BestillerNr>
+<Adresse>Badeparken 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3256</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>1</VelgSone>
+<Leveringsdag>1</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>merethe.hjelkrem.eftedal@larvik.kommune.no</E-post>
+<KundeGruppe>7</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABxhug=</SSMA_TimeStamp>
+<KundeID>414</KundeID>
+<Kundenavn>Dnas i Stavern- 135328</Kundenavn>
+<Avdeling>414289</Avdeling>
+<Telefonnummer>33 16 53 50</Telefonnummer>
+<Merknad> Inga Zinkiene</Merknad>
+<Adresse>Storgaten 22</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3290</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>26</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>135328</KundeNrAgresso>
+<E-post>post@dnas.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABXF98=</SSMA_TimeStamp>
+<E-post2>Inga Zinkiene &lt;inga.zinkiene@dnas.no&gt;#mailto:Inga Zinkiene
+    &lt;inga.zinkiene@dnas.no&gt;#</E-post2>
+<KundeID>416</KundeID>
+<Kundenavn>Furuheim Sykehjem avd Brage</Kundenavn>
+<Avdeling>416291</Avdeling>
+<Telefonnummer>33 17 36 10</Telefonnummer>
+<BestillerNr>70012</BestillerNr>
+<Merknad>13 pasienter</Merknad>
+<Adresse>Gamle Kongevei 27</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3269</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>21</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>sanela.hasic@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAAByKsE=</SSMA_TimeStamp>
+<E-post2>rikke.nilsen@larvik.kommune.no#mailto:rikke.nilsen@larvik.kommune.no#</E-post2>
+<KundeID>417</KundeID>
+<Kundenavn>Furuheim Sykehjem avd Dagsenter</Kundenavn>
+<Avdeling>417291</Avdeling>
+<Telefonnummer>98 23 18 94</Telefonnummer>
+<BestillerNr>70006</BestillerNr>
+<Merknad>12 brukere pr dag. 1 laktosefri (kun mandager).</Merknad>
+<Adresse>Gamle Kongevei 27</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3269</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>21</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>torgunn.refvem.kristiansen@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABtCi8=</SSMA_TimeStamp>
+<KundeID>418</KundeID>
+<Kundenavn>Furuheim Sykehjem avd Frida A</Kundenavn>
+<Avdeling>418292</Avdeling>
+<Telefonnummer>33 17 35 60</Telefonnummer>
+<BestillerNr>71017</BestillerNr>
+<Merknad>0</Merknad>
+<Adresse>Gamle Kongevei 27</Adresse>
+<Postboks>0</Postboks>
+<PostNR>2369</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>21</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>Shqipe Blaka@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABJxrw=</SSMA_TimeStamp>
+<E-post2>
+    Henriette.Schoyen.Bredal@larvik.kommune.no#mailto:Henriette.Schoyen.Bredal@larvik.kommune.no#</E-post2>
+<KundeID>421</KundeID>
+<Kundenavn>Furuheim Sykehjem avd Snorre</Kundenavn>
+<Avdeling>421294</Avdeling>
+<Telefonnummer>33 17 35 20</Telefonnummer>
+<BestillerNr>71006</BestillerNr>
+<Merknad>19 pr uke 133</Merknad>
+<Adresse>Gamle Kongevei 27</Adresse>
+<Postboks>0</Postboks>
+<VelgSone>21</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>simona.makare@larvik.kommune.no#mailto:simona.makare@larvik.kommune.no#</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAAByKpg=</SSMA_TimeStamp>
+<E-post2>ken.andersen@larvik.kommune.no#mailto:ken.andersen@larvik.kommune.no#</E-post2>
+<KundeID>422</KundeID>
+<Kundenavn>Furuheim Sykehjem avd Vilja</Kundenavn>
+<Avdeling>422295</Avdeling>
+<Telefonnummer>98 23 15 86</Telefonnummer>
+<BestillerNr>71006</BestillerNr>
+<Merknad>19 pasienter</Merknad>
+<Adresse>Gamle Kongevei 27</Adresse>
+<Postboks>0</Postboks>
+<VelgSone>21</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>ismeta peskovic@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAAB2xkE=</SSMA_TimeStamp>
+<E-post2>rikke.nilsen@larvik.kommune.no#mailto:rikke.nilsen@larvik.kommune.no#</E-post2>
+<KundeID>423</KundeID>
+<Kundenavn>Furuheim Sykehjem Kafeteria</Kundenavn>
+<Avdeling>423296</Avdeling>
+<Telefonnummer>98 23 12 37</Telefonnummer>
+<BestillerNr>71004</BestillerNr>
+<Adresse>Gamle Kongevei 27</Adresse>
+<Postboks>0</Postboks>
+<VelgSone>21</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABaDeI=</SSMA_TimeStamp>
+<KundeID>426</KundeID>
+<Kundenavn>Gloppe senteret- 153789</Kundenavn>
+<Telefonnummer>48 13 00 89</Telefonnummer>
+<Merknad>Inger Lise Hansen</Merknad>
+<Adresse>Iver Hesselbergvei 2</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3260</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>1</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>153789</KundeNrAgresso>
+<KundeGruppe>7</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABmDQk=</SSMA_TimeStamp>
+<KundeID>427</KundeID>
+<Kundenavn>Grevle Sykehjem Avd Nalum</Kundenavn>
+<Avdeling>427298</Avdeling>
+<Telefonnummer>45 50 04 95</Telefonnummer>
+<BestillerNr>71007</BestillerNr>
+<Merknad>17 pasienter</Merknad>
+<Adresse>Rakkeveien 27</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3294</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>28</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>hanne.skivik@larvik.kommune.no#mailto:hanne.skivik@larvik.kommune.no#</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAAByKsM=</SSMA_TimeStamp>
+<E-post2>elin.andersen.wahlin@larvik.kommune.no#mailto:elin.andersen.wahlin@larvik.kommune.no#</E-post2>
+<KundeID>428</KundeID>
+<Kundenavn>Grevle sykehjem avd Rakke 1</Kundenavn>
+<Avdeling>428299</Avdeling>
+<Telefonnummer>33 17 34 28</Telefonnummer>
+<BestillerNr>71007</BestillerNr>
+<Merknad>heidi.beck.jacobsen@larvik.kommune.no</Merknad>
+<Adresse>Rakkeveien 27</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3294</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>28</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>tone kjelsen@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAAByKsQ=</SSMA_TimeStamp>
+<E-post2>elin.andersen.wahlin@larvik.kommune.no#mailto:elin.andersen.wahlin@larvik.kommune.no#</E-post2>
+<KundeID>429</KundeID>
+<Kundenavn>Grevle sykehjem avd Rakke 2</Kundenavn>
+<Avdeling>429300</Avdeling>
+<Telefonnummer>98 25 33 82</Telefonnummer>
+<BestillerNr>71007</BestillerNr>
+<Merknad>heidi.beck.jacobsen@larvik.kommune.no</Merknad>
+<Adresse>Rakkeveien 27</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3294</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>28</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>barbro.eftedal@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAAByKsU=</SSMA_TimeStamp>
+<E-post2>elin.andersen.wahlin@larvik.kommune.no#mailto:elin.andersen.wahlin@larvik.kommune.no#</E-post2>
+<KundeID>430</KundeID>
+<Kundenavn>Grevle sykehjem dagsenter</Kundenavn>
+<Avdeling>430301</Avdeling>
+<BestillerNr>70006</BestillerNr>
+<Merknad>heidi.beck.jacobsen@larvik.kommune.no</Merknad>
+<Adresse>Rakkeveien 27</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3294</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>28</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>tone kjelsen@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABScXo=</SSMA_TimeStamp>
+<KundeID>433</KundeID>
+<Kundenavn>Kaffekunde Alle i Omsorgtj</Kundenavn>
+<Telefonnummer>98 23 12 46</Telefonnummer>
+<Postboks>0</Postboks>
+<VelgSone>1</VelgSone>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<E-post>lkc@larvik.kommune.no</E-post>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>1</Avsluttet>
+<SSMA_TimeStamp>AAAAAABus/Q=</SSMA_TimeStamp>
+<KundeID>435</KundeID>
+<Kundenavn>Kantine Larvik helsehus felles</Kundenavn>
+<Telefonnummer>98 23 15 01</Telefonnummer>
+<BestillerNr>72006</BestillerNr>
+<Adresse>Byskogveien 5</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3257</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>1</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>7</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABpzhA=</SSMA_TimeStamp>
+<KundeID>438</KundeID>
+<Kundenavn>Futejordet Kvelde Dagsenter</Kundenavn>
+<Avdeling>438306</Avdeling>
+<Telefonnummer>33 11 27 57</Telefonnummer>
+<BestillerNr>70006</BestillerNr>
+<Adresse>Futestien 1</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3282</PostNR>
+<Sted>KVELDE</Sted>
+<VelgSone>2</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABee6Y=</SSMA_TimeStamp>
+<KundeID>439</KundeID>
+<Kundenavn>Kvelde sykehjem</Kundenavn>
+<Avdeling>439307</Avdeling>
+<Telefonnummer>33 17 24 50</Telefonnummer>
+<BestillerNr>74004</BestillerNr>
+<Merknad>16 pasienter</Merknad>
+<Adresse>Futestien 1</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3282</PostNR>
+<Sted>KVELDE</Sted>
+<VelgSone>30</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>linda.marie.magnussen@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABee6c=</SSMA_TimeStamp>
+<E-post2>henriette.kongsteien@larvik.kommune.no#mailto:henriette.kongsteien@larvik.kommune.no#</E-post2>
+<KundeID>441</KundeID>
+<Kundenavn>Larvik helsehus Avklaring</Kundenavn>
+<Avdeling>441308</Avdeling>
+<Telefonnummer>98 23 15 63</Telefonnummer>
+<BestillerNr>72006</BestillerNr>
+<Merknad>13 pasienter</Merknad>
+<Adresse>Byskogveien 5</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3257</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>31</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>lene.olsen@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABJ07k=</SSMA_TimeStamp>
+<KundeID>442</KundeID>
+<Kundenavn>Larvik Helsehus Korttidsavdeling 1 VEST</Kundenavn>
+<Avdeling>442309</Avdeling>
+<Telefonnummer>98 23 10 73</Telefonnummer>
+<BestillerNr>72005</BestillerNr>
+<Merknad>26</Merknad>
+<Adresse>Byskogveien 5</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3257</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>31</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABlwHg=</SSMA_TimeStamp>
+<KundeID>443</KundeID>
+<Kundenavn>Larvik Helsehus Lindrende avd</Kundenavn>
+<Avdeling>443310</Avdeling>
+<Telefonnummer>98 25 33 61</Telefonnummer>
+<BestillerNr>72006</BestillerNr>
+<Merknad>Leveres med Crafter</Merknad>
+<Adresse>Byskogveien 5</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3257</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>31</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>merete.lysnes@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAAB0m6U=</SSMA_TimeStamp>
+<KundeID>450</KundeID>
+<Kundenavn>Presteløkka Rehabiliteringssenter</Kundenavn>
+<Avdeling>450315</Avdeling>
+<Telefonnummer>33 17 33 50</Telefonnummer>
+<BestillerNr>86003</BestillerNr>
+<Merknad>23 pasienter</Merknad>
+<Adresse>Kysthospitalveien 30</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3294</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>27</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>ann.kristin.amundsen@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABi3J4=</SSMA_TimeStamp>
+<E-post2>Stine Kaupang Andresen#http://Stine Kaupang Andresen#</E-post2>
+<KundeID>453</KundeID>
+<Kundenavn>Rekkevik Sykehjem</Kundenavn>
+<Avdeling>453317</Avdeling>
+<Telefonnummer>33 17 25 70</Telefonnummer>
+<BestillerNr>71012</BestillerNr>
+<Merknad>17 pasienter</Merknad>
+<Adresse>Rekkeviks gate 21</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3260</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>24</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>regina.coelly.galvao.barbosa@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAAByKsA=</SSMA_TimeStamp>
+<E-post2>kristin.skalleberg@larvik.kommune.no#mailto:kristin.skalleberg@larvik.kommune.no#</E-post2>
+<KundeID>455</KundeID>
+<Kundenavn>Stavern Sykehjem Avd A Bukta</Kundenavn>
+<Avdeling>455318</Avdeling>
+<Telefonnummer>33 17 22 16</Telefonnummer>
+<BestillerNr>71014</BestillerNr>
+<Merknad>13 pasienter</Merknad>
+<Adresse>Brunlaveien 11</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3290</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>25</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>jeanette.skare@larvik.kommune.no#mailto:jeanette.skare@larvik.kommune.no#</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABJxtI=</SSMA_TimeStamp>
+<E-post2>kjellfrid.andersen@larvik.kommune.no#mailto:kjellfrid.andersen@larvik.kommune.no#</E-post2>
+<KundeID>456</KundeID>
+<Kundenavn>Stavern Sykehjem Avd B Farris</Kundenavn>
+<Avdeling>456319</Avdeling>
+<Telefonnummer>33 17 22 16</Telefonnummer>
+<BestillerNr>71015</BestillerNr>
+<Merknad>14 p</Merknad>
+<Adresse>Brunlaveien 11</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3290</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>25</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>hanke2206@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABoV/Y=</SSMA_TimeStamp>
+<E-post2>mette.loftstad@larvik.kommune.no#mailto:mette.loftstad@larvik.kommune.no#</E-post2>
+<KundeID>457</KundeID>
+<Kundenavn>Stavern Sykehjem Fr.ringen spisesal</Kundenavn>
+<Avdeling>457319</Avdeling>
+<Telefonnummer>33 17 22 00</Telefonnummer>
+<BestillerNr>71014</BestillerNr>
+<Adresse>Brunlaveien 11</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3290</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>25</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABJxtU=</SSMA_TimeStamp>
+<KundeID>459</KundeID>
+<Kundenavn>Søbakken sykehjem mottakkjøkken</Kundenavn>
+<Telefonnummer>33 17 37 00</Telefonnummer>
+<BestillerNr>73002</BestillerNr>
+<Merknad> Husk Dietter&#x0D;
+    Porsjonspakket middager er 14 p til trim og trivsel, pluss dessert. 8 X 2 porsjoner er til
+    dagsenter og dessert</Merknad>
+<Postboks>0</Postboks>
+<PostNR>3295</PostNR>
+<Sted>HELGEROA</Sted>
+<VelgSone>29</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1vs-G7fiFQzkG1rQd9X92LckvCxpcNnq5UJ2vd41Sa1s</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw6ko=</SSMA_TimeStamp>
+<KundeID>461</KundeID>
+<Kundenavn>Søbakken Sykehjem</Kundenavn>
+<Avdeling>461322</Avdeling>
+<Telefonnummer>90 91 96 70</Telefonnummer>
+<BestillerNr>74010</BestillerNr>
+<Merknad>17 pasienter</Merknad>
+<Adresse>Lundesvingen 14</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3295</PostNR>
+<Sted>HELGEROA</Sted>
+<VelgSone>29</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>Eva.Larsen@larvik.kommune.no#mailto:Eva.Larsen@larvik.kommune.no#</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABhD7A=</SSMA_TimeStamp>
+<E-post2>
+    astrid.kristin.solbakken@larvik.kommune.no#mailto:astrid.kristin.solbakken@larvik.kommune.no#</E-post2>
+<KundeID>463</KundeID>
+<Kundenavn>Tjølling Sykehjem gruppe A</Kundenavn>
+<Avdeling>463324</Avdeling>
+<BestillerNr>71018</BestillerNr>
+<Merknad>9 pas</Merknad>
+<Adresse>Håkestadveien 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3280</PostNR>
+<Sted>TJODALYNG</Sted>
+<VelgSone>23</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>hege.bjork@larvik.kommune.no#mailto:hege.bjork@larvik.kommune.no#</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAAB5lQE=</SSMA_TimeStamp>
+<E-post2>nathalie.gronning.thon@larvik.kommune.no#mailto:nathalie.gronning.thon@larvik.kommune.no#</E-post2>
+<KundeID>464</KundeID>
+<Kundenavn>Tjølling Sykehjem Gruppe B</Kundenavn>
+<Avdeling>464324</Avdeling>
+<Telefonnummer>33 17 32 58</Telefonnummer>
+<BestillerNr>71018</BestillerNr>
+<Merknad>7 pas</Merknad>
+<Adresse>Håkestadveien 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3280</PostNR>
+<Sted>TJODALYNG</Sted>
+<VelgSone>23</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>emma.olsen@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABwt8M=</SSMA_TimeStamp>
+<E-post2>nathalie.gronning.thon@larvik.kommune.no#mailto:nathalie.gronning.thon@larvik.kommune.no#</E-post2>
+<KundeID>465</KundeID>
+<Kundenavn>Tjølling Sykehjem Dagsenter 1</Kundenavn>
+<Avdeling>465325</Avdeling>
+<Telefonnummer>98 23 13 69</Telefonnummer>
+<BestillerNr>70006</BestillerNr>
+<Adresse>Håkestadveien 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3280</PostNR>
+<Sted>TJODALYNG</Sted>
+<VelgSone>23</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>kaja.enoksen@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABagGw=</SSMA_TimeStamp>
+<KundeID>466</KundeID>
+<Kundenavn>Tjølling Sykehjem gruppe F</Kundenavn>
+<Avdeling>466326</Avdeling>
+<Telefonnummer>33 12 32 42</Telefonnummer>
+<BestillerNr>71018</BestillerNr>
+<Merknad>9 pas</Merknad>
+<Adresse>Håkestadveien 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3280</PostNR>
+<Sted>TJODALYNG</Sted>
+<VelgSone>23</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>minia.gulbet.tesfagabr@larvik.kommun.no#mailto:minia.gulbet.tesfagabr@larvik.kommun.no#</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABwt8Y=</SSMA_TimeStamp>
+<E-post2>nathalie.gronning.thon@larvik.kommune.no#mailto:nathalie.gronning.thon@larvik.kommune.no#</E-post2>
+<KundeID>467</KundeID>
+<Kundenavn>Tjølling Sykehjem Kaupang gruppe D</Kundenavn>
+<Avdeling>467326</Avdeling>
+<Telefonnummer>93 23 44 75</Telefonnummer>
+<BestillerNr>71035</BestillerNr>
+<Merknad>7 pasienter</Merknad>
+<Adresse>Håkestadveien 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3280</PostNR>
+<Sted>TJODALYNG</Sted>
+<VelgSone>23</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>torill.hoiberg@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAAByUh0=</SSMA_TimeStamp>
+<E-post2>henriette.kongsteien@larvik.kommune.no#mailto:henriette.kongsteien@larvik.kommune.no#</E-post2>
+<KundeID>468</KundeID>
+<Kundenavn>Tjølling Sykehjem kafeteria</Kundenavn>
+<Avdeling>468327</Avdeling>
+<Telefonnummer>33 17 32 68</Telefonnummer>
+<BestillerNr>70006</BestillerNr>
+<Adresse>Håkestadveien 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3280</PostNR>
+<Sted>TJODALYNG</Sted>
+<VelgSone>23</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABLIpc=</SSMA_TimeStamp>
+<KundeID>471</KundeID>
+<Kundenavn>Tårngården Eldresenter middag</Kundenavn>
+<Telefonnummer>98 23 12 56</Telefonnummer>
+<Postboks>0</Postboks>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>1</Avsluttet>
+<SSMA_TimeStamp>AAAAAABvGW0=</SSMA_TimeStamp>
+<KundeID>477</KundeID>
+<Kundenavn>Yttersølia Sykehjem Avd A&amp;B</Kundenavn>
+<Avdeling>477333</Avdeling>
+<Telefonnummer>33 17 21 57</Telefonnummer>
+<BestillerNr>71034</BestillerNr>
+<Merknad>Avd A 12 pasienter&#x0D;
+    Avd B 12 pasienter</Merknad>
+<Adresse>Gunnar Reiss-andersens gate 118</Adresse>
+<Postboks>0</Postboks>
+<VelgSone>22</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABk+9k=</SSMA_TimeStamp>
+<E-post2>astrid.synnove.bo@larvik.kommune.no#mailto:astrid.synnove.bo@larvik.kommune.no#</E-post2>
+<KundeID>478</KundeID>
+<Kundenavn>Yttersølia Sykehjem Avd B</Kundenavn>
+<Avdeling>478334</Avdeling>
+<Telefonnummer>33 17 21 57</Telefonnummer>
+<BestillerNr>71003</BestillerNr>
+<Merknad>13 pasienter A og B en avdeling fra 18/5</Merknad>
+<Adresse>Gunnar Reiss-andersens gate 118</Adresse>
+<Postboks>0</Postboks>
+<VelgSone>1</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>1</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>solvi.hvaara@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>1</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABxX5A=</SSMA_TimeStamp>
+<KundeID>479</KundeID>
+<Kundenavn>Yttersølia Sykehjem Avd C&amp;D</Kundenavn>
+<Avdeling>479335</Avdeling>
+<Telefonnummer>33 17 21 57</Telefonnummer>
+<BestillerNr>71003</BestillerNr>
+<Merknad>Avd C 12 pasienter&#x0D;
+    Avd C 12 pasienter</Merknad>
+<Adresse>Gunnar Reiss-andersens gate 118</Adresse>
+<Postboks>0</Postboks>
+<VelgSone>22</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>@larvik.kommune.no#mailto:ida.boe.olsen@larvik.kommune.no#</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABaDOE=</SSMA_TimeStamp>
+<E-post2>marianne.aakeroe@larvik.kommune.no#mailto:marianne.aakeroe@larvik.kommune.no#</E-post2>
+<KundeID>480</KundeID>
+<Kundenavn>Yttersølia Sykehjem Avd D</Kundenavn>
+<Avdeling>480336</Avdeling>
+<Telefonnummer>33 17 21 57</Telefonnummer>
+<BestillerNr>71003</BestillerNr>
+<Merknad>12 pasienter &#x0D;
+    C og D en avdeling fra 18/5</Merknad>
+<Adresse>Gunnar Reiss-andersens gate 118</Adresse>
+<Postboks>0</Postboks>
+<VelgSone>1</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>1</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>solvi.hvaara@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>1</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABxX5E=</SSMA_TimeStamp>
+<KundeID>481</KundeID>
+<Kundenavn>Yttersølia Sykehjem Kafeteria</Kundenavn>
+<Avdeling>481336</Avdeling>
+<BestillerNr>72007</BestillerNr>
+<Adresse>Gunnar Reiss-andersens gate 118</Adresse>
+<Postboks>0</Postboks>
+<VelgSone>1</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-10-16T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAAAE7PY=</SSMA_TimeStamp>
+<KundeID>486</KundeID>
+<Kundenavn>Aktivitetsavdelingen Roy Johansen</Kundenavn>
+<BestillerNr>94023</BestillerNr>
+<Postboks>0</Postboks>
+<VelgSone>1</VelgSone>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>roy.johansen@larvik.kommune.no</E-post>
+<KundeGruppe>7</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<UtDato>2025-01-16T00:00:00</UtDato>
+<Avsluttet>1</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABx+7g=</SSMA_TimeStamp>
+<KundeID>498</KundeID>
+<Kundenavn>Futejordet Eldresenter-187646</Kundenavn>
+<Telefonnummer>33 11 27 57</Telefonnummer>
+<Adresse>Futejordet</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3282</PostNR>
+<Sted>KVELDE</Sted>
+<VelgSone>2</VelgSone>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>187646</KundeNrAgresso>
+<E-post>Karinandreassen@outlook.com#mailto:Karinandreassen@outlook.com#</E-post>
+<KundeGruppe>7</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABVEYw=</SSMA_TimeStamp>
+<KundeID>501</KundeID>
+<Kundenavn>Grevle Sykehjem Kafeteria</Kundenavn>
+<Telefonnummer>48 02 46 46</Telefonnummer>
+<BestillerNr>71007</BestillerNr>
+<Adresse>Rakkeveien 27</Adresse>
+<Postboks>0</Postboks>
+<VelgSone>28</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>elin.andersen.wahlin@larvik.kommune.no#mailto:elin.andersen.wahlin@larvik.kommune.no#</E-post>
+<KundeGruppe>7</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>F:\HO_FELLESMAPPE\Sykehjem\LKCBestilling</EksportKatalog>
+<SSMA_TimeStamp>AAAAAAByKsY=</SSMA_TimeStamp>
+<KundeID>549</KundeID>
+<Kundenavn>Trygghet og Trening</Kundenavn>
+<Telefonnummer>33 17 33 50</Telefonnummer>
+<BestillerNr>86003</BestillerNr>
+<Merknad>8 Pasienter</Merknad>
+<Adresse>Kysthospitalveien 30</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3294</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>27</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABJ8xI=</SSMA_TimeStamp>
+<KundeID>862</KundeID>
+<Kundenavn>Larvik helsehus Løkka bo og avklaring</Kundenavn>
+<BestillerNr>77012</BestillerNr>
+<Adresse>Byskogveien 5</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3257</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>31</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>lisbeth.thorstensen@larvik.kommune.no</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-10-30T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABK79E=</SSMA_TimeStamp>
+<E-post2>trude.bredesen.wold@larvik.kommune.no#mailto:trude.bredesen.wold@larvik.kommune.no#</E-post2>
+<KundeID>920</KundeID>
+<Kundenavn>Furuheim sykehjem mottakkjøkken</Kundenavn>
+<Adresse>Gamle Kongevei 27</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3269</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>21</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-12-18T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1vpNdNZWTTsZK9M6NX6kMo8_iQnDgeEwWwmY9DBsUy5E</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw5lk=</SSMA_TimeStamp>
+<KundeID>921</KundeID>
+<Kundenavn>Byskogen sykehjem mottakkjøkken</Kundenavn>
+<Merknad>3 avdelinger Husk Dietter</Merknad>
+<Adresse>Byskogveien 5</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3257</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>31</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-12-18T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1ctsVlmzpoNcttQw_K8bfg2YaFJWi4mYrE16hBGg4qA0</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw6kE=</SSMA_TimeStamp>
+<KundeID>922</KundeID>
+<Kundenavn>Tjølling sykehjem mottakkjøkken</Kundenavn>
+<Merknad>Husk DIETTER</Merknad>
+<Adresse>Håkestadveien 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3280</PostNR>
+<Sted>TJODALYNG</Sted>
+<VelgSone>23</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-12-18T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>15sMHCEKSTRGhKhfg3nNKsP8_FTCI5z2BUipz9CUMtEE</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw6kM=</SSMA_TimeStamp>
+<KundeID>923</KundeID>
+<Kundenavn>Grevle sykehjem mottakkjøkken</Kundenavn>
+<Telefonnummer>40 06 63 87</Telefonnummer>
+<Merknad> Husk Dietter&#x0D;
+    totalt på huset 45</Merknad>
+<Adresse>Rakkeveien 27</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3290</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>28</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-12-18T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1Hf4zahm5jti9U9eH9kPRbVMrKSQ3uFtJnKZvKy09G0Y</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw6kQ=</SSMA_TimeStamp>
+<KundeID>924</KundeID>
+<Kundenavn>Stavern sykehjem mottakkjøkken</Kundenavn>
+<Merknad>2 avdelinger + spisesal &#x0D;
+    Husk Dietter&#x0D;
+    Dessert til 28</Merknad>
+<Adresse>Brunlaveien 11</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3290</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>25</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-12-18T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1nD8KCLvB6y7mxeQ2pnAgYWSjr6G5ZU_N_mTCrjrThsY</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw6kU=</SSMA_TimeStamp>
+<KundeID>925</KundeID>
+<Kundenavn>DNAS mottakkjøkken</Kundenavn>
+<Merknad>Husk Dietter</Merknad>
+<Adresse>Storgaten 22</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3290</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>26</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-12-18T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1axNbfxWjTKTPpCHG7DtrkSXtrBbspHzmX5QKHZXt_U0</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw6kc=</SSMA_TimeStamp>
+<KundeID>926</KundeID>
+<Kundenavn>Presteløkka rehab mottakkjøkken</Kundenavn>
+<Adresse>Kysthospitalveien 30</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3294</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>27</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-12-18T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1QydKkeVci5eq61x2c8DCWsMtSjzesnan7H4j2DXsMVk</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw6kY=</SSMA_TimeStamp>
+<KundeID>927</KundeID>
+<Kundenavn>Kvelde sykehjem mottakkjøkken</Kundenavn>
+<Merknad>Husk Dietter</Merknad>
+<Adresse>Futestien 1</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3282</PostNR>
+<Sted>KVELDE</Sted>
+<VelgSone>30</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-12-18T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1MeqQAINWD6grQaTxnKzQxODvnk58Sq7rIpF_SnM2dHc</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw6kk=</SSMA_TimeStamp>
+<KundeID>928</KundeID>
+<Kundenavn>Yttersølia sykehjem mottakkjøkken</Kundenavn>
+<Merknad>Avd A 12 pasienter&#x0D;
+    Avd B 12 pasienter&#x0D;
+    Avd C 12 pasienter&#x0D;
+    Avd D 12 pasienter</Merknad>
+<Adresse>Gunnar Reiss-andersens gate 118</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3257</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>22</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-12-18T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1aa5TV3ZyANniWG0tkoymZxxv46Ybtc5_4F90qgSdVJg</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw6kI=</SSMA_TimeStamp>
+<KundeID>932</KundeID>
+<Kundenavn>Nalum eldresenter middag</Kundenavn>
+<Adresse>Naulumruta</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3294</PostNR>
+<Sted>STAVERN</Sted>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-12-19T00:00:00</InnDato>
+<Avsluttet>1</Avsluttet>
+<SSMA_TimeStamp>AAAAAABus/o=</SSMA_TimeStamp>
+<KundeID>933</KundeID>
+<Kundenavn>Rekkevik sykehjem mottakkjøkken</Kundenavn>
+<Adresse>Rekkeviks gate 21</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3260</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>24</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-12-19T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1w4UZfcUSdvHpS3ZAPPsCHHUMCnw-r804qD-IpsDTMrw</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw6kg=</SSMA_TimeStamp>
+<SykehjemID>933</SykehjemID>
+<KundeID>934</KundeID>
+<Kundenavn>Bukta senteret middag</Kundenavn>
+<Adresse>Kronprinsgt 51</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3290</PostNR>
+<Sted>STAVERN</Sted>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-12-19T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1Jf77-UwkbtgSoB0VaegxvHCBKYI2lvbZjviEe-vgzzQ</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw6k0=</SSMA_TimeStamp>
+<KundeID>935</KundeID>
+<Kundenavn>Gloppe senteret middag</Kundenavn>
+<Adresse>Iver Hesselbergvei 2</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3260</PostNR>
+<Sted>LARVIK</Sted>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1wtNmCxyZDAeerXWDdhJzwVbzfIKJTSKHbOFqXk0pLc4</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw6kw=</SSMA_TimeStamp>
+<KundeID>936</KundeID>
+<Kundenavn>Bøkesenteret middag</Kundenavn>
+<Adresse>Badeparken 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3256</PostNR>
+<Sted>LARVIK</Sted>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-12-19T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1RUm1aEdL3Sj30paxGA9I7GYotlHmAaUEdZOxfNlEkpE</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw5lo=</SSMA_TimeStamp>
+<KundeID>937</KundeID>
+<Kundenavn>Futejordet Eldresenter middag</Kundenavn>
+<Adresse>Futestien</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3282</PostNR>
+<Sted>KVELDE</Sted>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2017-12-19T00:00:00</InnDato>
+<Avsluttet>1</Avsluttet>
+<SSMA_TimeStamp>AAAAAABus/s=</SSMA_TimeStamp>
+<KundeID>939</KundeID>
+<Kundenavn>TW Hovedkjøkkenet produksjon</Kundenavn>
+<Merknad>Totaler for TW produksjon hjemmeboende&#x0D;
+    15 p til spiser ikke fisk</Merknad>
+<Postboks>0</Postboks>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<SjåførPåRute>1</SjåførPåRute>
+<Diett>0</Diett>
+<InnDato>2017-12-21T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1iaa4xXGkDaYtk5W2vCEsLfMUJGe-yLtaHw1-BeZYvdo</EksportKatalog>
+<SSMA_TimeStamp>AAAAAAB0iCE=</SSMA_TimeStamp>
+<KundeID>949</KundeID>
+<Kundenavn>TW Kvelde dagsenter middag</Kundenavn>
+<Adresse>Futestien 1</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3282</PostNR>
+<Sted>Kvlde</Sted>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>4</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2018-01-02T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABee8g=</SSMA_TimeStamp>
+<KundeID>952</KundeID>
+<Kundenavn>Furuheim Sykehjem avd Embla</Kundenavn>
+<BestillerNr>75020</BestillerNr>
+<Adresse>Gamle Kongevei 27</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3257</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>21</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>Tove.Hansen@larvik.kommune.no#mailto:Tove.Hansen@larvik.kommune.no#</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2018-01-05T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAAB1nbM=</SSMA_TimeStamp>
+<KundeID>975</KundeID>
+<Kundenavn>Dagsenter Alle</Kundenavn>
+<Postboks>0</Postboks>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2018-01-24T00:00:00</InnDato>
+<Avsluttet>1</Avsluttet>
+<SSMA_TimeStamp>AAAAAABus/w=</SSMA_TimeStamp>
+<KundeID>1011</KundeID>
+<Kundenavn>TW Grevle dagsenter Middag</Kundenavn>
+<Adresse>Rakkeveien 27</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3294</PostNR>
+<Sted>STAVERN</Sted>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>4</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2018-03-01T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABee80=</SSMA_TimeStamp>
+<KundeID>1024</KundeID>
+<Kundenavn>TW Frøytunet dagsenter middag</Kundenavn>
+<Postboks>0</Postboks>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>4</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2018-03-16T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABee84=</SSMA_TimeStamp>
+<KundeID>1025</KundeID>
+<Kundenavn>Trim og Trivsel Helgeroa</Kundenavn>
+<BestillerNr>70006</BestillerNr>
+<Postboks>0</Postboks>
+<VelgSone>3</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2018-03-16T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABee88=</SSMA_TimeStamp>
+<KundeID>1161</KundeID>
+<Kundenavn>Dler Jaf</Kundenavn>
+<BestillerNr>90091</BestillerNr>
+<Adresse>Feyersgate 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3257</PostNR>
+<Sted>LARVIK</Sted>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>4</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2018-09-05T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAAAMIOE=</SSMA_TimeStamp>
+<Mobilnummer>46917400</Mobilnummer>
+<Formkost>0</Formkost>
+<KundeID>3331</KundeID>
+<Kundenavn>Frigg avlastning</Kundenavn>
+<Telefonnummer>98 23 10 77</Telefonnummer>
+<BestillerNr>75053</BestillerNr>
+<Merknad>Skal ha 5 grovbrød pr uke</Merknad>
+<Adresse>Kråkefjellveien 18</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3256</PostNR>
+<Sted>LARVIK</Sted>
+<Leveringsdag>1</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>7</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2019-07-04T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABxkmA=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>4432</KundeID>
+<Kundenavn>Kråkefjell Avlastning</Kundenavn>
+<BestillerNr>75004</BestillerNr>
+<Merknad>Skal ha 4 grovbrød pr uke</Merknad>
+<Adresse>Kråkefjellveien 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3256</PostNR>
+<Sted>Larvik</Sted>
+<Leveringsdag>1</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>7</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>2</AnsattID>
+<Diett>0</Diett>
+<InnDato>2020-01-30T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAAB/2n4=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>4499</KundeID>
+<Kundenavn>Tjølling Sykehjem Felles</Kundenavn>
+<BestillerNr>71018</BestillerNr>
+<Merknad>Fellesbestilling lunsj og alternativ meny</Merknad>
+<Adresse>Håkestadveien 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3280</PostNR>
+<Sted>TJODALYNG</Sted>
+<VelgSone>23</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2020-06-29T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABJxs8=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<E-post2>nathalie.gronning.thon@larvik.kommune.no#mailto:nathalie.gronning.thon@larvik.kommune.no#</E-post2>
+<KundeID>4524</KundeID>
+<Kundenavn>Kveldssol Tjølling</Kundenavn>
+<BestillerNr>70006</BestillerNr>
+<Merknad>Dagsenter</Merknad>
+<Adresse>Tjøllingvollen</Adresse>
+<Postboks>0</Postboks>
+<VelgSone>3</VelgSone>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2020-08-21T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABr8NU=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>4551</KundeID>
+<Kundenavn>Furuheim Sykehjem Dagsenter middag</Kundenavn>
+<Telefonnummer>98 23 18 94</Telefonnummer>
+<Adresse>Gamlekongevei</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3269</PostNR>
+<Sted>LARVIK</Sted>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<Diett>0</Diett>
+<InnDato>2020-10-27T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABee+c=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>4709</KundeID>
+<Kundenavn>Berggata Avlastning</Kundenavn>
+<BestillerNr>75063</BestillerNr>
+<Adresse>004.Leveres Berggata 3 1878</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3256</PostNR>
+<Sted>Larvik</Sted>
+<VelgSone>14</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>4</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<Rute>5</Rute>
+<AnsattID>2</AnsattID>
+<SjåførPåRute>4</SjåførPåRute>
+<Diett>0</Diett>
+<MenyGruppeID>2</MenyGruppeID>
+<InnDato>2021-10-26T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABee/A=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>4761</KundeID>
+<Kundenavn>Huset arbeid og aktivitet</Kundenavn>
+<Telefonnummer>97 01 76 87</Telefonnummer>
+<BestillerNr>94023</BestillerNr>
+<Postboks>0</Postboks>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>7</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<SjåførPåRute>5</SjåførPåRute>
+<Diett>0</Diett>
+<InnDato>2022-01-20T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAAA6Qmw=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>4860</KundeID>
+<Kundenavn>Lardal sykehjem</Kundenavn>
+<Telefonnummer>90 91 13 80</Telefonnummer>
+<BestillerNr>71026</BestillerNr>
+<Adresse>Rambergveien 11</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3275</PostNR>
+<Sted>Svarstad</Sted>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2022-08-05T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABErgw=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>4912</KundeID>
+<Kundenavn>Løven Avlastning</Kundenavn>
+<BestillerNr>75053</BestillerNr>
+<Merknad>10 brød annenhver fredag</Merknad>
+<Adresse>Dronning Gydasvei 7 B</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3274</PostNR>
+<Sted>Larvik</Sted>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>7</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>2</AnsattID>
+<Diett>0</Diett>
+<InnDato>2022-11-14T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABUyxE=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>4971</KundeID>
+<Kundenavn>Tjølling nærmiljøsenter</Kundenavn>
+<BestillerNr>70006</BestillerNr>
+<Adresse>Håkastadveien 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3280</PostNR>
+<Sted>Tjodalyng</Sted>
+<VelgSone>23</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<Diett>0</Diett>
+<InnDato>2023-03-24T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABQpOo=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>4985</KundeID>
+<Kundenavn>Bukta dagsenter</Kundenavn>
+<BestillerNr>70006</BestillerNr>
+<Adresse>Kronprinsgt 51</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3290</PostNR>
+<Sted>Stavern</Sted>
+<VelgSone>28</VelgSone>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>tone kjelsen@larvik.kommune.no##</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>2</AnsattID>
+<Diett>0</Diett>
+<InnDato>2023-04-26T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABefAQ=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<E-post2>siri.mehl@larvik.kommune.no#mailto:siri.mehl@larvik.kommune.no#</E-post2>
+<KundeID>4998</KundeID>
+<Kundenavn>Tårngården Dagsenter</Kundenavn>
+<BestillerNr>70006</BestillerNr>
+<Postboks>0</Postboks>
+<VelgSone>1</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>7</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<Rute>4</Rute>
+<Diett>0</Diett>
+<InnDato>2023-05-22T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAAB/ZW8=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>5010</KundeID>
+<Kundenavn>Tårngården Dagsenter Middag</Kundenavn>
+<Merknad>8 mandag 5 tirsdag 8 torsdag</Merknad>
+<Postboks>0</Postboks>
+<Leveringsdag>3</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<Diett>0</Diett>
+<InnDato>2023-06-06T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1HgDI5axa5DbntA1ZC05wETMdL4WwOAqK3GlVPjt93F8</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABw6k4=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>5122</KundeID>
+<Kundenavn>Larvik Helsehus Korttidsavdeling 2 SYD</Kundenavn>
+<Telefonnummer>98 23 10 73</Telefonnummer>
+<BestillerNr>72005</BestillerNr>
+<Merknad>syd</Merknad>
+<Adresse>Byskogveien 5</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3257</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>31</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>
+    vilma.santillan.henriksen@larvik.kommune.no#mailto:vilma.santillan.henriksen@larvik.kommune.no#</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<InnDato>2023-12-19T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAABeST8=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>5128</KundeID>
+<Kundenavn>Botiltak Byskogen MIDDAG</Kundenavn>
+<Telefonnummer>91 51 63 13</Telefonnummer>
+<Merknad>skal pakkes i 1/2 GN former 14 middag uten dessert 5 middager</Merknad>
+<Adresse>Jerpeveien 3</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3257</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>31</VelgSone>
+<Leveringsdag>5</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<Diett>0</Diett>
+<InnDato>2024-01-08T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<EksportKatalog>1417B59SHyKTCZfjzRZY5QB4NePBRhQnsHCYdB_oUWow</EksportKatalog>
+<SSMA_TimeStamp>AAAAAABxOGE=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>5177</KundeID>
+<Kundenavn>Byskogen Løkka middag</Kundenavn>
+<Merknad>22 pers</Merknad>
+<Adresse>Byskogveien 5</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3257</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>31</VelgSone>
+<Leveringsdag>5</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>1</Avsluttet>
+<SSMA_TimeStamp>AAAAAAButBA=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>5178</KundeID>
+<Kundenavn>Byskogen 2 ETAGE Middag</Kundenavn>
+<Merknad>26 personer</Merknad>
+<Adresse>Byskogveien 5</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3257</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>31</VelgSone>
+<Leveringsdag>5</Leveringsdag>
+<KundeInaktiv>1</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<Avsluttet>1</Avsluttet>
+<SSMA_TimeStamp>AAAAAABvGWk=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>5179</KundeID>
+<Kundenavn>Byskogen 3 ETAGE Middag</Kundenavn>
+<Merknad>20 personer</Merknad>
+<Adresse>Byskogveien 5</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3257</PostNR>
+<Sted>LARVIK</Sted>
+<VelgSone>31</VelgSone>
+<Leveringsdag>5</Leveringsdag>
+<KundeInaktiv>1</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>12</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<Diett>0</Diett>
+<Avsluttet>1</Avsluttet>
+<SSMA_TimeStamp>AAAAAABvGWo=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>5238</KundeID>
+<Kundenavn>Furuheim mottakkjøkken TEST</Kundenavn>
+<Merknad>Bestille dessert til hele huset</Merknad>
+<Adresse>Gamle Kongevei 27</Adresse>
+<Postboks>0</Postboks>
+<VelgSone>21</VelgSone>
+<Leveringsdag>5</Leveringsdag>
+<KundeInaktiv>1</KundeInaktiv>
+<KundeNrAgresso>0</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<AnsattID>1</AnsattID>
+<Diett>0</Diett>
+<UtDato>2025-01-16T00:00:00</UtDato>
+<InnDato>2024-10-03T00:00:00</InnDato>
+<Avsluttet>1</Avsluttet>
+<SSMA_TimeStamp>AAAAAABx+7k=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>5245</KundeID>
+<Kundenavn>Tjølling Kjøkken TEST</Kundenavn>
+<BestillerNr>71018</BestillerNr>
+<Merknad>Bestller dessert for hele huset</Merknad>
+<Adresse>Håkestadveien 7</Adresse>
+<Postboks>0</Postboks>
+<VelgSone>23</VelgSone>
+<Leveringsdag>5</Leveringsdag>
+<KundeInaktiv>1</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<Diett>0</Diett>
+<UtDato>2025-01-16T00:00:00</UtDato>
+<InnDato>2024-10-23T00:00:00</InnDato>
+<Avsluttet>1</Avsluttet>
+<SSMA_TimeStamp>AAAAAABx+7o=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>5317</KundeID>
+<Kundenavn>Presteløkka avdeling C</Kundenavn>
+<BestillerNr>86003</BestillerNr>
+<Adresse>Kysthospitalveien 30</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3290</PostNR>
+<Sted>STAVERN</Sted>
+<VelgSone>27</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<E-post>ann.kristin.amundsen@larvik.kommune.no##</E-post>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<Diett>0</Diett>
+<InnDato>2025-03-06T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAAB0r20=</SSMA_TimeStamp>
+<Formkost>0</Formkost>
+<KundeID>5349</KundeID>
+<Kundenavn>Tjølling sykhejm avd Forsterket</Kundenavn>
+<BestillerNr>71018</BestillerNr>
+<Merknad>28 middager</Merknad>
+<Adresse>Håkestadveien 7</Adresse>
+<Postboks>0</Postboks>
+<PostNR>3280</PostNR>
+<Sted>TJODALYNG</Sted>
+<VelgSone>23</VelgSone>
+<Leveringsdag>4</Leveringsdag>
+<KundeInaktiv>0</KundeInaktiv>
+<KundeNrAgresso>159842</KundeNrAgresso>
+<KundeGruppe>6</KundeGruppe>
+<BestillerSelv>0</BestillerSelv>
+<Diett>0</Diett>
+<InnDato>2025-05-20T00:00:00</InnDato>
+<Avsluttet>0</Avsluttet>
+<SSMA_TimeStamp>AAAAAAB9rNY=</SSMA_TimeStamp>
+<Formkost>0</Formkost>';
+<!---->
