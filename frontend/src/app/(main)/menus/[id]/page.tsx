@@ -107,7 +107,7 @@ export default function MenuDetailPage() {
   const fetchMenuProducts = async () => {
     if (!menuId) return
     try {
-      const response = await api.get(`/menyprodukt/details?meny_id=${menuId}`)
+      const response = await api.get(`/v1/meny-produkt/details?meny_id=${menuId}`)
       setMenuProducts(response.data)
     } catch (error) {
       console.error("Failed to fetch menu products:", error)
@@ -126,7 +126,7 @@ export default function MenuDetailPage() {
   const handleAddProduct = async (produktId: number) => {
     if (!menuId) return
     try {
-      await api.post("/menyprodukt/", {
+      await api.post("/v1/meny-produkt/", {
         menyid: menuId,
         produktid: produktId,
       })
@@ -149,7 +149,7 @@ export default function MenuDetailPage() {
   const handleRemoveProduct = async (produktId: number) => {
     if (!menuId) return
     try {
-      await api.delete(`/menyprodukt/?meny_id=${menuId}&produkt_id=${produktId}`)
+      await api.delete(`/v1/meny-produkt/?meny_id=${menuId}&produkt_id=${produktId}`)
       toast({
         title: "Success",
         description: "Product removed from menu",
