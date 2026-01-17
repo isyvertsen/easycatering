@@ -74,7 +74,7 @@ async def get_etiketter(
     Returns customers with their orders and products for printing delivery labels.
     Only includes:
     - Active customers (not avsluttet, not kundeinaktiv)
-    - Orders with status 5 (confirmed/ready)
+    - Orders with status 35 (ready for label printing)
     - Non-cancelled orders
     """
     # Build the query using raw SQL for flexibility with tblsone
@@ -109,7 +109,7 @@ async def get_etiketter(
         WHERE o.leveringsdato BETWEEN :fra_dato AND :til_dato
             AND (k.avsluttet = false OR k.avsluttet IS NULL)
             AND (k.kundeinaktiv = false OR k.kundeinaktiv IS NULL)
-            AND o.ordrestatusid = 5
+            AND o.ordrestatusid = 35
             AND o.kansellertdato IS NULL
             AND (:sone_id IS NULL OR k.velgsone = :sone_id)
             AND (:rute IS NULL OR k.rute = :rute)
