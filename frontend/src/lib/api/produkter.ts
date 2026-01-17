@@ -16,6 +16,12 @@ export interface Produkt {
   bestillingsgrense: number | null
   bestillingsmengde: number | null
   ean_kode: string | null
+
+  // Multi-level GTINs
+  gtin_fpak: string | null
+  gtin_dpak: string | null
+  gtin_pall: string | null
+
   utgatt: boolean | null
   oppdatert: string | null
   webshop: boolean | null
@@ -128,6 +134,12 @@ export type ProduktCreateData = {
   bestillingsgrense?: number | null
   bestillingsmengde?: number | null
   ean_kode?: string | null
+
+  // Multi-level GTINs
+  gtin_fpak?: string | null
+  gtin_dpak?: string | null
+  gtin_pall?: string | null
+
   utgatt?: boolean | null
   webshop?: boolean | null
   mvaverdi?: number | null
