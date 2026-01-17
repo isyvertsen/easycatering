@@ -56,6 +56,7 @@ class Bruker(BrukerBase):
     """Schema for user responses."""
     id: int
     is_superuser: bool = False
+    google_id: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

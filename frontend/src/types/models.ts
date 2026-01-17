@@ -271,6 +271,7 @@ export interface Bruker {
   rolle: string
   is_active: boolean
   is_superuser: boolean
+  google_id?: string | null
   created_at?: string
   updated_at?: string
   ansatt?: AnsattInfo

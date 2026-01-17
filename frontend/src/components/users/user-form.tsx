@@ -183,28 +183,38 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{bruker ? "Nytt passord (valgfritt)" : "Passord"}</FormLabel>
-                <FormControl>
-                  <Input
-                    type="password"
-                    {...field}
-                    placeholder={bruker ? "La stå tom for å beholde" : "Minst 8 tegn"}
-                  />
-                </FormControl>
-                <FormDescription>
-                  {bruker
-                    ? "Fyll inn kun hvis du vil endre passordet"
-                    : "Passord må være minst 8 tegn"}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Hide password field for OAuth users (users with google_id) */}
+          {!bruker?.google_id && (
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{bruker ? "Nytt passord (valgfritt)" : "Passord"}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      {...field}
+                      placeholder={bruker ? "La stå tom for å beholde" : "Minst 8 tegn"}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {bruker
+                      ? "Fyll inn kun hvis du vil endre passordet"
+                      : "Passord må være minst 8 tegn"}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+          {bruker?.google_id && (
+            <div className="rounded-lg border p-4 bg-muted/50">
+              <p className="text-sm text-muted-foreground">
+                Denne brukeren logger inn med Google-konto. Passord kan ikke endres her.
+              </p>
+            </div>
+          )}
 
           <FormField
             control={form.control}
