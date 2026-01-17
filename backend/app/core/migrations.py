@@ -453,6 +453,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(CreateSystemSettingsTable())
         migration_runner.add_migration(AddWebshopSortingIndexes())
         migration_runner.add_migration(MakeMenygruppeNullable())
+        migration_runner.add_migration(AddSequenceToTblmeny())
     return migration_runner
 
 
@@ -1229,6 +1230,39 @@ class MakeMenygruppeNullable(Migration):
             await conn.execute(text("""
                 ALTER TABLE tblmeny
                 ALTER COLUMN menygruppe DROP NOT NULL
+            """))
+
+
+class AddSequenceToTblmeny(Migration):
+    """Add sequence for menyid in tblmeny."""
+
+    def __init__(self):
+        super().__init__(
+            version="20260117_002_meny_sequence",
+            description="Add auto-increment sequence to tblmeny.menyid"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # Create sequence starting from max id + 1
+            await conn.execute(text("""
+                DO $$
+                DECLARE
+                    max_id INTEGER;
+                BEGIN
+                    SELECT COALESCE(MAX(menyid), 0) + 1 INTO max_id FROM tblmeny;
+
+                    -- Create sequence if not exists
+                    IF NOT EXISTS (SELECT 1 FROM pg_sequences WHERE schemaname = 'public' AND sequencename = 'tblmeny_menyid_seq') THEN
+                        EXECUTE format('CREATE SEQUENCE tblmeny_menyid_seq START WITH %s', max_id);
+                    END IF;
+                END $$
+            """))
+
+            # Set column default to use sequence
+            await conn.execute(text("""
+                ALTER TABLE tblmeny
+                ALTER COLUMN menyid SET DEFAULT nextval('tblmeny_menyid_seq')
             """))
 
 
