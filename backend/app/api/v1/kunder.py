@@ -19,6 +19,8 @@ async def get_kunder(
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
+    page: Optional[int] = Query(None, ge=1, description="Page number (alternative to skip)"),
+    page_size: Optional[int] = Query(None, ge=1, le=1000, description="Page size (alternative to limit)"),
     aktiv: Optional[bool] = Query(True, description="Filter by active status"),
     search: Optional[str] = Query(None, max_length=200, description="Search in customer name (standard parameter)"),
     sok: Optional[str] = Query(None, description="Search in customer name (deprecated, use 'search')"),
@@ -28,6 +30,12 @@ async def get_kunder(
 ) -> PaginatedResponse[Kunder]:
     """Get all customers with pagination info."""
     from app.models.kunde_gruppe import Kundegruppe as KundegruppeModel
+
+    # Support page/page_size as alternatives to skip/limit
+    if page_size is not None:
+        limit = page_size
+    if page is not None:
+        skip = (page - 1) * limit
 
     # Support both 'search' and 'sok' for backward compatibility
     search_term_input = search or sok
@@ -86,13 +94,13 @@ async def get_kunder(
     items = result.scalars().all()
 
     # Calculate pagination info
-    page = (skip // limit) + 1
+    current_page = (skip // limit) + 1
     total_pages = (total + limit - 1) // limit if total > 0 else 0
 
     return PaginatedResponse[Kunder](
         items=items,
         total=total,
-        page=page,
+        page=current_page,
         page_size=limit,
         total_pages=total_pages
     )

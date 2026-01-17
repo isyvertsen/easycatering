@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -276,6 +276,31 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
             name="kundeids"
             render={({ field }) => {
               const selectedIds = field.value || []
+              const [kundeSearch, setKundeSearch] = useState("")
+
+              // Filter and sort: selected first, then by search, then alphabetically
+              const displayedCustomers = useMemo(() => {
+                let filtered = sortedCustomers
+
+                // Apply search filter
+                if (kundeSearch.trim()) {
+                  const searchLower = kundeSearch.toLowerCase()
+                  filtered = filtered.filter(kunde =>
+                    kunde.kundenavn?.toLowerCase().includes(searchLower) ||
+                    kunde.avdeling?.toLowerCase().includes(searchLower)
+                  )
+                }
+
+                // Sort: selected first, then alphabetically
+                return [...filtered].sort((a, b) => {
+                  const aSelected = selectedIds.includes(a.kundeid)
+                  const bSelected = selectedIds.includes(b.kundeid)
+                  if (aSelected && !bSelected) return -1
+                  if (!aSelected && bSelected) return 1
+                  return (a.kundenavn || '').localeCompare(b.kundenavn || '', 'no')
+                })
+              }, [sortedCustomers, selectedIds, kundeSearch])
+
               return (
                 <FormItem className="md:col-span-2">
                   <FormLabel>Tilknyttede kunder</FormLabel>
@@ -283,33 +308,49 @@ export function UserForm({ bruker, onSubmit, onCancel, loading }: UserFormProps)
                     Velg hvilke kunder denne brukeren kan bestille på vegne av (for webshop-brukere)
                   </FormDescription>
                   <FormControl>
-                    <div className="max-h-48 overflow-y-auto rounded-md border border-input p-3 space-y-2">
-                      {sortedCustomers.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Ingen aktive kunder funnet</p>
-                      ) : (
-                        sortedCustomers.map((kunde) => (
-                          <div key={kunde.kundeid} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`kunde-${kunde.kundeid}`}
-                              checked={selectedIds.includes(kunde.kundeid)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  field.onChange([...selectedIds, kunde.kundeid])
-                                } else {
-                                  field.onChange(selectedIds.filter(id => id !== kunde.kundeid))
-                                }
-                              }}
-                            />
-                            <label
-                              htmlFor={`kunde-${kunde.kundeid}`}
-                              className="text-sm cursor-pointer flex-1"
-                            >
-                              {kunde.kundenavn}
-                              {kunde.avdeling && ` - ${kunde.avdeling}`}
-                            </label>
-                          </div>
-                        ))
-                      )}
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Søk etter kunde..."
+                        value={kundeSearch}
+                        onChange={(e) => setKundeSearch(e.target.value)}
+                        className="mb-2"
+                      />
+                      <div className="max-h-64 overflow-y-auto rounded-md border border-input p-3 space-y-2">
+                        {displayedCustomers.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">
+                            {kundeSearch ? "Ingen kunder matcher søket" : "Ingen aktive kunder funnet"}
+                          </p>
+                        ) : (
+                          displayedCustomers.map((kunde) => {
+                            const isSelected = selectedIds.includes(kunde.kundeid)
+                            return (
+                              <div
+                                key={kunde.kundeid}
+                                className={`flex items-center space-x-2 p-1 rounded ${isSelected ? 'bg-primary/10' : ''}`}
+                              >
+                                <Checkbox
+                                  id={`kunde-${kunde.kundeid}`}
+                                  checked={isSelected}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      field.onChange([...selectedIds, kunde.kundeid])
+                                    } else {
+                                      field.onChange(selectedIds.filter(id => id !== kunde.kundeid))
+                                    }
+                                  }}
+                                />
+                                <label
+                                  htmlFor={`kunde-${kunde.kundeid}`}
+                                  className="text-sm cursor-pointer flex-1"
+                                >
+                                  {kunde.kundenavn}
+                                  {kunde.avdeling && ` - ${kunde.avdeling}`}
+                                </label>
+                              </div>
+                            )
+                          })
+                        )}
+                      </div>
                     </div>
                   </FormControl>
                   {selectedIds.length > 0 && (
