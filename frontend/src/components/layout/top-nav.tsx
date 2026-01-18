@@ -130,6 +130,7 @@ const navigationGroups: NavGroup[] = [
     items: [
       { name: "Ansatte", href: "/employees", icon: UserCheck },
       { name: "Brukere", href: "/admin/users", icon: UserCheck },
+      { name: "Arbeidsflyter", href: "/settings/workflows", icon: Activity },
       { name: "Rapporter", href: "/reports", icon: BarChart3 },
       { name: "Dokumentasjon", href: "/admin/documentation", icon: BookOpen },
       { name: "Systemstatus", href: "/admin/system", icon: Activity },

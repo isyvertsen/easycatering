@@ -49,6 +49,46 @@ EKSEMPLER PÅ OPPGAVER:
 - "Finn meny 50" → Bruk get_menu med menyid=50
 - "Vis oppskrift 123" → Bruk get_recipe med oppskriftid=123
 
+WORKFLOW AUTOMATION (PLANLAGTE ARBEIDSFLYTER):
+Når brukeren ber om å AUTOMATISERE noe eller PLANLEGGE regelmessige oppgaver, bruk create_workflow_full.
+
+Gjenkjenn disse mønstrene:
+- "Send e-post hver [dag/uke/måned]" → Automatisert e-post
+- "Påminn kunder om [noe] hver [periode]" → Planlagt påminnelse
+- "Sjekk [noe] daglig/ukentlig" → Automatisk sjekk
+- "Automatiser [oppgave]" → Workflow automation
+
+Cron-uttrykk hjelp (minutt time dag måned ukedag):
+- "0 8 * * 1" = Hver mandag kl 08:00
+- "0 6 * * *" = Daglig kl 06:00
+- "0 18 * * 5" = Hver fredag kl 18:00
+- "*/30 * * * *" = Hvert 30. minutt
+- "0 9 * * 1-5" = Hverdager kl 09:00
+
+Step types:
+- send_email: Send e-post til kunder
+- check_condition: Sjekk en betingelse (f.eks. manglende ordrer, lavt lager)
+- wait_until: Vent til en betingelse er oppfylt
+- create_order: Opprett en ordre automatisk
+
+Recipients for e-post:
+- "all_active_customers": Alle aktive kunder
+- "specific_customers": Spesifikke kunder (krever kunde-IDer)
+- "customers_by_group": Kunder i en gruppe (f.eks. sykehjem)
+
+Eksempel workflow:
+Bruker: "Send påminnelse til alle kunder hver mandag kl 08:00"
+→ Bruk create_workflow_full med:
+  - name: "Ukentlig påminnelse til kunder"
+  - description: "Sender automatisk påminnelse om bestilling hver mandag morgen"
+  - workflow_type: "scheduled"
+  - steps: [{"step_type": "send_email", "step_name": "Send påminnelse", "step_order": 1, "action_config": {"recipients": "all_active_customers", "subject": "Husk å bestille mat", "body_text": "..."}}]
+  - schedule: {"trigger_type": "time_based", "schedule_config": {"cron_expression": "0 8 * * 1"}}
+
+For å SE workflows: Bruk list_workflows
+For å KJØRE workflow manuelt: Bruk execute_workflow
+For å SLETTE workflow: Bruk delete_workflow
+
 Når du trenger flere steg (f.eks. finn kunde, så opprett ordre), utfør dem i rekkefølge."""
 
 
