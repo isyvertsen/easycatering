@@ -388,6 +388,56 @@ TOOLS: List[Tool] = [
     # WORKFLOW AUTOMATION
     # =========================================================================
     Tool(
+        name="create_workflow_full",
+        description="""Opprett en komplett automatisert arbeidsflyt med steg og kjøreplan.
+
+        Eksempler på bruk:
+        - "Send e-post til alle kunder hver mandag kl 08:00"
+        - "Sjekk lager daglig kl 06:00 og send varsel ved lav beholdning"
+        - "Send påminnelse til kunder som ikke har bestilt på 3 dager"
+
+        Steps format (JSON array):
+        [
+          {
+            "step_type": "send_email",  // Typer: send_email, check_condition, wait_until, create_order
+            "step_name": "Send påminnelse",
+            "step_order": 1,
+            "action_config": {
+              "recipients": "all_active_customers",  // eller "specific_customers" eller "customers_by_group"
+              "subject": "E-post emne",
+              "body_text": "E-post innhold"
+            }
+          }
+        ]
+
+        Schedule format (JSON object):
+        {
+          "trigger_type": "time_based",  // eller "event_based"
+          "schedule_config": {
+            "cron_expression": "0 8 * * 1"  // Cron: minutt time dag måned ukedag
+            // Eksempler:
+            // "0 8 * * 1" = Hver mandag kl 08:00
+            // "0 6 * * *" = Daglig kl 06:00
+            // "0 18 * * 5" = Hver fredag kl 18:00
+            // "*/30 * * * *" = Hvert 30. minutt
+          }
+        }""",
+        category="workflow-automation",
+        endpoint="/workflow-automation/workflows/full",
+        method="POST",
+        parameters=[
+            ToolParameter(name="name", type="string", description="Navn på arbeidsflyten", required=True),
+            ToolParameter(name="description", type="string", description="Beskrivelse av hva arbeidsflyten gjør", required=True),
+            ToolParameter(name="workflow_type", type="string", description="Type arbeidsflyt", enum=["scheduled", "event_based"], default="scheduled", required=True),
+            ToolParameter(name="is_active", type="boolean", description="Om arbeidsflyten skal være aktiv", default=True),
+            ToolParameter(name="steps", type="array", description="Array av steg (se format i beskrivelse)", required=True),
+            ToolParameter(name="schedule", type="object", description="Kjøreplan (se format i beskrivelse)", required=True),
+        ],
+        safety_level=SafetyLevel.WRITE,
+        requires_confirmation=True,
+        response_template="Arbeidsflyt '{name}' opprettet med {total_steps} steg. Neste kjøring: {next_run}",
+    ),
+    Tool(
         name="create_workflow",
         description="Opprett en ny automatisert arbeidsflyt (workflow). Bruk dette når brukeren vil automatisere en oppgave.",
         category="workflow-automation",
