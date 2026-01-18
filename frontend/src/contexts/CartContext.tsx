@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { CartItem } from '@/lib/api/webshop'
 import { webshopApi, DraftOrder } from '@/lib/api/webshop'
 import { useSession } from 'next-auth/react'
+import { WebshopCustomerContext } from './WebshopCustomerContext'
 
 interface CartContextType {
   items: CartItem[]
@@ -69,6 +70,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const { data: session, status: sessionStatus } = useSession()
   const isLoggedIn = sessionStatus === 'authenticated'
+
+  // Check if WebshopCustomerProvider is available (optional dependency)
+  const webshopContext = useContext(WebshopCustomerContext)
+  const hasWebshopAccess = webshopContext?.hasAccess ?? false
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingSaveRef = useRef(false)
@@ -137,7 +142,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Sync with backend (debounced)
   const syncToBackend = useCallback(async (cartItems: CartItem[]) => {
-    if (!isLoggedIn || cartItems.length === 0) {
+    // Only sync if user is logged in, has webshop access, and has items
+    if (!isLoggedIn || !hasWebshopAccess || cartItems.length === 0) {
       setIsSynced(true)
       return
     }
@@ -161,7 +167,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setIsSaving(false)
       pendingSaveRef.current = false
     }
-  }, [isLoggedIn, kundeid])
+  }, [isLoggedIn, hasWebshopAccess, kundeid])
 
   // Debounced save
   const debouncedSave = useCallback((cartItems: CartItem[]) => {
@@ -179,7 +185,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Load draft order from backend
   const loadDraftOrder = useCallback(async () => {
-    if (!isLoggedIn) return
+    // Only load draft order if user is logged in AND has webshop access
+    if (!isLoggedIn || !hasWebshopAccess) return
 
     try {
       const draft = await webshopApi.getDraftOrder(kundeid ?? undefined)
@@ -202,7 +209,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to load draft order', error)
     }
-  }, [isLoggedIn, kundeid])
+  }, [isLoggedIn, hasWebshopAccess, kundeid])
 
   // Load draft order when user logs in
   useEffect(() => {

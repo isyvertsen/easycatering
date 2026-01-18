@@ -20,6 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const recipeSchema = z.object({
   kalkylenavn: z.string().min(1, "Navn er påkrevd"),
+  kalkylekode: z.coerce.number().optional().nullable(),
+  refporsjon: z.string().optional().nullable(),
   antallporsjoner: z.coerce.number().optional().nullable(),
   enhet: z.string().optional().nullable(),
   brukestil: z.string().optional().nullable(),
@@ -42,19 +44,23 @@ export function RecipeForm({ recipe, onSubmit, isLoading }: RecipeFormProps) {
     resolver: zodResolver(recipeSchema),
     defaultValues: {
       kalkylenavn: recipe?.kalkylenavn || "",
+      kalkylekode: recipe?.kalkylekode || null,
+      refporsjon: recipe?.refporsjon?.trim() || "",
       antallporsjoner: recipe?.antallporsjoner || null,
-      enhet: recipe?.enhet || null,
-      brukestil: recipe?.brukestil || "",
+      enhet: recipe?.enhet?.trim() || null,
+      brukestil: recipe?.brukestil?.trim() || "",
       informasjon: recipe?.informasjon || "",
       merknad: recipe?.merknad || "",
-      produksjonsmetode: recipe?.produksjonsmetode || "",
+      produksjonsmetode: recipe?.produksjonsmetode?.trim() || "",
       gruppeid: recipe?.gruppeid || null,
     },
   })
 
   const handleSubmit = async (data: RecipeFormData) => {
     try {
-      await onSubmit(data)
+      // Remove kalkylekode from submission data (it's a read-only field)
+      const { kalkylekode, ...submitData } = data
+      await onSubmit(submitData)
     } catch (error) {
       console.error("Failed to submit recipe:", error)
     }
@@ -80,7 +86,29 @@ export function RecipeForm({ recipe, onSubmit, isLoading }: RecipeFormProps) {
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="kalkylekode"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Kalkylekode</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  disabled
+                  className="bg-muted"
+                />
+              </FormControl>
+              <FormDescription>
+                Autogenerert ID for oppskriften
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-3 gap-4">
           <FormField
             control={form.control}
             name="antallporsjoner"
@@ -88,11 +116,11 @@ export function RecipeForm({ recipe, onSubmit, isLoading }: RecipeFormProps) {
               <FormItem>
                 <FormLabel>Antall porsjoner</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    min="1" 
-                    {...field} 
-                    value={field.value || ''} 
+                  <Input
+                    type="number"
+                    min="1"
+                    {...field}
+                    value={field.value || ''}
                   />
                 </FormControl>
                 <FormDescription>
@@ -109,8 +137,8 @@ export function RecipeForm({ recipe, onSubmit, isLoading }: RecipeFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Enhet</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
+                <Select
+                  onValueChange={field.onChange}
                   value={field.value || undefined}
                 >
                   <FormControl>
@@ -125,6 +153,24 @@ export function RecipeForm({ recipe, onSubmit, isLoading }: RecipeFormProps) {
                     <SelectItem value="Stk">Stk</SelectItem>
                   </SelectContent>
                 </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="refporsjon"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Refporsjon</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="F.eks. 1 person"
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -174,9 +220,9 @@ export function RecipeForm({ recipe, onSubmit, isLoading }: RecipeFormProps) {
             <FormItem>
               <FormLabel>Fremgangsmåte</FormLabel>
               <FormControl>
-                <Textarea 
+                <Textarea
                   placeholder="Detaljert fremgangsmåte for oppskriften..."
-                  className="resize-none min-h-[150px]"
+                  className="resize-y min-h-[200px]"
                   {...field}
                   value={field.value || ''}
                 />
@@ -196,9 +242,9 @@ export function RecipeForm({ recipe, onSubmit, isLoading }: RecipeFormProps) {
             <FormItem>
               <FormLabel>Merknader</FormLabel>
               <FormControl>
-                <Textarea 
+                <Textarea
                   placeholder="Spesielle merknader, allergener, etc..."
-                  className="resize-none"
+                  className="resize-y min-h-[120px]"
                   {...field}
                   value={field.value || ''}
                 />
