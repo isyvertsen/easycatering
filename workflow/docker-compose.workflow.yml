@@ -1,0 +1,115 @@
+# Docker Compose for Workflow Automation Service
+#
+# This can be included in the main docker-compose.yml or run standalone
+#
+# Usage:
+#   docker-compose -f docker-compose.workflow.yml up -d
+
+version: '3.8'
+
+services:
+  workflow-worker:
+    build:
+      context: ..
+      dockerfile: workflow/Dockerfile
+    container_name: lkc-workflow-worker
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=4 --queues=workflows,emails,default --hostname=worker@%h
+    env_file:
+      - ../.env
+    environment:
+      - PYTHONPATH=/app/backend:/app/workflow
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - lkc-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "celery", "-A", "app.celery_app", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  workflow-beat:
+    build:
+      context: ..
+      dockerfile: workflow/Dockerfile
+    container_name: lkc-workflow-beat
+    command: celery -A app.celery_app beat --loglevel=info
+    env_file:
+      - ../.env
+    environment:
+      - PYTHONPATH=/app/backend:/app/workflow
+    depends_on:
+      - redis
+      - postgres
+      - workflow-worker
+    networks:
+      - lkc-network
+    restart: unless-stopped
+
+  workflow-flower:
+    build:
+      context: ..
+      dockerfile: workflow/Dockerfile
+    container_name: lkc-workflow-flower
+    command: celery -A app.celery_app flower --port=5555 --basic_auth=admin:admin
+    env_file:
+      - ../.env
+    environment:
+      - PYTHONPATH=/app/backend:/app/workflow
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - workflow-worker
+    networks:
+      - lkc-network
+    restart: unless-stopped
+
+  # Redis service (if not already defined in main docker-compose)
+  redis:
+    image: redis:7-alpine
+    container_name: lkc-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - lkc-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgreSQL (if not already defined in main docker-compose)
+  postgres:
+    image: postgres:15-alpine
+    container_name: lkc-postgres
+    environment:
+      POSTGRES_DB: catering
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lkc-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  lkc-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  postgres_data:

@@ -4,7 +4,8 @@ import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Dict, Any
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 
@@ -14,7 +15,8 @@ logger = logging.getLogger(__name__)
 class EmailService:
     """Service for sending emails via SMTP."""
 
-    def __init__(self):
+    def __init__(self, db: Optional[AsyncSession] = None):
+        self.db = db
         self.host = settings.SMTP_HOST
         self.port = settings.SMTP_PORT
         self.user = settings.SMTP_USER
@@ -224,6 +226,163 @@ Vikingveien 4, 3274 Larvik
 """
 
         return self.send_email(to_email, subject, html_content, text_content)
+
+    async def send_bulk_emails(
+        self,
+        recipients: List[Dict[str, Any]],
+        template_name: Optional[str] = None,
+        subject: Optional[str] = None,
+        body_html: Optional[str] = None,
+        body_text: Optional[str] = None,
+    ) -> int:
+        """Send emails to multiple recipients for workflow automation.
+
+        Args:
+            recipients: List of dicts with 'email', 'name', and optional template variables
+            template_name: Name of email template to use (if any)
+            subject: Email subject (used if no template)
+            body_html: HTML email body (used if no template)
+            body_text: Plain text email body (used if no template)
+
+        Returns:
+            Number of emails successfully sent
+        """
+        if not recipients:
+            return 0
+
+        sent_count = 0
+        failed_count = 0
+
+        # Get template if specified
+        if template_name:
+            template = self._get_template(template_name)
+            if template:
+                subject = template.get("subject", subject)
+                body_html = template.get("body_html", body_html)
+                body_text = template.get("body_text", body_text)
+
+        # Send to each recipient
+        for recipient in recipients:
+            try:
+                # Replace variables in subject and body
+                recipient_subject = self._replace_variables(subject or "No Subject", recipient)
+                recipient_body_html = self._replace_variables(
+                    body_html or "",
+                    recipient
+                ) if body_html else None
+                recipient_body_text = self._replace_variables(
+                    body_text or "",
+                    recipient
+                ) if body_text else None
+
+                # Send email
+                success = self.send_email(
+                    to_email=recipient["email"],
+                    subject=recipient_subject,
+                    html_content=recipient_body_html or "",
+                    text_content=recipient_body_text,
+                )
+
+                if success:
+                    sent_count += 1
+                else:
+                    failed_count += 1
+
+            except Exception as e:
+                failed_count += 1
+                logger.error(
+                    f"Failed to send email to {recipient.get('email', 'unknown')}: {str(e)}"
+                )
+
+        logger.info(
+            f"Bulk email completed: {sent_count} sent, {failed_count} failed out of {len(recipients)} total"
+        )
+
+        return sent_count
+
+    def _replace_variables(self, text: str, variables: Dict[str, Any]) -> str:
+        """Replace {{variable}} placeholders in text.
+
+        Args:
+            text: Text with {{variable}} placeholders
+            variables: Dict of variable name -> value
+
+        Returns:
+            Text with variables replaced
+        """
+        if not text:
+            return text
+
+        for key, value in variables.items():
+            placeholder = f"{{{{{key}}}}}"
+            text = text.replace(placeholder, str(value))
+
+        return text
+
+    def _get_template(self, template_name: str) -> Optional[Dict[str, str]]:
+        """Get email template by name.
+
+        Args:
+            template_name: Name of template to retrieve
+
+        Returns:
+            Dict with 'subject', 'body_html', 'body_text' or None if not found
+        """
+        # Built-in templates for workflow automation
+        templates = {
+            "weekly_reminder": {
+                "subject": "Ukentlig påminnelse: Send inn din bestilling",
+                "body_html": """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1a1a1a;">God dag {{name}}</h2>
+        <p style="color: #666666; line-height: 1.5;">
+            Dette er en påminnelse om å sende inn din ukentlige bestilling.
+        </p>
+        <p style="margin: 24px 0;">
+            <a href="{{frontend_url}}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px;">
+                Gå til catering-portalen
+            </a>
+        </p>
+        <p style="color: #666666; font-size: 14px;">
+            Med vennlig hilsen,<br>
+            Larvik Kommune Catering
+        </p>
+    </div>
+</body>
+</html>
+                """,
+                "body_text": """God dag {{name}}
+
+Dette er en påminnelse om å sende inn din ukentlige bestilling.
+
+Vennligst gå til catering-portalen for å legge inn din bestilling: {{frontend_url}}
+
+Med vennlig hilsen,
+Larvik Kommune Catering""",
+            },
+        }
+
+        template = templates.get(template_name)
+
+        if template:
+            # Add frontend URL to template
+            template_copy = template.copy()
+            for key in ["body_html", "body_text"]:
+                if key in template_copy:
+                    template_copy[key] = template_copy[key].replace(
+                        "{{frontend_url}}",
+                        settings.FRONTEND_URL
+                    )
+            return template_copy
+
+        logger.warning(f"Template '{template_name}' not found")
+        return None
 
 
 # Singleton instance
