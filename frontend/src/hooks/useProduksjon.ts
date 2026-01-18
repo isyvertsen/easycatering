@@ -171,7 +171,7 @@ export function useProduksjonsList(
   options?: UseQueryOptions<ProduksjonsListResponse>
 ) {
   return useQuery<ProduksjonsListResponse>({
-    queryKey: ['produksjon-orders', 'list', params],
+    queryKey: ['produksjon-orders', 'list', 'v2', params],
     queryFn: () => produksjonApi.list(params),
     ...options
   })

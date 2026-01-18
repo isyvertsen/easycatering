@@ -68,7 +68,7 @@ export function WebshopOnlyGuard({ children }: WebshopOnlyGuardProps) {
     }
 
     checkAccess()
-  }, [session, status, router])
+  }, [status, session?.user?.rolle])
 
   if (isChecking || status === 'loading') {
     return (

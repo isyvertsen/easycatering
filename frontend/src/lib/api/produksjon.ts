@@ -48,7 +48,7 @@ export interface TemplateCreateInput {
   detaljer?: Omit<TemplateDetalj, 'template_detaljid' | 'template_id'>[]
 }
 
-export interface TemplateUpdateInput extends Partial<TemplateCreateInput> {}
+export type TemplateUpdateInput = Partial<TemplateCreateInput>
 
 export interface TemplateListParams {
   page?: number

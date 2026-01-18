@@ -42,4 +42,4 @@ class User(Base):
     ansatt = relationship("Ansatte", back_populates="bruker", lazy="joined")
 
     # Many-to-many relationship to Kunder (for webshop users with access to multiple customers)
-    kunder = relationship("Kunder", secondary=user_kunder, lazy="selectin")
+    kunder = relationship("Kunder", secondary=user_kunder, lazy="noload")

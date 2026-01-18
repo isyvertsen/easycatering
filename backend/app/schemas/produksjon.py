@@ -1,7 +1,7 @@
 """Production system schemas."""
-from typing import Optional, List
+from typing import Optional, List, Any
 from datetime import datetime, date
-from pydantic import Field
+from pydantic import Field, model_validator
 from .base import BaseSchema
 
 
@@ -100,6 +100,21 @@ class ProduksjonsDetaljer(ProduksjonsDetaljerBase):
     """Schema for production order details response."""
     produksjonskode: int
 
+    @model_validator(mode='before')
+    @classmethod
+    def populate_produktnavn(cls, data: Any) -> Any:
+        """Populate produktnavn from produkt relationship if not set."""
+        if isinstance(data, dict):
+            # If produktnavn is not set but produkt relationship exists
+            if not data.get('produktnavn') and data.get('produkt'):
+                data['produktnavn'] = data['produkt'].get('produktnavn')
+        else:
+            # Handle SQLAlchemy model objects
+            if hasattr(data, 'produktnavn') and not data.produktnavn:
+                if hasattr(data, 'produkt') and data.produkt:
+                    data.produktnavn = data.produkt.produktnavn
+        return data
+
 
 class ProduksjonsBase(BaseSchema):
     """Base schema for production order."""
@@ -128,6 +143,18 @@ class ProduksjonsUpdate(ProduksjonsBase):
     detaljer: Optional[List[ProduksjonsDetaljerCreate]] = None
 
 
+class KundeRef(BaseSchema):
+    """Reference to customer."""
+    kundeid: int
+    kundenavn: str
+
+
+class TemplateRef(BaseSchema):
+    """Reference to template."""
+    template_id: int
+    template_navn: str
+
+
 class Produksjon(ProduksjonsBase):
     """Schema for production order response."""
     produksjonkode: int
@@ -141,6 +168,9 @@ class Produksjon(ProduksjonsBase):
     overfort_dato: Optional[datetime] = None
     overfort_av: Optional[int] = None
     detaljer: Optional[List[ProduksjonsDetaljer]] = []
+    # Related data
+    kunde: Optional[KundeRef] = None
+    template: Optional[TemplateRef] = None
 
 
 # ============================================================================
