@@ -56,7 +56,7 @@ function OrderDetailPageContent() {
     try {
       await approveMutation.mutateAsync({
         produksjonskode_list: [orderId],
-        godkjent_av: session?.user?.id || 1,
+        godkjent_av: Number(session?.user?.id) || 1,
       })
       setApproveDialogOpen(false)
       refetch()
