@@ -69,193 +69,190 @@ export function RecipeForm({ recipe, onSubmit, isLoading }: RecipeFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="kalkylenavn"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Navn</FormLabel>
-              <FormControl>
-                <Input placeholder="F.eks. Fiskesuppe" {...field} />
-              </FormControl>
-              <FormDescription>
-                Gi oppskriften et beskrivende navn
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Venstre kolonne: Alle input-felter */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="kalkylenavn"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Navn</FormLabel>
+                    <FormControl>
+                      <Input placeholder="F.eks. Fiskesuppe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <FormField
-          control={form.control}
-          name="kalkylekode"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Kalkylekode</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  value={field.value || ''}
-                  disabled
-                  className="bg-muted"
-                />
-              </FormControl>
-              <FormDescription>
-                Autogenerert ID for oppskriften
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+              <FormField
+                control={form.control}
+                name="kalkylekode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Kalkylekode</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={field.value || ''}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <FormField
-            control={form.control}
-            name="antallporsjoner"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Antall porsjoner</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="1"
-                    {...field}
-                    value={field.value || ''}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Standard antall porsjoner
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <div className="grid grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="antallporsjoner"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Antall porsjoner</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        {...field}
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="enhet"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Enhet</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value || undefined}
-                >
+              <FormField
+                control={form.control}
+                name="enhet"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Enhet</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || undefined}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Velg enhet" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Kilo">Kilo</SelectItem>
+                        <SelectItem value="Liter">Liter</SelectItem>
+                        <SelectItem value="Porsjoner">Porsjoner</SelectItem>
+                        <SelectItem value="Stk">Stk</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="refporsjon"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Refporsjon</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="F.eks. 1 person"
+                        {...field}
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="produksjonsmetode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Produksjonsmetode</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="F.eks. Tradisjonell, Sous vide, etc."
+                        {...field}
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="brukestil"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Brukes til</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="F.eks. Middag, Lunsj, etc."
+                        {...field}
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Høyre kolonne: Tekstområder */}
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="informasjon"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fremgangsmåte</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Velg enhet" />
-                    </SelectTrigger>
+                    <Textarea
+                      placeholder="Detaljert fremgangsmåte for oppskriften..."
+                      className="resize-y min-h-[200px]"
+                      {...field}
+                      value={field.value || ''}
+                    />
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Kilo">Kilo</SelectItem>
-                    <SelectItem value="Liter">Liter</SelectItem>
-                    <SelectItem value="Porsjoner">Porsjoner</SelectItem>
-                    <SelectItem value="Stk">Stk</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="refporsjon"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Refporsjon</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="F.eks. 1 person"
-                    {...field}
-                    value={field.value || ''}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="merknad"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Merknader</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Spesielle merknader, allergener, etc..."
+                      className="resize-y min-h-[150px]"
+                      {...field}
+                      value={field.value || ''}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
-
-        <FormField
-          control={form.control}
-          name="produksjonsmetode"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Produksjonsmetode</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="F.eks. Tradisjonell, Sous vide, etc." 
-                  {...field} 
-                  value={field.value || ''}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="brukestil"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Brukes til</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="F.eks. Middag, Lunsj, etc." 
-                  {...field} 
-                  value={field.value || ''}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="informasjon"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Fremgangsmåte</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Detaljert fremgangsmåte for oppskriften..."
-                  className="resize-y min-h-[200px]"
-                  {...field}
-                  value={field.value || ''}
-                />
-              </FormControl>
-              <FormDescription>
-                Instruksjoner for tilberedning
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="merknad"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Merknader</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Spesielle merknader, allergener, etc..."
-                  className="resize-y min-h-[120px]"
-                  {...field}
-                  value={field.value || ''}
-                />
-              </FormControl>
-              <FormDescription>
-                Viktige merknader om oppskriften
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <div className="flex gap-4">
           <Button type="submit" disabled={isLoading}>
