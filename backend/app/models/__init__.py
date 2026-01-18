@@ -28,6 +28,8 @@ from .customer_access_token import CustomerAccessToken
 from .activity_log import ActivityLog
 from .app_log import AppLog
 from .system_settings import SystemSettings
+from .produksjonstemplate import ProduksjonsTemplate, ProduksjonsTemplateDetaljer
+from .produksjon import Produksjon, ProduksjonsDetaljer
 
 __all__ = [
     "Ansatte",
@@ -67,4 +69,8 @@ __all__ = [
     "ActivityLog",
     "AppLog",
     "SystemSettings",
+    "ProduksjonsTemplate",
+    "ProduksjonsTemplateDetaljer",
+    "Produksjon",
+    "ProduksjonsDetaljer",
 ]

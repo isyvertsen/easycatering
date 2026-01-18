@@ -459,6 +459,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(CreateUserKunderJunctionTable())
         migration_runner.add_migration(AddSequenceToTblansatte())
         migration_runner.add_migration(DropKundeidFromUsers())
+        migration_runner.add_migration(CreateProduksjonssystemTables())
     return migration_runner
 
 
@@ -1422,6 +1423,182 @@ class DropKundeidFromUsers(Migration):
             await conn.execute(text("""
                 ALTER TABLE users
                 DROP COLUMN IF EXISTS kundeid
+            """))
+
+
+class CreateProduksjonssystemTables(Migration):
+    """Create production template system and update existing production tables.
+
+    This migration:
+    1. Creates new template tables (tbl_produksjonstemplate, tbl_produksjonstemplate_detaljer)
+    2. Updates existing tbl_rpproduksjon with status workflow and order transfer fields
+    3. Updates existing tbl_rpproduksjondetaljer with kalkyleid support
+
+    This is a pre-order system that allows:
+    - Admin creates production templates
+    - Templates are distributed to all customers in group 12
+    - Customers fill out quantities (webshop-like interface)
+    - Admin approves orders
+    - Approved orders are transferred to tblordrer
+    """
+
+    def __init__(self):
+        super().__init__(
+            version="20260118_001_produksjonssystem",
+            description="Create production template system and update existing tables"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # 1. Create tbl_produksjonstemplate (NEW - template definition)
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS tbl_produksjonstemplate (
+                    template_id SERIAL PRIMARY KEY,
+                    template_navn VARCHAR(255) NOT NULL,
+                    beskrivelse TEXT,
+                    kundegruppe INTEGER DEFAULT 12,
+                    gyldig_fra DATE,
+                    gyldig_til DATE,
+                    aktiv BOOLEAN DEFAULT TRUE,
+                    opprettet_dato TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    opprettet_av INTEGER REFERENCES users(id) ON DELETE SET NULL
+                )
+            """))
+
+            # Create indexes for tbl_produksjonstemplate
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_produksjonstemplate_aktiv
+                ON tbl_produksjonstemplate(aktiv)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_produksjonstemplate_kundegruppe
+                ON tbl_produksjonstemplate(kundegruppe)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_produksjonstemplate_gyldig
+                ON tbl_produksjonstemplate(gyldig_fra, gyldig_til)
+            """))
+
+            # 2. Create tbl_produksjonstemplate_detaljer (NEW - products in template)
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS tbl_produksjonstemplate_detaljer (
+                    template_detaljid SERIAL PRIMARY KEY,
+                    template_id INTEGER NOT NULL REFERENCES tbl_produksjonstemplate(template_id) ON DELETE CASCADE,
+                    produktid INTEGER REFERENCES tblprodukter(produktid) ON DELETE CASCADE,
+                    kalkyleid INTEGER REFERENCES tbl_rpkalkyle(kalkylekode) ON DELETE CASCADE,
+                    standard_antall INTEGER,
+                    maks_antall INTEGER,
+                    paakrevd BOOLEAN DEFAULT FALSE,
+                    linje_nummer INTEGER,
+                    CONSTRAINT check_template_produkt_or_kalkyle CHECK (produktid IS NOT NULL OR kalkyleid IS NOT NULL)
+                )
+            """))
+
+            # Create indexes for tbl_produksjonstemplate_detaljer
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_produksjonstemplate_detaljer_template
+                ON tbl_produksjonstemplate_detaljer(template_id)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_produksjonstemplate_detaljer_produkt
+                ON tbl_produksjonstemplate_detaljer(produktid)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_produksjonstemplate_detaljer_kalkyle
+                ON tbl_produksjonstemplate_detaljer(kalkyleid)
+            """))
+
+            # 3. UPDATE existing tbl_rpproduksjon table with new fields
+            # Add template_id for linking to template
+            await conn.execute(text("""
+                ALTER TABLE tbl_rpproduksjon
+                ADD COLUMN IF NOT EXISTS template_id INTEGER REFERENCES tbl_produksjonstemplate(template_id) ON DELETE SET NULL
+            """))
+
+            # Add periodeid for period tracking
+            await conn.execute(text("""
+                ALTER TABLE tbl_rpproduksjon
+                ADD COLUMN IF NOT EXISTS periodeid INTEGER REFERENCES tblperiode(menyperiodeid) ON DELETE SET NULL
+            """))
+
+            # Add status workflow
+            await conn.execute(text("""
+                ALTER TABLE tbl_rpproduksjon
+                ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'draft',
+                ADD CONSTRAINT check_rpproduksjon_status CHECK (status IN ('draft', 'submitted', 'approved', 'rejected', 'transferred', 'produced'))
+            """))
+
+            # Add opprettet_av (creator tracking)
+            await conn.execute(text("""
+                ALTER TABLE tbl_rpproduksjon
+                ADD COLUMN IF NOT EXISTS opprettet_av INTEGER REFERENCES users(id) ON DELETE SET NULL
+            """))
+
+            # Add workflow timestamps
+            await conn.execute(text("""
+                ALTER TABLE tbl_rpproduksjon
+                ADD COLUMN IF NOT EXISTS oppdatert_dato TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS innsendt_dato TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS godkjent_dato TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS godkjent_av INTEGER REFERENCES users(id) ON DELETE SET NULL
+            """))
+
+            # Add order transfer fields (Phase 6)
+            await conn.execute(text("""
+                ALTER TABLE tbl_rpproduksjon
+                ADD COLUMN IF NOT EXISTS ordre_id BIGINT REFERENCES tblordrer(ordreid) ON DELETE SET NULL,
+                ADD COLUMN IF NOT EXISTS overfort_dato TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS overfort_av INTEGER REFERENCES users(id) ON DELETE SET NULL
+            """))
+
+            # Create indexes for tbl_rpproduksjon
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_rpproduksjon_kunde ON tbl_rpproduksjon(kundeid)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_rpproduksjon_status ON tbl_rpproduksjon(status)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_rpproduksjon_template ON tbl_rpproduksjon(template_id)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_rpproduksjon_periode ON tbl_rpproduksjon(periodeid)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_rpproduksjon_ordre ON tbl_rpproduksjon(ordre_id) WHERE ordre_id IS NOT NULL
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_rpproduksjon_kunde_status ON tbl_rpproduksjon(kundeid, status)
+            """))
+
+            # 4. UPDATE existing tbl_rpproduksjondetaljer table
+            # Add kalkyleid for recipe support
+            await conn.execute(text("""
+                ALTER TABLE tbl_rpproduksjondetaljer
+                ADD COLUMN IF NOT EXISTS kalkyleid INTEGER REFERENCES tbl_rpkalkyle(kalkylekode) ON DELETE CASCADE
+            """))
+
+            # Add kommentar field
+            await conn.execute(text("""
+                ALTER TABLE tbl_rpproduksjondetaljer
+                ADD COLUMN IF NOT EXISTS kommentar TEXT
+            """))
+
+            # Add linje_nummer for sorting
+            await conn.execute(text("""
+                ALTER TABLE tbl_rpproduksjondetaljer
+                ADD COLUMN IF NOT EXISTS linje_nummer INTEGER
+            """))
+
+            # Create indexes for tbl_rpproduksjondetaljer
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_rpproduksjondetaljer_produksjon ON tbl_rpproduksjondetaljer(produksjonskode)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_rpproduksjondetaljer_produkt ON tbl_rpproduksjondetaljer(produktid)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_rpproduksjondetaljer_kalkyle ON tbl_rpproduksjondetaljer(kalkyleid)
             """))
 
 
