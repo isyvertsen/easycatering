@@ -34,6 +34,8 @@ import {
   Link2,
   FileText,
   PackageCheck,
+  Utensils,
+  FileSpreadsheet,
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -111,6 +113,15 @@ const navigationGroups: NavGroup[] = [
       { name: "Bestillingsskjema", href: "/bestilling/skjema", icon: ClipboardList },
       { name: "Registrer bestilling", href: "/bestilling/registrer", icon: PenLine },
       { name: "Send kundelenke", href: "/bestilling/send-link", icon: Link2 },
+      { name: "Produksjonsbestilling", href: "/bestilling/produksjon", icon: Utensils },
+    ]
+  },
+  {
+    name: "Produksjon",
+    icon: Utensils,
+    items: [
+      { name: "Produksjonstemplates", href: "/produksjon/templates", icon: FileSpreadsheet },
+      { name: "Produksjonsordrer", href: "/produksjon/orders", icon: ClipboardList },
     ]
   },
   {

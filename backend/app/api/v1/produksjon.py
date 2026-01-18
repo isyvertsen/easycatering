@@ -443,6 +443,82 @@ async def approve_production_orders(
     }
 
 
+@router.post("/orders/{produksjonskode}/reject", tags=["produksjon-workflow"])
+async def reject_production_order(
+    produksjonskode: int,
+    reason: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Reject a production order."""
+    result = await db.execute(
+        select(ProduksjonsModel).where(ProduksjonsModel.produksjonkode == produksjonskode)
+    )
+    produksjon = result.scalar_one_or_none()
+
+    if not produksjon:
+        raise HTTPException(status_code=404, detail="Production order not found")
+
+    if produksjon.status != 'submitted':
+        raise HTTPException(status_code=400, detail="Only submitted orders can be rejected")
+
+    produksjon.status = 'rejected'
+    produksjon.merknad = reason or produksjon.merknad
+    produksjon.oppdatert_dato = datetime.now()
+
+    await db.commit()
+
+    return {"message": "Production order rejected", "produksjonskode": produksjonskode}
+
+
+@router.put("/orders/{produksjonskode}/details", tags=["produksjon-orders"])
+async def update_production_details(
+    produksjonskode: int,
+    detaljer: List[dict],
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update production order details (for webshop interface)."""
+    # Get produksjon
+    result = await db.execute(
+        select(ProduksjonsModel).where(ProduksjonsModel.produksjonkode == produksjonskode)
+    )
+    produksjon = result.scalar_one_or_none()
+
+    if not produksjon:
+        raise HTTPException(status_code=404, detail="Production order not found")
+
+    if produksjon.status != 'draft':
+        raise HTTPException(status_code=400, detail="Only draft orders can be updated")
+
+    # Update details
+    for detalj_update in detaljer:
+        produktid = detalj_update.get('produktid')
+        if not produktid:
+            continue
+
+        # Find existing detail
+        detalj_result = await db.execute(
+            select(ProduksjonsDetaljerModel).where(
+                ProduksjonsDetaljerModel.produksjonskode == produksjonskode,
+                ProduksjonsDetaljerModel.produktid == produktid
+            )
+        )
+        existing = detalj_result.scalar_one_or_none()
+
+        if existing:
+            if 'antallporsjoner' in detalj_update:
+                existing.antallporsjoner = detalj_update['antallporsjoner']
+            if 'kommentar' in detalj_update:
+                existing.kommentar = detalj_update['kommentar']
+
+    produksjon.oppdatert_dato = datetime.now()
+
+    await db.commit()
+
+    return {"message": "Details updated", "produksjonskode": produksjonskode}
+
+
 @router.post("/orders/{produksjonskode}/transfer-to-order", tags=["produksjon-workflow"])
 async def transfer_production_to_order(
     produksjonskode: int,
