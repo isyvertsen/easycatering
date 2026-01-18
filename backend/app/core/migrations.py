@@ -460,6 +460,7 @@ def get_migration_runner(engine: AsyncEngine) -> MigrationRunner:
         migration_runner.add_migration(AddSequenceToTblansatte())
         migration_runner.add_migration(DropKundeidFromUsers())
         migration_runner.add_migration(CreateProduksjonssystemTables())
+        migration_runner.add_migration(CreateWorkflowAutomationTables())
     return migration_runner
 
 
@@ -1599,6 +1600,166 @@ class CreateProduksjonssystemTables(Migration):
             """))
             await conn.execute(text("""
                 CREATE INDEX IF NOT EXISTS idx_rpproduksjondetaljer_kalkyle ON tbl_rpproduksjondetaljer(kalkyleid)
+            """))
+
+
+class CreateWorkflowAutomationTables(Migration):
+    """Create workflow automation system tables.
+
+    This migration creates the foundation for the workflow automation system:
+    1. workflow_definitions - Main workflow configuration
+    2. workflow_steps - Individual steps in a workflow
+    3. workflow_schedules - When workflows should run
+    4. workflow_executions - Records of workflow runs
+    5. workflow_action_logs - Detailed logs of each action
+
+    Enables automated workflows like:
+    - Scheduled email sending (weekly orders, reminders)
+    - Conditional checks (missing orders, low inventory)
+    - Multi-step automations with branching logic
+    """
+
+    def __init__(self):
+        super().__init__(
+            version="20260118_002_workflow_automation",
+            description="Create workflow automation system tables"
+        )
+
+    async def up(self, engine: AsyncEngine):
+        async with engine.begin() as conn:
+            # 1. Create workflow_definitions table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS workflow_definitions (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    description TEXT,
+                    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                    workflow_type VARCHAR(50) NOT NULL DEFAULT 'scheduled',
+                    created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT check_workflow_type CHECK (workflow_type IN ('scheduled', 'event_based'))
+                )
+            """))
+
+            # Create indexes for workflow_definitions
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_workflow_definitions_active
+                ON workflow_definitions(is_active)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_workflow_definitions_created_by
+                ON workflow_definitions(created_by)
+            """))
+
+            # 2. Create workflow_steps table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS workflow_steps (
+                    id SERIAL PRIMARY KEY,
+                    workflow_id INTEGER NOT NULL REFERENCES workflow_definitions(id) ON DELETE CASCADE,
+                    step_order INTEGER NOT NULL,
+                    step_type VARCHAR(100) NOT NULL,
+                    trigger_type VARCHAR(50) NOT NULL,
+                    trigger_config JSONB,
+                    action_config JSONB,
+                    condition_config JSONB,
+                    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                    CONSTRAINT check_step_type CHECK (step_type IN (
+                        'send_email', 'check_condition', 'create_order', 'wait_until',
+                        'send_notification', 'generate_report', 'custom_action'
+                    )),
+                    CONSTRAINT check_trigger_type CHECK (trigger_type IN (
+                        'time_based', 'condition_based', 'immediate'
+                    ))
+                )
+            """))
+
+            # Create indexes for workflow_steps
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_workflow_steps_workflow
+                ON workflow_steps(workflow_id, step_order)
+            """))
+
+            # 3. Create workflow_schedules table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS workflow_schedules (
+                    id SERIAL PRIMARY KEY,
+                    workflow_id INTEGER NOT NULL UNIQUE REFERENCES workflow_definitions(id) ON DELETE CASCADE,
+                    schedule_type VARCHAR(50) NOT NULL,
+                    schedule_config JSONB NOT NULL,
+                    next_run TIMESTAMP,
+                    last_run TIMESTAMP,
+                    CONSTRAINT check_schedule_type CHECK (schedule_type IN (
+                        'daily', 'weekly', 'monthly', 'cron'
+                    ))
+                )
+            """))
+
+            # Create indexes for workflow_schedules
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_workflow_schedules_next_run
+                ON workflow_schedules(next_run)
+                WHERE next_run IS NOT NULL
+            """))
+
+            # 4. Create workflow_executions table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS workflow_executions (
+                    id SERIAL PRIMARY KEY,
+                    workflow_id INTEGER NOT NULL REFERENCES workflow_definitions(id) ON DELETE CASCADE,
+                    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    completed_at TIMESTAMP,
+                    status VARCHAR(50) NOT NULL DEFAULT 'running',
+                    current_step INTEGER,
+                    error_message TEXT,
+                    CONSTRAINT check_execution_status CHECK (status IN (
+                        'running', 'completed', 'failed', 'paused'
+                    ))
+                )
+            """))
+
+            # Create indexes for workflow_executions
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_workflow_executions_workflow
+                ON workflow_executions(workflow_id, started_at DESC)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_workflow_executions_status
+                ON workflow_executions(status)
+            """))
+
+            # 5. Create workflow_action_logs table
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS workflow_action_logs (
+                    id SERIAL PRIMARY KEY,
+                    execution_id INTEGER NOT NULL REFERENCES workflow_executions(id) ON DELETE CASCADE,
+                    step_id INTEGER NOT NULL REFERENCES workflow_steps(id) ON DELETE CASCADE,
+                    action_type VARCHAR(100) NOT NULL,
+                    target_id INTEGER,
+                    target_type VARCHAR(50),
+                    performed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    status VARCHAR(50) NOT NULL DEFAULT 'success',
+                    result_data JSONB,
+                    error_message TEXT,
+                    CONSTRAINT check_action_status CHECK (status IN (
+                        'success', 'failed', 'skipped'
+                    ))
+                )
+            """))
+
+            # Create indexes for workflow_action_logs
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_workflow_action_logs_execution
+                ON workflow_action_logs(execution_id, performed_at)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_workflow_action_logs_step
+                ON workflow_action_logs(step_id)
+            """))
+            await conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_workflow_action_logs_target
+                ON workflow_action_logs(target_type, target_id)
+                WHERE target_id IS NOT NULL
             """))
 
 

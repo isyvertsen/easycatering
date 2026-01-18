@@ -383,6 +383,119 @@ TOOLS: List[Tool] = [
         ],
         safety_level=SafetyLevel.READ,
     ),
+
+    # =========================================================================
+    # WORKFLOW AUTOMATION
+    # =========================================================================
+    Tool(
+        name="create_workflow",
+        description="Opprett en ny automatisert arbeidsflyt (workflow). Bruk dette når brukeren vil automatisere en oppgave.",
+        category="workflow-automation",
+        endpoint="/workflow-automation/workflows",
+        method="POST",
+        parameters=[
+            ToolParameter(name="name", type="string", description="Navn på arbeidsflyten", required=True),
+            ToolParameter(name="description", type="string", description="Beskrivelse av hva arbeidsflyten gjør"),
+            ToolParameter(name="is_active", type="boolean", description="Om arbeidsflyten skal være aktiv", default=True),
+            ToolParameter(name="workflow_type", type="string", description="Type arbeidsflyt", enum=["scheduled", "event_based"], default="scheduled"),
+        ],
+        safety_level=SafetyLevel.WRITE,
+        requires_confirmation=True,
+        response_template="Arbeidsflyt '{name}' opprettet med ID {id}. Status: {'aktiv' if is_active else 'inaktiv'}",
+    ),
+    Tool(
+        name="list_workflows",
+        description="List alle automatiserte arbeidsflyter. Kan filtrere på aktiv/inaktiv status.",
+        category="workflow-automation",
+        endpoint="/workflow-automation/workflows",
+        method="GET",
+        parameters=[
+            ToolParameter(name="is_active", type="boolean", description="Filtrer på aktiv status"),
+            ToolParameter(name="workflow_type", type="string", description="Filtrer på type", enum=["scheduled", "event_based"]),
+            ToolParameter(name="search", type="string", description="Søkeord i navn eller beskrivelse"),
+            ToolParameter(name="page_size", type="integer", description="Antall resultater", default=50),
+        ],
+        safety_level=SafetyLevel.READ,
+    ),
+    Tool(
+        name="get_workflow",
+        description="Hent detaljert informasjon om en spesifikk arbeidsflyt med alle steg og kjøreplan.",
+        category="workflow-automation",
+        endpoint="/workflow-automation/workflows/{workflow_id}",
+        method="GET",
+        parameters=[
+            ToolParameter(name="workflow_id", type="integer", description="Arbeidsflyt-ID", required=True),
+            ToolParameter(name="include_steps", type="boolean", description="Inkluder alle steg", default=True),
+            ToolParameter(name="include_schedule", type="boolean", description="Inkluder kjøreplan", default=True),
+            ToolParameter(name="include_executions", type="boolean", description="Inkluder kjøringshistorikk", default=False),
+        ],
+        safety_level=SafetyLevel.READ,
+    ),
+    Tool(
+        name="execute_workflow",
+        description="Kjør en arbeidsflyt manuelt nå (i stedet for å vente på planlagt tid).",
+        category="workflow-automation",
+        endpoint="/workflow-automation/workflows/{workflow_id}/execute",
+        method="POST",
+        parameters=[
+            ToolParameter(name="workflow_id", type="integer", description="Arbeidsflyt-ID", required=True),
+        ],
+        safety_level=SafetyLevel.WRITE,
+        requires_confirmation=True,
+        response_template="Startet kjøring av arbeidsflyt med execution ID {id}",
+    ),
+    Tool(
+        name="get_workflow_statistics",
+        description="Hent statistikk for en arbeidsflyt (antall kjøringer, suksessrate, gjennomsnittlig varighet).",
+        category="workflow-automation",
+        endpoint="/workflow-automation/workflows/{workflow_id}/statistics",
+        method="GET",
+        parameters=[
+            ToolParameter(name="workflow_id", type="integer", description="Arbeidsflyt-ID", required=True),
+        ],
+        safety_level=SafetyLevel.READ,
+        response_template="Statistikk for arbeidsflyt: {total_executions} kjøringer, {success_rate:.1%} suksessrate",
+    ),
+    Tool(
+        name="list_workflow_executions",
+        description="List alle kjøringer av arbeidsflyter. Kan filtrere på arbeidsflyt og status.",
+        category="workflow-automation",
+        endpoint="/workflow-automation/executions",
+        method="GET",
+        parameters=[
+            ToolParameter(name="workflow_id", type="integer", description="Filtrer på arbeidsflyt-ID"),
+            ToolParameter(name="status", type="string", description="Filtrer på status", enum=["running", "completed", "failed", "paused"]),
+            ToolParameter(name="page_size", type="integer", description="Antall resultater", default=50),
+        ],
+        safety_level=SafetyLevel.READ,
+    ),
+    Tool(
+        name="update_workflow",
+        description="Oppdater en eksisterende arbeidsflyt (navn, beskrivelse, aktiv status).",
+        category="workflow-automation",
+        endpoint="/workflow-automation/workflows/{workflow_id}",
+        method="PATCH",
+        parameters=[
+            ToolParameter(name="workflow_id", type="integer", description="Arbeidsflyt-ID", required=True),
+            ToolParameter(name="name", type="string", description="Nytt navn"),
+            ToolParameter(name="description", type="string", description="Ny beskrivelse"),
+            ToolParameter(name="is_active", type="boolean", description="Aktiv status"),
+        ],
+        safety_level=SafetyLevel.UPDATE,
+        requires_confirmation=True,
+    ),
+    Tool(
+        name="delete_workflow",
+        description="Slett en arbeidsflyt permanent. Dette sletter også alle steg, kjøreplaner og kjøringshistorikk.",
+        category="workflow-automation",
+        endpoint="/workflow-automation/workflows/{workflow_id}",
+        method="DELETE",
+        parameters=[
+            ToolParameter(name="workflow_id", type="integer", description="Arbeidsflyt-ID", required=True),
+        ],
+        safety_level=SafetyLevel.DELETE,
+        requires_confirmation=True,
+    ),
 ]
 
 

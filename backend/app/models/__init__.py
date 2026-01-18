@@ -30,6 +30,11 @@ from .app_log import AppLog
 from .system_settings import SystemSettings
 from .produksjonstemplate import ProduksjonsTemplate, ProduksjonsTemplateDetaljer
 from .produksjon import Produksjon, ProduksjonsDetaljer
+from .workflow_definition import WorkflowDefinition
+from .workflow_step import WorkflowStep
+from .workflow_schedule import WorkflowSchedule
+from .workflow_execution import WorkflowExecution
+from .workflow_action_log import WorkflowActionLog
 
 __all__ = [
     "Ansatte",
@@ -73,4 +78,9 @@ __all__ = [
     "ProduksjonsTemplateDetaljer",
     "Produksjon",
     "ProduksjonsDetaljer",
+    "WorkflowDefinition",
+    "WorkflowStep",
+    "WorkflowSchedule",
+    "WorkflowExecution",
+    "WorkflowActionLog",
 ]
