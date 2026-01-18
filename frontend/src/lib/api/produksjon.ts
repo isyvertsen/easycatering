@@ -26,6 +26,7 @@ export interface TemplateDetalj {
 }
 
 export interface ProduksjonsTemplate {
+  id: number  // Alias for template_id (for compatibility with generic components)
   template_id: number
   template_navn: string
   beskrivelse?: string
@@ -98,6 +99,7 @@ export interface ProduksjonsDetalj {
 }
 
 export interface Produksjon {
+  id: number  // Alias for produksjonkode (for compatibility with generic components)
   produksjonkode: number
   kundeid: number
   ansattid: number

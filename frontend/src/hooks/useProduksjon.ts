@@ -25,7 +25,17 @@ export function useTemplatesList(
 ) {
   return useQuery<TemplateListResponse>({
     queryKey: ['produksjon-templates', 'list', params],
-    queryFn: () => templateApi.list(params),
+    queryFn: async () => {
+      const response = await templateApi.list(params)
+      // Map template_id to id for compatibility with generic components
+      return {
+        ...response,
+        items: response.items.map(item => ({
+          ...item,
+          id: item.template_id
+        }))
+      }
+    },
     ...options
   })
 }
@@ -36,7 +46,14 @@ export function useTemplate(
 ) {
   return useQuery<ProduksjonsTemplate>({
     queryKey: ['produksjon-templates', id],
-    queryFn: () => templateApi.get(id),
+    queryFn: async () => {
+      const item = await templateApi.get(id)
+      // Map template_id to id for compatibility with generic components
+      return {
+        ...item,
+        id: item.template_id
+      }
+    },
     enabled: !!id,
     ...options
   })
@@ -84,7 +101,7 @@ export function useUpdateTemplate(
       queryClient.invalidateQueries({ queryKey: ['produksjon-templates', variables.id] })
       toast({
         title: "Template oppdatert",
-        description: `Produksjonstemplate "${data.template_namn}" ble oppdatert`,
+        description: `Produksjonstemplate "${data.template_navn}" ble oppdatert`,
         variant: "default",
       })
       options?.onSuccess?.(data, variables, context)
@@ -172,7 +189,17 @@ export function useProduksjonsList(
 ) {
   return useQuery<ProduksjonsListResponse>({
     queryKey: ['produksjon-orders', 'list', 'v2', params],
-    queryFn: () => produksjonApi.list(params),
+    queryFn: async () => {
+      const response = await produksjonApi.list(params)
+      // Map produksjonkode to id for compatibility with generic components
+      return {
+        ...response,
+        items: response.items.map(item => ({
+          ...item,
+          id: item.produksjonkode
+        }))
+      }
+    },
     ...options
   })
 }
@@ -183,7 +210,14 @@ export function useProduksjon(
 ) {
   return useQuery<Produksjon>({
     queryKey: ['produksjon-orders', id],
-    queryFn: () => produksjonApi.get(id),
+    queryFn: async () => {
+      const item = await produksjonApi.get(id)
+      // Map produksjonkode to id for compatibility with generic components
+      return {
+        ...item,
+        id: item.produksjonkode
+      }
+    },
     enabled: !!id,
     ...options
   })

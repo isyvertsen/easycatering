@@ -186,7 +186,7 @@ export default function PrintersSettingsPage() {
     if (!printer) return
 
     if (confirm(`Er du sikker på at du vil slette "${printer.name}"?`)) {
-      let updatedPrinters = printers.filter(p => p.id !== printerId)
+      const updatedPrinters = printers.filter(p => p.id !== printerId)
 
       // If we deleted the default printer and there are others, set first as default
       if (printer.isDefault && updatedPrinters.length > 0) {
