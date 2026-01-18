@@ -25,7 +25,7 @@ interface WebshopCustomerContextType {
   refetch: () => Promise<void>
 }
 
-const WebshopCustomerContext = createContext<WebshopCustomerContextType | undefined>(undefined)
+export const WebshopCustomerContext = createContext<WebshopCustomerContextType | undefined>(undefined)
 
 const SELECTED_KUNDE_KEY = 'webshop-selected-kundeid'
 
