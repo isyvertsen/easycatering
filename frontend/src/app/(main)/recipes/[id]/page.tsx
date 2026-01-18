@@ -9,11 +9,12 @@ import { CalculateNutritionButton } from "@/components/recipes/calculate-nutriti
 import { useRecipe, useUpdateRecipe } from "@/hooks/useRecipes"
 import { Recipe } from "@/types/models"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Calculator, FileText } from "lucide-react"
+import { Calculator, FileText, FileEdit, UtensilsCrossed, Activity } from "lucide-react"
 import { recipesApi } from "@/lib/api/recipes"
 
 interface RecipeEditPageProps {
@@ -121,28 +122,58 @@ export default function RecipeEditPage({ params }: RecipeEditPageProps) {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Rediger oppskrift</h1>
           <p className="text-muted-foreground">
-            Oppdater oppskriftinformasjon
+            {recipe.kalkylenavn}
           </p>
         </div>
-        <CalculateNutritionButton
-          recipeId={Number(id)}
-          onCalculated={handleNutritionCalculated}
-        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-6">
+      <Tabs defaultValue="grunndata" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="grunndata" className="flex items-center gap-2">
+            <FileEdit className="h-4 w-4" />
+            Grunndata
+          </TabsTrigger>
+          <TabsTrigger value="ingredienser" className="flex items-center gap-2">
+            <UtensilsCrossed className="h-4 w-4" />
+            Ingredienser
+          </TabsTrigger>
+          <TabsTrigger value="naering" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Næring
+          </TabsTrigger>
+          <TabsTrigger value="kalkulering" className="flex items-center gap-2">
+            <Calculator className="h-4 w-4" />
+            Kalkulering
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab 1: Grunndata */}
+        <TabsContent value="grunndata" className="space-y-6">
           <RecipeForm
             recipe={recipe}
             onSubmit={handleSubmit}
             isLoading={updateMutation.isPending}
           />
-        </div>
-        <div className="space-y-6">
-          <RecipeIngredients recipeId={Number(id)} nutritionData={nutritionData} />
-          <NutritionDisplay data={nutritionData} loading={nutritionLoading} />
+        </TabsContent>
 
-          {/* Kalkulering og Rapport */}
+        {/* Tab 2: Ingredienser */}
+        <TabsContent value="ingredienser" className="space-y-6">
+          <RecipeIngredients recipeId={Number(id)} nutritionData={nutritionData} />
+        </TabsContent>
+
+        {/* Tab 3: Næring */}
+        <TabsContent value="naering" className="space-y-6">
+          <div className="flex justify-end mb-4">
+            <CalculateNutritionButton
+              recipeId={Number(id)}
+              onCalculated={handleNutritionCalculated}
+            />
+          </div>
+          <NutritionDisplay data={nutritionData} loading={nutritionLoading} />
+        </TabsContent>
+
+        {/* Tab 4: Kalkulering og Rapport */}
+        <TabsContent value="kalkulering" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -207,8 +238,8 @@ export default function RecipeEditPage({ params }: RecipeEditPageProps) {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
