@@ -43,19 +43,19 @@ class Produksjon(Base):
 
     # Relationships
     kunde = relationship("Kunder", foreign_keys=[kundeid], lazy="joined")
-    ansatt = relationship("Ansatte", foreign_keys=[ansattid], lazy="joined")
+    ansatt = relationship("Ansatte", foreign_keys=[ansattid], lazy="noload")
     template = relationship("ProduksjonsTemplate", back_populates="produksjoner", lazy="joined")
-    periode = relationship("Periode", lazy="joined")
+    periode = relationship("Periode", lazy="noload")
     detaljer = relationship(
         "ProduksjonsDetaljer",
         back_populates="produksjon",
         cascade="all, delete-orphan",
         lazy="raise"
     )
-    ordre = relationship("Ordrer", foreign_keys=[ordre_id], lazy="joined")
-    opprettet_av_bruker = relationship("User", foreign_keys=[opprettet_av], lazy="joined")
-    godkjent_av_bruker = relationship("User", foreign_keys=[godkjent_av], lazy="joined")
-    overfort_av_bruker = relationship("User", foreign_keys=[overfort_av], lazy="joined")
+    ordre = relationship("Ordrer", foreign_keys=[ordre_id], lazy="noload")
+    opprettet_av_bruker = relationship("User", foreign_keys=[opprettet_av], lazy="noload")
+    godkjent_av_bruker = relationship("User", foreign_keys=[godkjent_av], lazy="noload")
+    overfort_av_bruker = relationship("User", foreign_keys=[overfort_av], lazy="noload")
 
 
 class ProduksjonsDetaljer(Base):

@@ -258,7 +258,7 @@ function OrdersPageContent() {
       </div>
 
       <DataTable<Produksjon>
-        tableName="produksjon-orders"
+        tableName="produksjon/orders"
         columns={columns}
         data={data?.items || []}
         total={data?.total || 0}
@@ -266,9 +266,13 @@ function OrdersPageContent() {
         pageSize={data?.page_size || 20}
         totalPages={data?.total_pages || 1}
         onParamsChange={handleParamsChange}
+        onDelete={() => {}}
         loading={isLoading}
         idField="produksjonkode"
-        searchPlaceholder="Søk etter ordre..."
+        searchPlaceholder="Søk etter produksjonsordre..."
+        hideAddButton={true}
+        enableDelete={false}
+        enableBulkOperations={false}
         customActions={(order) => (
           <div className="flex items-center gap-2">
             {order.status === 'submitted' && (

@@ -2,6 +2,7 @@
 from typing import List, Optional
 from datetime import datetime
 from sqlalchemy import select, func, or_
+from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
@@ -321,9 +322,14 @@ async def get_production_orders(
     status: Optional[str] = Query(None, description="Filter by status"),
     kundeid: Optional[int] = Query(None, description="Filter by customer"),
     template_id: Optional[int] = Query(None, description="Filter by template"),
+    search: Optional[str] = Query(None, description="Search in customer name and order info"),
 ) -> ProduksjonsListResponse:
     """Get all production orders with pagination."""
-    query = select(ProduksjonsModel)
+    from app.models.kunder import Kunder
+
+    query = select(ProduksjonsModel).options(
+        selectinload(ProduksjonsModel.detaljer).joinedload(ProduksjonsDetaljerModel.produkt)
+    )
     count_query = select(func.count()).select_from(ProduksjonsModel)
 
     # Filters
@@ -339,13 +345,27 @@ async def get_production_orders(
         query = query.where(ProduksjonsModel.template_id == template_id)
         count_query = count_query.where(ProduksjonsModel.template_id == template_id)
 
+    # Search filter
+    if search:
+        # Join with Kunder table to search in customer name
+        query = query.join(Kunder, ProduksjonsModel.kundeid == Kunder.kundeid)
+        count_query = count_query.join(Kunder, ProduksjonsModel.kundeid == Kunder.kundeid)
+
+        search_filter = or_(
+            Kunder.kundenavn.ilike(f"%{search}%"),
+            ProduksjonsModel.informasjon.ilike(f"%{search}%"),
+            ProduksjonsModel.merknad.ilike(f"%{search}%"),
+        )
+        query = query.where(search_filter)
+        count_query = count_query.where(search_filter)
+
     # Get total count
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0
 
     # Pagination
     offset = (page - 1) * page_size
-    query = query.order_by(ProduksjonsModel.created.desc())
+    query = query.order_by(ProduksjonsModel.produksjonkode.desc())
     query = query.offset(offset).limit(page_size)
 
     result = await db.execute(query)
@@ -370,7 +390,11 @@ async def get_production_order(
 ) -> Produksjon:
     """Get a specific production order."""
     result = await db.execute(
-        select(ProduksjonsModel).where(ProduksjonsModel.produksjonkode == produksjonskode)
+        select(ProduksjonsModel)
+        .options(
+            selectinload(ProduksjonsModel.detaljer).joinedload(ProduksjonsDetaljerModel.produkt)
+        )
+        .where(ProduksjonsModel.produksjonkode == produksjonskode)
     )
     produksjon = result.scalar_one_or_none()
 
@@ -529,7 +553,11 @@ async def transfer_production_to_order(
     """Transfer approved production order to tblordrer (Phase 6)."""
     # Get produksjon
     result = await db.execute(
-        select(ProduksjonsModel).where(ProduksjonsModel.produksjonkode == produksjonskode)
+        select(ProduksjonsModel)
+        .options(
+            selectinload(ProduksjonsModel.detaljer).joinedload(ProduksjonsDetaljerModel.produkt)
+        )
+        .where(ProduksjonsModel.produksjonkode == produksjonskode)
     )
     produksjon = result.scalar_one_or_none()
 
@@ -553,12 +581,7 @@ async def transfer_production_to_order(
     await db.flush()
 
     # Copy produksjonsdetaljer to ordredetaljer
-    detaljer_result = await db.execute(
-        select(ProduksjonsDetaljerModel).where(
-            ProduksjonsDetaljerModel.produksjonskode == produksjonskode
-        )
-    )
-    detaljer = detaljer_result.scalars().all()
+    detaljer = produksjon.detaljer
 
     for detalj in detaljer:
         db_ordredetalj = Ordredetaljer(

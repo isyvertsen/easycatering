@@ -176,7 +176,7 @@ function TemplatesPageContent() {
       )}
 
       <DataTable<ProduksjonsTemplate>
-        tableName="produksjon-templates"
+        tableName="produksjon/templates"
         columns={columns}
         data={data?.items || []}
         total={data?.total || 0}
